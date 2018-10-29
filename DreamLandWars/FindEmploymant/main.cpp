@@ -1,151 +1,67 @@
-//*****************************************************************************
-//	GM31 授業１コマ目
 //	Author : Yusuke Seki
-//*****************************************************************************
+//	Author : 20181029
 
-//---------- インクルードファイル
 #include "main.h"
 #include "GameManager.h"
 #include "Title.h"
 #include "MainGame.h"
+#include "result.h"
 
-//---------- マクロ定義
-#define CLASS_NAME	("class name")	// ウィンドウクラスの名前
-#define WINDOW_NAME	("Dream Land Wars")	// ウィンドウの名前
-#define WindowStyle		(WS_OVERLAPPEDWINDOW ^ WS_MINIMIZEBOX ^ WS_MAXIMIZEBOX ^ WS_THICKFRAME)	// ウィンドウスタイル
+#define CLASS_NAME	("class name")
+#define WINDOW_NAME	("Dream Land Wars")
+#define WindowStyle	(WS_OVERLAPPEDWINDOW ^ WS_MINIMIZEBOX ^ WS_MAXIMIZEBOX ^ WS_THICKFRAME)
 
-//---------- プロトタイプ宣言
-LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);	// ウィンドウプロシージャ
+enum GAMESCENE
+{
+	TITLE,
+	GAME,
+	RESULT,
+};
 
-//---------- グローバル宣言
-#ifdef _DEBUG
-int	g_nCountFPS	= 0;	// FPSカウンター
-#endif
+LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void FixCreateWindow(HINSTANCE hInstance, int nCmdShow);
+D3DXVECTOR2 AdjustClientPosition(D3DXVECTOR2 *outWindowPosition, D3DXVECTOR2 windowSize);
+bool InitializeGame(GAMESCENE initGameScene, HINSTANCE hInstance);
+void MainRoop(MSG *msg);
+
 HWND g_hwnd;
+#ifdef _DEBUG
+int	g_nCountFPS	= 0;
+#endif
 
+#ifdef _DEBUG
+int GetFPS(void)
+{
+	return g_nCountFPS;
+}
+#endif
 
-//=============================================================================
-// メイン関数
-//=============================================================================
+HWND GetHWnd()
+{
+	return g_hwnd;
+}
+
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	MSG msg;
+
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
-	HWND hWnd;
-	WNDCLASSEX wcex;
-	RECT ClientRect, DesktopRect;
-	int WindowWidth, WindowHeight, DesktopWidth, DesktopHeight, WindowX, WindowY;
-	HRESULT hr;
-	MSG msg;
-	DWORD dwCountFrame, dwCurrentTime, dwFPSLastTime, dwExecLastTime;
 
+	FixCreateWindow(hInstance, nCmdShow);
 
-	//----- ウィンドウの作成 -----
-	// ウィンドウクラスの設定
-	wcex = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0, 0, hInstance, NULL, LoadCursor(NULL,IDC_ARROW),
-			 (HBRUSH)(COLOR_WINDOW+1), NULL, CLASS_NAME, NULL };
-	RegisterClassEx(&wcex);
-
-	// クライアント領域の設定
-	ClientRect = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
-	AdjustWindowRect( &ClientRect, WindowStyle, FALSE );
-	WindowWidth  = ClientRect.right  - ClientRect.left;
-	WindowHeight = ClientRect.bottom - ClientRect.top;
-
-	// デスクトップ領域の取得
-	GetWindowRect( GetDesktopWindow(), &DesktopRect );
-	DesktopWidth  = DesktopRect.right  - DesktopRect.left;
-	DesktopHeight = DesktopRect.bottom - DesktopRect.top;
-
-	// 実際のクライアント領域の算出
-	WindowX = WindowWidth  > DesktopWidth  ? 0 : ( DesktopWidth  - WindowWidth  ) / 2;
-	WindowY = WindowHeight > DesktopHeight ? 0 : ( DesktopHeight - WindowHeight ) / 2;
-
-	// ウィンドウの実体化
-	hWnd = CreateWindowEx( 0, CLASS_NAME, WINDOW_NAME, WindowStyle, WindowX, WindowY,
-						   WindowWidth, WindowHeight, NULL, NULL, hInstance, NULL );
-	g_hwnd = hWnd;
-
-	// ウィンドウの表示
-	ShowWindow( hWnd, nCmdShow );
-	UpdateWindow( hWnd );
-
-	
-	//----- ゲームの初期化 -----
-	// ゲームマネージャーの初期化
-	//hr = GameManager::Init(hInstance, hWnd, TRUE, new Title);
-	hr = GameManager::Init(hInstance, hWnd, TRUE, new MainGame);
-
-	// 結果は？
-	if (hr) { // 失敗しました
-		// エラーメッセージの表示
-		_MSG("終了します");
-
-		// 終わります
+	if (InitializeGame(GAMESCENE::GAME, hInstance) == false)
+	{
 		return -1;
 	}
-
-	// 分解能設定
-	timeBeginPeriod(1);
-
-	// FPS設定
-	dwCountFrame		= 0;				// フレームカウンター
-	dwCurrentTime		= 0;				// 現在時刻
-	dwFPSLastTime		= timeGetTime();	// 最後にFPSを更新した時刻
-	dwExecLastTime	= dwFPSLastTime;	// 最後にゲーム処理をした時刻
-
-	//----- メインループ -----
-	for(;;){
-		// メッセージの取得
-		if( PeekMessage( &msg, NULL, 0, 0, PM_REMOVE ) != 0 ){	// WndProcの設定
-			if(msg.message == WM_QUIT){	// 終了命令の取得で、ループ脱出
-				break;
-			}else{	// 命令・処理の取得
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-		}
-		// ゲームループ
-		else{
-			// 現在時刻の取得
-			dwCurrentTime = timeGetTime();
 	
-#ifdef _DEBUG
-			// FPSの更新
-			if( dwCurrentTime - dwFPSLastTime >= 500 ){
-				g_nCountFPS		= ( dwCountFrame * 1000 ) / ( dwCurrentTime-dwFPSLastTime );
-				dwFPSLastTime	= dwCurrentTime;
-				dwCountFrame	= 0;
-			}
-#endif
-			// ゲーム処理
-			if((dwCurrentTime - dwExecLastTime) >= (1000/60)){
-				dwExecLastTime = dwCurrentTime;
+	MainRoop(&msg);
 
-				// 更新処理
-				GameManager::Update();
-
-				// 描画処理
-				GameManager::Draw();
-
-				dwCountFrame++;
-			}// end... ゲーム処理
-		}// end... ゲームループ
-	}// end... メインループ
-
-	// 分解能の解放
-	timeEndPeriod(1);
-
-
-	//----- ゲーム終了 -----
 	GameManager::Uninit();
 
 	return (int)msg.wParam;
 }
 
-//=============================================================================
-//	クライアント領域の設定
-//=============================================================================
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	UINT nID;	// ID取得
@@ -184,19 +100,145 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);	// 既定の処理を提供
 }
 
+void FixCreateWindow(HINSTANCE hInstance, int nCmdShow)
+{
+	WNDCLASSEX wcex;
+	D3DXVECTOR2 windowPosition(0, 0);
+	D3DXVECTOR2 windowSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+	wcex = {
+		sizeof(WNDCLASSEX),
+		CS_CLASSDC,
+		WndProc,
+		0,
+		0,
+		hInstance,
+		NULL,
+		LoadCursor(NULL,IDC_ARROW),
+		(HBRUSH)(COLOR_WINDOW + 1),
+		NULL,
+		CLASS_NAME,
+		NULL
+	};
+
+	RegisterClassEx(&wcex);
+
+	AdjustClientPosition(&windowPosition, windowSize);
+
+	g_hwnd = CreateWindowEx(
+		0,
+		CLASS_NAME,
+		WINDOW_NAME, WindowStyle,
+		(int)windowPosition.x,
+		(int)windowPosition.y,
+		(int)windowSize.x,
+		(int)windowSize.y,
+		NULL,
+		NULL,
+		hInstance, NULL);
+
+	ShowWindow(g_hwnd, nCmdShow);
+	UpdateWindow(g_hwnd);
+}
+
+D3DXVECTOR2 AdjustClientPosition(D3DXVECTOR2 *outWindowPosition, D3DXVECTOR2 windowSize)
+{
+	RECT clientRect = { 0, 0, (int)windowSize.x, (int)windowSize.y };
+	RECT desktopRect;
+	int windowWidth, windowHeight, desktopWidth, desktopHeight;
+
+	// imaginate window rect
+	AdjustWindowRect(&clientRect, WindowStyle, FALSE);
+	windowWidth = clientRect.right - clientRect.left;
+	windowHeight = clientRect.bottom - clientRect.top;
+
+	// practical desktop rect
+	GetWindowRect(GetDesktopWindow(), &desktopRect);
+	desktopWidth = desktopRect.right - desktopRect.left;
+	desktopHeight = desktopRect.bottom - desktopRect.top;
+
+	// adjust window rect
+	outWindowPosition->x = windowWidth  > desktopWidth ? 0 : (float)(desktopWidth - windowWidth) / 2;
+	outWindowPosition->y = windowHeight > desktopHeight ? 0 : (float)(desktopHeight - windowHeight) / 2;
+
+	return *outWindowPosition;
+}
+
+bool InitializeGame(GAMESCENE initGameScene, HINSTANCE hInstance)
+{
+	HRESULT hr;
+
+	switch (initGameScene)
+	{
+		case TITLE:
+			hr = GameManager::Init(hInstance, g_hwnd, TRUE, new Title);
+			break;
+
+		case GAME:
+			hr = GameManager::Init(hInstance, g_hwnd, TRUE, new MainGame);
+			break;
+
+		case RESULT:
+			hr = GameManager::Init(hInstance, g_hwnd, TRUE, new Result);
+			break;
+
+	}
+
+	if (hr)
+	{
+		_MSGERROR("ゲームの初期化に失敗しました。ゲームを終了します。", "ERROR");
+		return false;
+	}
+
+	return true;
+}
+
+void MainRoop(MSG *msg)
+{
+	DWORD dwCountFrame, dwCurrentTime, dwFPSLastTime, dwExecLastTime;
+
+	dwCountFrame = 0;
+	dwCurrentTime = 0;
+	dwFPSLastTime = timeGetTime();
+	dwExecLastTime = dwFPSLastTime;
+
+	timeBeginPeriod(1);
+
+	for (;;)
+	{
+		if (PeekMessage(msg, NULL, 0, 0, PM_REMOVE) != 0)
+		{
+			if (msg->message == WM_QUIT)
+			{
+				break;
+			}
+			else
+			{
+				TranslateMessage(msg);
+				DispatchMessage(msg);
+			}
+		}
+		else {
+			dwCurrentTime = timeGetTime();
+
 #ifdef _DEBUG
-//=============================================================================
-//	FPS取得
-//=============================================================================
-int GetFPS(void)
-{
-	return g_nCountFPS;
-}
+			if (dwCurrentTime - dwFPSLastTime >= 500) {
+				g_nCountFPS = (dwCountFrame * 1000) / (dwCurrentTime - dwFPSLastTime);
+				dwFPSLastTime = dwCurrentTime;
+				dwCountFrame = 0;
+			}
 #endif
+			if ((dwCurrentTime - dwExecLastTime) >= (1000 / 60)) {
+				dwExecLastTime = dwCurrentTime;
 
+				GameManager::Update();
 
-HWND GetHWnd()
-{
-	return g_hwnd;
+				GameManager::Draw();
+
+				dwCountFrame++;
+			}
+		}
+	}
+
+	timeEndPeriod(1);
 }
-
