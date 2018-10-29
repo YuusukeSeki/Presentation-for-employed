@@ -1,0 +1,228 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{E9B1AECD-9554-4A03-89C4-459B7695AB21}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>FindEmploymant</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(DXSDK_DIR)include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(DXSDK_DIR)lib\x86;$(LibraryPath)</LibraryPath>
+    <SourcePath>$(SourcePath)</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(DXSDK_DIR)include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(DXSDK_DIR)lib\x86;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Commander.cpp" />
+    <ClCompile Include="GameTitle.cpp" />
+    <ClCompile Include="Gauge.cpp" />
+    <ClCompile Include="Icon.cpp" />
+    <ClCompile Include="LifeGauge.cpp" />
+    <ClCompile Include="Bullet3D.cpp" />
+    <ClCompile Include="camera.cpp" />
+    <ClCompile Include="castle.cpp" />
+    <ClCompile Include="collision.cpp" />
+    <ClCompile Include="DrawLine.cpp" />
+    <ClCompile Include="DrawRange.cpp" />
+    <ClCompile Include="DrawShot.cpp" />
+    <ClCompile Include="effect.cpp" />
+    <ClCompile Include="Effect3D.cpp" />
+    <ClCompile Include="EffectManager.cpp" />
+    <ClCompile Include="fade.cpp" />
+    <ClCompile Include="font.cpp" />
+    <ClCompile Include="FrameBorder.cpp" />
+    <ClCompile Include="Hold.cpp" />
+    <ClCompile Include="input.cpp" />
+    <ClCompile Include="LifeGauge_Soldier.cpp" />
+    <ClCompile Include="Object3D_Quaternion.cpp" />
+    <ClCompile Include="ObjectCube.cpp" />
+    <ClCompile Include="Part.cpp" />
+    <ClCompile Include="SkyDome.cpp" />
+    <ClCompile Include="SoldierBullet.cpp" />
+    <ClCompile Include="TeamGauge.cpp" />
+    <ClCompile Include="TeamLevel.cpp" />
+    <ClCompile Include="light.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="GameManager.cpp" />
+    <ClCompile Include="MainGame.cpp" />
+    <ClCompile Include="Object.cpp" />
+    <ClCompile Include="Object2D.cpp" />
+    <ClCompile Include="Object3D.cpp" />
+    <ClCompile Include="ObjectBillboard.cpp" />
+    <ClCompile Include="EffectBillboard.cpp" />
+    <ClCompile Include="ObjectModel.cpp" />
+    <ClCompile Include="oxdebugfont_dx9.cpp" />
+    <ClCompile Include="renderer.cpp" />
+    <ClCompile Include="result.cpp" />
+    <ClCompile Include="scene.cpp" />
+    <ClCompile Include="scene2D.cpp" />
+    <ClCompile Include="scene3D.cpp" />
+    <ClCompile Include="billboard.cpp" />
+    <ClCompile Include="BulletBillboard.cpp" />
+    <ClCompile Include="field.cpp" />
+    <ClCompile Include="sceneModel.cpp" />
+    <ClCompile Include="player.cpp" />
+    <ClCompile Include="skybox.cpp" />
+    <ClCompile Include="score.cpp" />
+    <ClCompile Include="Soldier.cpp" />
+    <ClCompile Include="sound.cpp" />
+    <ClCompile Include="StraightShot.cpp" />
+    <ClCompile Include="TeamGaugeManager.cpp" />
+    <ClCompile Include="texture.cpp" />
+    <ClCompile Include="TextureManager.cpp" />
+    <ClCompile Include="timer.cpp" />
+    <ClCompile Include="Title.cpp" />
+    <ClCompile Include="TouchScreen.cpp" />
+    <ClCompile Include="tower.cpp" />
+    <ClCompile Include="Wall.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Etc_Paramaters.h" />
+    <ClInclude Include="EventButton.h" />
+    <ClInclude Include="GameTitle.h" />
+    <ClInclude Include="Gauge.h" />
+    <ClInclude Include="Part.h" />
+    <ClInclude Include="SkyDome.h" />
+    <ClInclude Include="Soldier_LifeGauge.h" />
+    <ClInclude Include="TouchScreen.h" />
+    <ClInclude Include="UniqueArea.h" />
+    <ClInclude Include="Commander.h" />
+    <ClInclude Include="Icon.h" />
+    <ClInclude Include="LifeGauge.h" />
+    <ClInclude Include="Bullet3D.h" />
+    <ClInclude Include="camera.h" />
+    <ClInclude Include="castle.h" />
+    <ClInclude Include="collision.h" />
+    <ClInclude Include="DrawLine.h" />
+    <ClInclude Include="DrawRange.h" />
+    <ClInclude Include="DrawShot.h" />
+    <ClInclude Include="effect.h" />
+    <ClInclude Include="Effect3D.h" />
+    <ClInclude Include="EffectManager.h" />
+    <ClInclude Include="fade.h" />
+    <ClInclude Include="font.h" />
+    <ClInclude Include="FrameBorder.h" />
+    <ClInclude Include="GameScene.h" />
+    <ClInclude Include="Hold.h" />
+    <ClInclude Include="input.h" />
+    <ClInclude Include="LifeGauge_Soldier.h" />
+    <ClInclude Include="ModelData.h" />
+    <ClInclude Include="Object3D_Quaternion.h" />
+    <ClInclude Include="ObjectCube.h" />
+    <ClInclude Include="SoldierBullet.h" />
+    <ClInclude Include="TeamGauge.h" />
+    <ClInclude Include="TeamLevel.h" />
+    <ClInclude Include="light.h" />
+    <ClInclude Include="list_CharaParameters.h" />
+    <ClInclude Include="list_LoadTexture_MainGame.h" />
+    <ClInclude Include="list_LoadTexture_Result.h" />
+    <ClInclude Include="list_LoadTexture_Title.h" />
+    <ClInclude Include="main.h" />
+    <ClInclude Include="GameManager.h" />
+    <ClInclude Include="MainGame.h" />
+    <ClInclude Include="Object.h" />
+    <ClInclude Include="Object2D.h" />
+    <ClInclude Include="Object3D.h" />
+    <ClInclude Include="ObjectBillboard.h" />
+    <ClInclude Include="EffectBillboard.h" />
+    <ClInclude Include="ObjectModel.h" />
+    <ClInclude Include="oxdebugfont.h" />
+    <ClInclude Include="renderer.h" />
+    <ClInclude Include="result.h" />
+    <ClInclude Include="scene.h" />
+    <ClInclude Include="scene2D.h" />
+    <ClInclude Include="scene3D.h" />
+    <ClInclude Include="billboard.h" />
+    <ClInclude Include="BulletBillboard.h" />
+    <ClInclude Include="field.h" />
+    <ClInclude Include="sceneModel.h" />
+    <ClInclude Include="player.h" />
+    <ClInclude Include="skybox.h" />
+    <ClInclude Include="score.h" />
+    <ClInclude Include="Soldier.h" />
+    <ClInclude Include="sound.h" />
+    <ClInclude Include="StraightShot.h" />
+    <ClInclude Include="TeamGaugeManager.h" />
+    <ClInclude Include="texture.h" />
+    <ClInclude Include="TextureManager.h" />
+    <ClInclude Include="timer.h" />
+    <ClInclude Include="Title.h" />
+    <ClInclude Include="tower.h" />
+    <ClInclude Include="Wall.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
