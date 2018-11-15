@@ -417,6 +417,12 @@
     <ClCompile Include="Unit.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+<<<<<<< Updated upstream
+=======
+    <ClCompile Include="BasePoint.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+>>>>>>> Stashed changes
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
