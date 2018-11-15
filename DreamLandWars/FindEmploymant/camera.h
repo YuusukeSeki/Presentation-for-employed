@@ -17,6 +17,7 @@ public:
 	~Camera();
 
 	// äÓñ{ìIÇ»ä÷êî
+	//static Camera* Create(const D3DXVECTOR3& posEye, const D3DXVECTOR3& posAt, const D3DXVECTOR3& vecUp, const float& fNear, const float& fFar);
 	static Camera* Create(D3DXVECTOR3 posEye, D3DXVECTOR3 posAt, D3DXVECTOR3 vecUp, float fNear, float fFar);
 	void Release(void);
 	void Init(D3DXVECTOR3 posEye, D3DXVECTOR3 posAt, D3DXVECTOR3 vecUp, float fNear, float fFar);

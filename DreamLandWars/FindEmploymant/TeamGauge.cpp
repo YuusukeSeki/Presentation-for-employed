@@ -128,9 +128,9 @@ void TeamGauge::MoveLife(float moveLife)
 	SetSize(size);
 
 	// ゲージのUVサイズの更新
-	D3DXVECTOR2 UVsize = GetUV_Size();
+	D3DXVECTOR2 UVsize = GetUv_Size();
 	UVsize.x = 1.0f * percentage;
-	SetUV_Size(UVsize);
+	SetUv_Size(UVsize);
 
 }
 

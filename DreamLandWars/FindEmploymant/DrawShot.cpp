@@ -95,7 +95,7 @@ void DrawShot::Uninit(void)
 void DrawShot::Update(void)
 {
 	// 【更新判定】
-	if (!this->GetInstance()) return;	// 未使用で処理無し
+	if (GetIsInstance() == false) return;	// 未使用で処理無し
 
 	//移動
 	{
@@ -103,7 +103,7 @@ void DrawShot::Update(void)
 		float result;
 
 		// 移動量の算出
-		move     = GetVecZ() * GetMove();
+		move     = GetFront() * GetInitSpeed();
 		position = GetPosition() + move;
 		vec      = m_pMoveWay->GetNextPointer_DrawLine()->GetPosition() - GetPosition();
 
@@ -129,7 +129,7 @@ void DrawShot::Update(void)
 				if (m_pMoveWay->GetNextPointer_DrawLine() == nullptr) {
 					m_pMoveWay->ClearParameter();
 					ClearCollisionID();
-					SetInstance(false);
+					SetIsInstance(false);
 					return;
 				}
 
@@ -140,7 +140,7 @@ void DrawShot::Update(void)
 				D3DXVec3Normalize(&vec, &vec);
 				
 				// 弾の向きを更新
-				SetVecZ(vec);
+				SetFront(vec);
 				m_vecPrevToNext = vec;
 
 			}
@@ -151,8 +151,8 @@ void DrawShot::Update(void)
 		MovePosition(move);
 
 		// エフェクトの発生
-		Effect3D::SetEffect(GetPosition(), GetVecZ(), EffectBillboard::TYPE::TYPE_FIRE);
-		Effect3D::SetEffect(GetPosition(), GetVecZ(), EffectBillboard::TYPE::TYPE_FIRE);
+		Effect3D::SetEffect(GetPosition(), GetFront(), EffectBillboard::TYPE::TYPE_FIRE);
+		Effect3D::SetEffect(GetPosition(), GetFront(), EffectBillboard::TYPE::TYPE_FIRE);
 		//EffectBillboard::SetEffect(GetPosition(), GetVecZ(), MainGame::GetCamera(0), EffectBillboard::TYPE::TYPE_FIRE);
 		//EffectBillboard::SetEffect(GetPosition(), GetVecZ(), MainGame::GetCamera(0), EffectBillboard::TYPE::TYPE_FIRE);
 
@@ -165,7 +165,7 @@ void DrawShot::Update(void)
 	if (Collision_Tower()) {
 		DrawLine::ClearParameter_List(m_pMoveWay);
 		ClearCollisionID();
-		SetInstance(false);
+		SetIsInstance(false);
 	}
 
 }
@@ -177,7 +177,7 @@ void DrawShot::Update(void)
 void DrawShot::Draw(void)
 {
 	// 未使用で処理無し
-	if (!Bullet3D::GetInstance()) return;
+	if (!Bullet3D::GetIsInstance()) return;
 
 
 	// 描くだけ
@@ -216,7 +216,7 @@ void DrawShot::SetDrawShot(DrawLine* pStartPoint)
 	DrawShot* pNext    = (DrawShot*)pDrawShot->GetNextPointer();
 	for (;;) {
 		// 未使用なら設定して終了
-		if (!pCurrent->GetInstance()) {
+		if (!pCurrent->GetIsInstance()) {
 			pCurrent->SetDrawShot_private(pStartPoint);
 			break;
 		}
@@ -347,7 +347,7 @@ void DrawShot::SetDrawShot_private(DrawLine* pStartPoint)
 		// 向きを設定
 		D3DXVECTOR3 vec = nextPos - startPos;
 		D3DXVec3Normalize(&vec, &vec);
-		Bullet3D::SetVecZ(vec);
+		Bullet3D::SetFront(vec);
 
 		// 次の地点までのベクトルを保存
 		m_vecPrevToNext = vec;
@@ -356,7 +356,7 @@ void DrawShot::SetDrawShot_private(DrawLine* pStartPoint)
 	//SetVecZ(pStartPoint->GetPlayer_DrawLine()->GetVecZ());
 
 	// 初速度の設定
-	SetMove(pStartPoint->GetPlayer_DrawLine()->GetDrawShotSpeed());
+	SetInitSpeed(pStartPoint->GetPlayer_DrawLine()->GetDrawShotSpeed());
 
 	// 加速度の設定
 	SetAccelerate(0);
@@ -365,7 +365,7 @@ void DrawShot::SetDrawShot_private(DrawLine* pStartPoint)
 	m_pCamera = pStartPoint->GetPlayer_DrawLine()->GetCamera();
 
 	// 使用フラグON
-	SetInstance(true);
+	SetIsInstance(true);
 
 }
 

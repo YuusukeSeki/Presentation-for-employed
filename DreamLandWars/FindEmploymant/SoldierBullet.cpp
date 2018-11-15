@@ -57,7 +57,7 @@ void SoldierBullet::Uninit(void)
 void SoldierBullet::Update(void)
 {
 	// 未使用時は無処理
-	if (!GetInstance())
+	if (!GetIsInstance())
 		return;
 
 	// 標的はキャスト？
@@ -65,7 +65,7 @@ void SoldierBullet::Update(void)
 		Player* pPlayer = (Player*)m_pTarget;
 
 		// キャストの回避行動で追尾フラグを切る
-		if (pPlayer->GetPosture() == Player::POSTURE::POSTURE_AVOID || pPlayer->GetPosture() == Player::POSTURE::POSTURE_EMAVOID) {
+		if (pPlayer->GetBehave() == Player::Behave::AVOID || pPlayer->GetBehave() == Player::Behave::HEAVY_AVOID) {
 			m_bTracking = false;
 
 		}
@@ -96,7 +96,7 @@ void SoldierBullet::Update(void)
 		}
 
 		// 使用フラグを降ろす
-		SetInstance(false);
+		SetIsInstance(false);
 
 		return;
 	}
@@ -106,14 +106,14 @@ void SoldierBullet::Update(void)
 
 	// 寿命が切れたら使用フラグを降ろす
 	if (m_cntEraseFrame <= 0)
-		SetInstance(false);
+		SetIsInstance(false);
 
 }
 
 // 描画処理
 void SoldierBullet::Draw(void)
 {
-	if (!GetInstance())
+	if (!GetIsInstance())
 		return;
 
 	BulletBillboard::Draw();
@@ -142,7 +142,7 @@ void SoldierBullet::SetBullet(D3DXVECTOR3& position, ObjectModel *pTarget, Camer
 	SoldierBullet* pNext = (SoldierBullet*)pCurrent->GetNextPointer();
 	for (;;) {
 		// 未使用なら兵士弾を設定して終了
-		if (!pCurrent->GetInstance()) {
+		if (!pCurrent->GetIsInstance()) {
 			// 設定処理
 			pCurrent->SetBullet_private(position, pTarget, pCamera);
 
@@ -175,7 +175,7 @@ void SoldierBullet::SetBullet_private(D3DXVECTOR3& position, ObjectModel *pTarge
 
 	m_pTarget = pTarget;
 	
-	SetCamera(*pCamera);
+	SetCamera(pCamera);
 
 	m_cntEraseFrame = 240;
 
@@ -185,7 +185,7 @@ void SoldierBullet::SetBullet_private(D3DXVECTOR3& position, ObjectModel *pTarge
 
 	m_bTracking = true;
 
-	SetInstance(true);
+	SetIsInstance(true);
 
 }
 

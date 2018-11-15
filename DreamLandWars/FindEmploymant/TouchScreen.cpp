@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 // コンストラクタ
 //-----------------------------------------------------------------------------
-TouchScreen::TouchScreen() :Object3D_Quaternion(Object::TYPE::TYPE_3D_TOUCHSCREEN)
+TouchScreen::TouchScreen() :Object3D(Object::TYPE::TYPE_3D_TOUCHSCREEN)
 {
 	// メンバ変数初期化
 
@@ -19,7 +19,7 @@ TouchScreen::TouchScreen() :Object3D_Quaternion(Object::TYPE::TYPE_3D_TOUCHSCREE
 //-----------------------------------------------------------------------------
 // コンストラクタ
 //-----------------------------------------------------------------------------
-TouchScreen::TouchScreen(Object::TYPE type) :Object3D_Quaternion(type)
+TouchScreen::TouchScreen(Object::TYPE type) :Object3D(type)
 {
 	// メンバ変数初期化
 
@@ -58,7 +58,7 @@ TouchScreen* TouchScreen::Create(D3DXVECTOR3& pos, D3DXVECTOR3& size)
 void TouchScreen::Init(D3DXVECTOR3& position, D3DXVECTOR3& size)
 {
 	// 継承データの初期化
-	Object3D_Quaternion::Init(position, size);
+	Object3D::Init(position, size);
 
 }
 
@@ -69,7 +69,7 @@ void TouchScreen::Init(D3DXVECTOR3& position, D3DXVECTOR3& size)
 void TouchScreen::Uninit(void)
 {
 	// 継承データの終了
-	Object3D_Quaternion::Uninit();
+	Object3D::Uninit();
 
 }
 
@@ -89,7 +89,7 @@ void TouchScreen::Update(void)
 void TouchScreen::Draw(void)
 {
 	// 描画
-	Object3D_Quaternion::Draw();
+	Object3D::Draw();
 
 }
 

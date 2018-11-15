@@ -1,22 +1,14 @@
-//*****************************************************************************
-//	
-//		メインゲーム
-//													Author : Yusuke Seki
-//*****************************************************************************
-// base
+// author : yusuke seki
+// data   : 20181102
 #include "MainGame.h"
 #include "GameManager.h"
 #include "result.h"
 #include "Title.h"
-
-// FW
 #include "fade.h"
 #include "input.h"
 #include "camera.h"
 #include "light.h"
 #include "renderer.h"
-
-// Object
 #include "player.h"
 #include "Soldier.h"
 #include "DrawRange.h"
@@ -25,61 +17,40 @@
 #include "field.h"
 #include "skybox.h"
 #include "Wall.h"
-
-// UI
 #include "timer.h"
 #include "score.h"
 #include "FrameBorder.h"
 #include "TeamGaugeManager.h"
 #include "TeamGauge.h"
 #include "Hold.h"
-
-// resource
 #include "texture.h"
 #include "list_LoadTexture_MainGame.h"
 #include "ModelData.h"
-
-// etc...
 #include "ObjectModel.h"
 #include "Object2D.h"
-
 #include "EventButton.h"
 
+#include <algorithm>
 
-//----- マクロ定義 -----
-// レギュレーション用入力制御
 #define _INPUT_REGULATION		// コメントアウトでレギュレーション用操作を除外
 
+std::vector<Player*> MainGame::players;
+Field* MainGame::m_pField = nullptr;
+SkyBox* MainGame::m_pSkyBox = nullptr;
+Wall* MainGame::m_pWall[] = {};
+Texture* MainGame::m_pTexture[] = {};
 
-//----- 静的メンバ変数初期化 -----
-Field*     MainGame::m_pField          = nullptr;	// 地面
-SkyBox*    MainGame::m_pSkyBox         = nullptr;	// 背景
-Wall*	   MainGame::m_pWall[]         = {};		// 壁
-Camera*    MainGame::m_pCamera[]       = {};		// カメラ
-Texture*   MainGame::m_pTexture[]      = {};		// テクスチャー
-
-
-//-----------------------------------------------------------------------------
-//	初期化処理
-//-----------------------------------------------------------------------------
 void MainGame::Init()
 {
-	// Load Texture
-	{
-		List_LoadTexture_MainGame::LoadTextureAll(m_pTexture);
-	}
+	List_LoadTexture_MainGame::LoadTextureAll(m_pTexture);
 
-	// Create Camera
-	{
-		m_pCamera[0] = Camera::Create(D3DXVECTOR3(0.f, 200.f, -110.f), D3DXVECTOR3(0.f, 0.f, 0.f), D3DXVECTOR3(0.f, 1.f, 0.f), 1.f, 1000.f);
-	}
+	//m_pCamera[0] = Camera::Create(D3DXVECTOR3(0.f, 200.f, -110.f), D3DXVECTOR3(0.f, 0.f, 0.f), D3DXVECTOR3(0.f, 1.f, 0.f), 1.f, 1000.f);
 
 	// Create Light
 	{
 		m_pLight = Light::Create();
 		m_pLight->SetVectorDirection(D3DXVECTOR3(0.f, -1, 0.f));
 	}
-
 
 	//----- Create Object -----
 	{
@@ -130,15 +101,21 @@ void MainGame::Init()
 
 		// Create Cast
 		{
-			m_pPlayer = Player::Create(D3DXVECTOR3(0.0f, 0.0f, 0.0f), m_pCamera[0], MODELDATA_PLAYER, Player::CHARACTER::CHARACTER_KIBITSU);
-			m_pPlayer->SetGroup(Object::GROUP::GROUP_A);
+			//Player* player = Player::Create(D3DXVECTOR3(0.0f, 0.0f, 0.0f), m_pCamera[0], MODELDATA_PLAYER, Player::CHARACTER::FIGHTER);
+			Player* player = Player::Create(D3DXVECTOR3(0.0f, 0.0f, 0.0f), Player::Character::FIGHTER);
+			player->SetGroup(Object::GROUP::GROUP_A);
+
+			players.push_back(player);
 		}
 
 		// Create Range of Draw
 		{
-			m_pDrawRange = DrawRange::Create(m_pPlayer);
-			m_pDrawRange->SetTexture(m_pTexture[List_LoadTexture_MainGame::DRAWLINE_TEXNAME]->GetTexture());
-			m_pDrawRange->SetColor(0xffffff80);
+			for each (auto player in players)
+			{
+				m_pDrawRange = DrawRange::Create(player);
+				m_pDrawRange->SetTexture(m_pTexture[List_LoadTexture_MainGame::DRAWLINE_TEXNAME]->GetTexture());
+				m_pDrawRange->SetColor(0xffffff80);
+			}
 		}
 
 		// Create Tower
@@ -287,8 +264,11 @@ void MainGame::Uninit()
 	m_pLight = nullptr;
 
 	// カメラ
-	m_pCamera[0]->Release();
-	m_pCamera[0] = nullptr;
+	for each(auto player in players)
+	{
+		//player->GetCamera()->Release();
+		//player->GetCamera() = nullptr;
+	}
 
 	// スコア
 	m_pScore->Release();
@@ -304,35 +284,42 @@ GameScene* MainGame::Update()
 	InputManage();
 
 	// カメラをプレイヤーに追従させる：要列挙体
-	if (_switchControl) {
-		D3DXVECTOR3 pos = m_pPlayer->GetPosition();
-		pos.z += 0.f;
-		D3DXVECTOR3 move = m_pCamera[0]->SetPosAt(pos);
+	for each (auto player in players)
+	{
+		if (_switchControl)
+		{
+			D3DXVECTOR3 pos = player->GetPosition();
+			pos.z += 0.f;
+			//D3DXVECTOR3 move = m_pCamera[0]->SetPosAt(pos);
+			D3DXVECTOR3 move = player->GetCamera()->SetPosAt(pos);
+		}
+
+		// スカイボックスをカメラに追従させる：要列挙体
+		//m_pSkyBox->MovePos(move);
+
+		// スコア
+		m_pScore->Update();
+
+		// カメラ
+		player->GetCamera()->Update();
 	}
-
-	// スカイボックスをカメラに追従させる：要列挙体
-	//m_pSkyBox->MovePos(move);
-
-	// スコア
-	m_pScore->Update();
-	m_pScore->SetScore(m_pPlayer->GetScore_CrushSoldier());
-
-	// カメラ
-	m_pCamera[0]->Update();
 
 	// ライト
 	m_pLight->Update();
 
+	m_pDrawRange->Update();
+
 	// 次のシーンに行く？
-	if(GameManager::GetFade()->Finish_FadeOut()){ // 行く
-		// ゲームシーンをリザルトへ
-		//return new Result;
+	if (GameManager::GetFade()->Finish_FadeOut()) { // 行く
+													// ゲームシーンをリザルトへ
+													//return new Result;
 		return new Title;
 	}
 	else {	// 行かない
-		// メインゲームの処理を続行する
+			// メインゲームの処理を続行する
 		return this;
 	}
+
 }
 
 //-----------------------------------------------------------------------------
@@ -393,28 +380,6 @@ void MainGame::InputManage()
 	if (pInput->GetKeyboardTrigger(BUTTON_DEBUG_SWITCH_CTRL)) _switchControl ^= 1;
 
 
-	// カメラ 
-	if(!_switchControl)
-	{
-		const float MOVE = 10.0f;
-		const float ROT = 0.03f;
-		
-		// 移動
-		if (pInput->GetKeyboardPress(DIK_W)) m_pCamera[0]->MovePosEye_Z( MOVE); // 前
-		if (pInput->GetKeyboardPress(DIK_S)) m_pCamera[0]->MovePosEye_Z(-MOVE); // 後
-		if (pInput->GetKeyboardPress(DIK_A)) m_pCamera[0]->MovePosEye_X(-MOVE); // 左
-		if (pInput->GetKeyboardPress(DIK_D)) m_pCamera[0]->MovePosEye_X( MOVE); // 右
-
-		// 回転
-		if (pInput->GetKeyboardPress(DIK_Q)) m_pCamera[0]->MoveRotEye(-ROT);  // 反時計周り
-		if (pInput->GetKeyboardPress(DIK_E)) m_pCamera[0]->MoveRotEye( ROT);  // 時計周り
-
-		// 旋回
-		if (pInput->GetKeyboardPress(DIK_Z)) m_pCamera[0]->MoveTurnEye(-ROT); // 反時計周り
-		if (pInput->GetKeyboardPress(DIK_C)) m_pCamera[0]->MoveTurnEye( ROT); // 時計周り
-
-	}
-
 	// プレイヤー
 	{
 		// ジョイスティック、左軸傾きの取得
@@ -426,76 +391,83 @@ void MainGame::InputManage()
 			lAxis.y = 0;
 		}
 
+		for each (auto player in players)
+		{
+			// カメラ 
+			if (!_switchControl)
+			{
+				const float MOVE = 10.0f;
+				const float ROT = 0.03f;
 
-		// 移動 : Joystick_LAxis 傾き
-		m_pPlayer->Run(lAxis.x, lAxis.y);
+				// 移動
+				if (pInput->GetKeyboardPress(DIK_W)) player->GetCamera()->MovePosEye_Z(MOVE);	// 前
+				if (pInput->GetKeyboardPress(DIK_S)) player->GetCamera()->MovePosEye_Z(-MOVE);	// 後
+				if (pInput->GetKeyboardPress(DIK_A)) player->GetCamera()->MovePosEye_X(-MOVE);	// 左
+				if (pInput->GetKeyboardPress(DIK_D)) player->GetCamera()->MovePosEye_X(MOVE);	// 右
 
-		// 回避 : Joystick_Trigger L1ボタン
-		if (pInput->GetJoystickTrigger(Input::JOYSTICKBUTTON005)) m_pPlayer->Avoid(lAxis.x, lAxis.y);
+				// 回転
+				if (pInput->GetKeyboardPress(DIK_Q)) player->GetCamera()->MoveRotEye(-ROT);		// 反時計周り
+				if (pInput->GetKeyboardPress(DIK_E)) player->GetCamera()->MoveRotEye(ROT);		// 時計周り
 
-		// 緊急回避 : Joystick_Trigger L1ボタンダブルクリック
-		if (pInput->GetJoystickWTrigger(Input::JOYSTICKBUTTON005)) m_pPlayer->EmAvoid(lAxis.x, lAxis.y);
+				// 旋回
+				if (pInput->GetKeyboardPress(DIK_Z)) player->GetCamera()->MoveTurnEye(-ROT);	// 反時計周り
+				if (pInput->GetKeyboardPress(DIK_C)) player->GetCamera()->MoveTurnEye(ROT);		// 時計周り
+			}
 
-		// SS準備 : Mouse_Press 左ボタン
-		if (pInput->GetMouseTrigger(Input::MOUSEBUTTON_LEFT)) m_pPlayer->STReady();
-
-		// SS発射 : Mouse_Release 左ボタン
-		if (pInput->GetMouseRelease(Input::MOUSEBUTTON_LEFT)) m_pPlayer->STShot();
-
-		// DS準備 : Mouse_Press 右ボタン
-		if (pInput->GetMousePress(Input::MOUSEBUTTON_RIGHT)) m_pPlayer->DRReady(pInput->GetMouseTrigger(Input::MOUSEBUTTON_RIGHT));
-
-		// DS発射 : Mouse_Release 右ボタン
-		if (pInput->GetMouseRelease(Input::MOUSEBUTTON_RIGHT)) m_pPlayer->DRShot(true);
-
-		// 拠点を殴る : Mouse_Press 左ボタン
-		if (pInput->GetMousePress(Input::MOUSEBUTTON_LEFT)) m_pPlayer->BreakBasePoint();
-
-
-#ifdef _INPUT_REGULATION
-		//----- ▼▼以下レギュレーション用キーボード操作▼▼ -----
-		// 移動
-		if (_switchControl) {
-			if (pInput->GetKeyboardPress(DIK_W) && pInput->GetKeyboardPress(DIK_A)) m_pPlayer->Run(-1, +1);
-			else if (pInput->GetKeyboardPress(DIK_W) && pInput->GetKeyboardPress(DIK_D)) m_pPlayer->Run(+1, +1);
-			else if (pInput->GetKeyboardPress(DIK_S) && pInput->GetKeyboardPress(DIK_A)) m_pPlayer->Run(-1, -1);
-			else if (pInput->GetKeyboardPress(DIK_S) && pInput->GetKeyboardPress(DIK_D)) m_pPlayer->Run(+1, -1);
-			else if (pInput->GetKeyboardPress(DIK_W))                                    m_pPlayer->Run(0, +1);
-			else if (pInput->GetKeyboardPress(DIK_S))                                    m_pPlayer->Run(0, -1);
-			else if (pInput->GetKeyboardPress(DIK_A))                                    m_pPlayer->Run(-1, 0);
-			else if (pInput->GetKeyboardPress(DIK_D))                                    m_pPlayer->Run(+1, 0);
+//			player->Run(lAxis.x, lAxis.y);
+//			if (pInput->GetJoystickTrigger(Input::JOYSTICKBUTTON005)) player->Avoid(lAxis.x, lAxis.y);
+//			if (pInput->GetJoystickWTrigger(Input::JOYSTICKBUTTON005)) player->EmAvoid(lAxis.x, lAxis.y);
+//			if (pInput->GetMouseTrigger(Input::MOUSEBUTTON_LEFT)) player->STReady();
+//			if (pInput->GetMouseRelease(Input::MOUSEBUTTON_LEFT)) player->STShot();
+//			if (pInput->GetMousePress(Input::MOUSEBUTTON_RIGHT)) player->DRReady(pInput->GetMouseTrigger(Input::MOUSEBUTTON_RIGHT));
+//			if (pInput->GetMouseRelease(Input::MOUSEBUTTON_RIGHT)) player->DRShot(true);
+//			if (pInput->GetMousePress(Input::MOUSEBUTTON_LEFT)) player->BreakBasePoint();
+//
+//#ifdef _INPUT_REGULATION
+//			//----- ▼▼以下レギュレーション用キーボード操作▼▼ -----
+//			// 移動
+//			if (_switchControl)
+//			{
+//				if (pInput->GetKeyboardPress(DIK_W) && pInput->GetKeyboardPress(DIK_A)) player->Run(-1, +1);
+//				else if (pInput->GetKeyboardPress(DIK_W) && pInput->GetKeyboardPress(DIK_D)) player->Run(+1, +1);
+//				else if (pInput->GetKeyboardPress(DIK_S) && pInput->GetKeyboardPress(DIK_A)) player->Run(-1, -1);
+//				else if (pInput->GetKeyboardPress(DIK_S) && pInput->GetKeyboardPress(DIK_D)) player->Run(+1, -1);
+//				else if (pInput->GetKeyboardPress(DIK_W))                                    player->Run(0, +1);
+//				else if (pInput->GetKeyboardPress(DIK_S))                                    player->Run(0, -1);
+//				else if (pInput->GetKeyboardPress(DIK_A))                                    player->Run(-1, 0);
+//				else if (pInput->GetKeyboardPress(DIK_D))                                    player->Run(+1, 0);
+//			}
+//
+//			// 回避
+//			if (pInput->GetKeyboardTrigger(DIK_E))
+//			{
+//				if (pInput->GetKeyboardPress(DIK_W) && pInput->GetKeyboardPress(DIK_A)) player->Avoid(-1, +1);
+//				else if (pInput->GetKeyboardPress(DIK_W) && pInput->GetKeyboardPress(DIK_D)) player->Avoid(+1, +1);
+//				else if (pInput->GetKeyboardPress(DIK_S) && pInput->GetKeyboardPress(DIK_A)) player->Avoid(-1, -1);
+//				else if (pInput->GetKeyboardPress(DIK_S) && pInput->GetKeyboardPress(DIK_D)) player->Avoid(+1, -1);
+//				else if (pInput->GetKeyboardPress(DIK_W))                                    player->Avoid(0, +1);
+//				else if (pInput->GetKeyboardPress(DIK_S))                                    player->Avoid(0, -1);
+//				else if (pInput->GetKeyboardPress(DIK_A))                                    player->Avoid(-1, 0);
+//				else if (pInput->GetKeyboardPress(DIK_D))                                    player->Avoid(+1, 0);
+//				else                                                                         player->Avoid(0, 0);
+//			}
+//
+//			// 緊急回避
+//			if (pInput->GetKeyboardWTrigger(DIK_E))
+//			{
+//				if (pInput->GetKeyboardPress(DIK_W) && pInput->GetKeyboardPress(DIK_A)) player->EmAvoid(-1, +1);
+//				else if (pInput->GetKeyboardPress(DIK_W) && pInput->GetKeyboardPress(DIK_D)) player->EmAvoid(+1, +1);
+//				else if (pInput->GetKeyboardPress(DIK_S) && pInput->GetKeyboardPress(DIK_A)) player->EmAvoid(-1, -1);
+//				else if (pInput->GetKeyboardPress(DIK_S) && pInput->GetKeyboardPress(DIK_D)) player->EmAvoid(+1, -1);
+//				else if (pInput->GetKeyboardPress(DIK_W))                                    player->EmAvoid(0, +1);
+//				else if (pInput->GetKeyboardPress(DIK_S))                                    player->EmAvoid(0, -1);
+//				else if (pInput->GetKeyboardPress(DIK_A))                                    player->EmAvoid(-1, 0);
+//				else if (pInput->GetKeyboardPress(DIK_D))                                    player->EmAvoid(+1, 0);
+//				else                                                                         player->EmAvoid(0, 0);
+//
+//			}
+//#endif
 		}
-
-		// 回避
-		if (pInput->GetKeyboardTrigger(DIK_E)) {
-			if      (pInput->GetKeyboardPress(DIK_W) && pInput->GetKeyboardPress(DIK_A)) m_pPlayer->Avoid(-1, +1);
-			else if (pInput->GetKeyboardPress(DIK_W) && pInput->GetKeyboardPress(DIK_D)) m_pPlayer->Avoid(+1, +1);
-			else if (pInput->GetKeyboardPress(DIK_S) && pInput->GetKeyboardPress(DIK_A)) m_pPlayer->Avoid(-1, -1);
-			else if (pInput->GetKeyboardPress(DIK_S) && pInput->GetKeyboardPress(DIK_D)) m_pPlayer->Avoid(+1, -1);
-			else if (pInput->GetKeyboardPress(DIK_W))                                    m_pPlayer->Avoid( 0, +1);
-			else if (pInput->GetKeyboardPress(DIK_S))                                    m_pPlayer->Avoid( 0, -1);
-			else if (pInput->GetKeyboardPress(DIK_A))                                    m_pPlayer->Avoid(-1,  0);
-			else if (pInput->GetKeyboardPress(DIK_D))                                    m_pPlayer->Avoid(+1,  0);
-			else                                                                         m_pPlayer->Avoid( 0,  0);
-		}
-
-		// 緊急回避
-		if (pInput->GetKeyboardWTrigger(DIK_E)) {
-			if      (pInput->GetKeyboardPress(DIK_W) && pInput->GetKeyboardPress(DIK_A)) m_pPlayer->EmAvoid(-1, +1);
-			else if (pInput->GetKeyboardPress(DIK_W) && pInput->GetKeyboardPress(DIK_D)) m_pPlayer->EmAvoid(+1, +1);
-			else if (pInput->GetKeyboardPress(DIK_S) && pInput->GetKeyboardPress(DIK_A)) m_pPlayer->EmAvoid(-1, -1);
-			else if (pInput->GetKeyboardPress(DIK_S) && pInput->GetKeyboardPress(DIK_D)) m_pPlayer->EmAvoid(+1, -1);
-			else if (pInput->GetKeyboardPress(DIK_W))                                    m_pPlayer->EmAvoid( 0, +1);
-			else if (pInput->GetKeyboardPress(DIK_S))                                    m_pPlayer->EmAvoid( 0, -1);
-			else if (pInput->GetKeyboardPress(DIK_A))                                    m_pPlayer->EmAvoid(-1,  0);
-			else if (pInput->GetKeyboardPress(DIK_D))                                    m_pPlayer->EmAvoid(+1,  0);
-			else                                                                         m_pPlayer->EmAvoid( 0,  0);
-
-		}
-
-		//----- ▲▲レギュレーション用入力制御ここまで▲▲ -----
-#endif
-
 	}
 
 
@@ -519,12 +491,20 @@ void MainGame::InputManage()
 // 壁情報の取得
 Wall* MainGame::GetWall(int index)
 {
-	if (index < 0 || index >= NUM_WALL) {
+	if (index < 0 || index >= NUM_WALL)
+	{
 		return nullptr;
 	}
 
 	return m_pWall[index];
-
 }
 
+Player* MainGame::GetPlayer(unsigned int index)
+{
+	if (index < 0 || index >= players.size())
+	{
+		return nullptr;
+	}
 
+	return players[index];
+}

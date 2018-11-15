@@ -1,59 +1,53 @@
-//*****************************************************************************
-//	
-//		オブジェクト基底クラス（リスト構造）
-//													Author : Yusuke Seki
-//*****************************************************************************
+// author : yusuke seki
+// data   : 20181110
 #include "Object.h"
 
+Object* Object::headObj_[Object::TYPE::TYPE_MAX] = {};
+Object* Object::tailObj_[Object::TYPE::TYPE_MAX] = {};
 
-//----- 静的メンバ変数初期化 -----
-Object* Object::m_pHEAD[Object::TYPE::TYPE_MAX] = {};
-Object* Object::m_pTAIL[Object::TYPE::TYPE_MAX] = {};
+Object::Object()
+{
 
+}
 
-
-//-----------------------------------------------------------------------------
-//	コンストラクタ
-//-----------------------------------------------------------------------------
 Object::Object(Object::TYPE type)
 {
 	// 初めて生成された種類なら、先頭にポインタを代入。
-	if (m_pHEAD[type] == nullptr) {
+	if (headObj_[type] == nullptr)
+	{
 		// ヘッドの更新
-		m_pHEAD[type] = this;
-		m_pHEAD[type]->m_pNext = nullptr;
-		m_pHEAD[type]->m_pPrev = nullptr;
+		headObj_[type] = this;
+		headObj_[type]->nextObj_ = nullptr;
+		headObj_[type]->prevObj_ = nullptr;
 
 		// テイルの更新
-		m_pTAIL[type] = m_pHEAD[type];
+		tailObj_[type] = headObj_[type];
 
 		// 前後のポインタの初期化
-		this->m_pNext    = nullptr;
-		this->m_pPrev    = nullptr;
+		nextObj_ = nullptr;
+		prevObj_ = nullptr;
 
 	}
 	// ２個目以上に生成された種類なら、末尾に追加。
-	else {
+	else
+	{
 		// テイルの次のポインタを"これ"にする
-		m_pTAIL[type]->m_pNext = this;
+		tailObj_[type]->nextObj_ = this;
 
 		// 前後のポインタの初期化
-		this->m_pNext    = nullptr;
-		this->m_pPrev    = m_pTAIL[type];
+		nextObj_ = nullptr;
+		prevObj_ = tailObj_[type];
 
 		// テイルの更新
-		m_pTAIL[type] = this;
+		tailObj_[type] = this;
 
 	}
 
-
 	// メンバ変数の初期化
-	this->m_position = D3DXVECTOR3(0, 0, 0);
-	this->m_type = type;
-
-#ifdef _WLW
-	this->m_group = Object::GROUP::GROUP_NONE;
-#endif
+	position_ = D3DXVECTOR3(0, 0, 0);
+	type_ = type;
+	group_ = Object::GROUP::GROUP_NONE;
+	isActive_ = true;
 
 }
 
@@ -64,17 +58,17 @@ Object::Object(Object::TYPE type)
 void Object::Release()
 {
 	// 前後のオブジェクトが持っている、前後のポインタを更新
-	if (this->m_pNext != nullptr) m_pNext->m_pPrev = this->m_pPrev;
-	if (this->m_pPrev != nullptr) m_pPrev->m_pNext = this->m_pNext;
+	if (nextObj_ != nullptr) nextObj_->prevObj_ = prevObj_;
+	if (prevObj_ != nullptr) prevObj_->nextObj_ = nextObj_;
 
 	// ヘッドのポインタを更新
-	if (m_pHEAD[m_type] == this) m_pHEAD[m_type] = this->m_pNext;
+	if (headObj_[type_] == this) headObj_[type_] = nextObj_;
 
 	// テイルのポインタを更新
-	if (m_pTAIL[m_type] == this) m_pTAIL[m_type] = this->m_pPrev;
+	if (tailObj_[type_] == this) tailObj_[type_] = prevObj_;
 
 	// 終了処理
-	this->Uninit();
+	Uninit();
 
 	// メモリの解放
 	delete this;
@@ -89,17 +83,24 @@ void Object::UpdateAll()
 {
 	int cnt[Object::TYPE::TYPE_MAX] = {};
 
+	for (int i = 0; i < Object::TYPE::TYPE_MAX; i++)
+	{
+		Object* pCurrent = headObj_[i];
 
-	for (int i = 0; i < Object::TYPE::TYPE_MAX; i++) {
-		Object* pCurrent = m_pHEAD[i];
+		for (;;)
+		{
+			if (pCurrent == nullptr)
+			{
+				break;
+			}
+			else
+			{
+				if (pCurrent->GetActive() == true)
+				{
+					pCurrent->Update();
+				}
 
-
-		for (;;) {
-			if (pCurrent == nullptr) break;
-			else {
-				pCurrent->Update();
-				pCurrent = pCurrent->m_pNext;
-
+				pCurrent = pCurrent->nextObj_;
 				cnt[i]++;
 			}
 		}
@@ -125,17 +126,25 @@ void Object::UpdateAll()
 //-----------------------------------------------------------------------------
 void Object::DrawAll()
 {
-	for (int i = 0; i < Object::TYPE::TYPE_MAX; i++) {
-		Object* pCurrent = m_pHEAD[i];
+	for (int i = 0; i < Object::TYPE::TYPE_MAX; i++)
+	{
+		Object* pCurrent = headObj_[i];
 
-		for (;;) {
-			if (pCurrent == nullptr) break;
-			else {
-				pCurrent->Draw();
-				pCurrent = pCurrent->m_pNext;
-
+		for (;;)
+		{
+			if (pCurrent == nullptr)
+			{
+				break;
 			}
+			else
+			{
+				if (pCurrent->GetActive() == true)
+				{
+					pCurrent->Draw();
+				}
 
+				pCurrent = pCurrent->nextObj_;
+			}
 		}
 	}
 
@@ -147,24 +156,31 @@ void Object::DrawAll()
 //-----------------------------------------------------------------------------
 void Object::ReleaseAll()
 {
-	for (int i = 0; i < Object::TYPE::TYPE_MAX; i++) {
-		if (m_pHEAD[i] == nullptr) continue;
+	for (int i = 0; i < Object::TYPE::TYPE_MAX; i++)
+	{
+		if (headObj_[i] == nullptr)
+		{
+			continue;
+		}
 
-		Object* pCurrent = m_pHEAD[i];
-		Object* pNext    = m_pHEAD[i]->m_pNext;
+		Object* pCurrent = headObj_[i];
+		Object* pNext    = headObj_[i]->nextObj_;
 
-		for (;;) {
-			if (pCurrent == nullptr) break;
-			else {
-				pNext = pCurrent->m_pNext;
+		for (;;)
+		{
+			if (pCurrent == nullptr)
+			{
+				break;
+			}
+			else
+			{
+				pNext = pCurrent->nextObj_;
 				pCurrent->Release();
 				pCurrent = pNext;
 				
 			}
-
 		}
 	}
-
 }
 
 

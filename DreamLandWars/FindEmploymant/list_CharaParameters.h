@@ -20,10 +20,11 @@ public:
 	static void InitParameter(T* pPlayer)
 	//static void InitParameter(OLMDL_Player* pPlayer)
 	{
-		switch (pPlayer->GetCharacter()) {
-		case T::CHARACTER::CHARACTER_KIBITSU:
-			InitKibitsu(pPlayer);
-			break;
+		switch (pPlayer->GetCharacter())
+		{
+			case T::Character::FIGHTER:
+				InitKibitsu(pPlayer);
+				break;
 		}
 
 
@@ -95,7 +96,7 @@ private:
 		pPlayer->SetMaxMoveSpeed(maxMoveSpeed);				// yÅ‘å’lz‘¬“x
 
 
-		pPlayer->SetPosture(T::POSTURE::POSTURE_NONE);		// ‘Ì¨
+		//pPlayer->SetPosture(T::Behave::NONE);		// ‘Ì¨
 		pPlayer->SetLife(maxLife);							// Œ»İ‚Ì‘Ì—Í
 
 

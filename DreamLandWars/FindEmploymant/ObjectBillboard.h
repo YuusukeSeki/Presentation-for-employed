@@ -1,44 +1,32 @@
-#pragma once
-//*****************************************************************************
-//
-//		ビルボード（リスト構造）
-//												Autohr : Yusuke Seki
-//*****************************************************************************
-#ifndef _OBJECTBILLBOARD_H_
-#define _OBJECTBILLBOARD_H_
+// author : yusuke seki
+// data   : 20181111
+#ifndef ObjectBILLBOARD_H_
+#define ObjectBILLBOARD_H_
 
-#include "main.h"
-#include "Object3D_Quaternion.h"
+#include "Object3D.h"
+#include "camera.h"
 
-class Camera;
-
-
-class ObjectBillboard : public Object3D_Quaternion
+class ObjectBillboard : public Object3D
 {
 public:
-	ObjectBillboard() {}
-	ObjectBillboard(Object::TYPE type);
+	ObjectBillboard();
+	ObjectBillboard(const Object::TYPE& type);
 	virtual ~ObjectBillboard();
 
-	static ObjectBillboard* Create(D3DXVECTOR3& position, D3DXVECTOR3& size, Camera* pCamera);
-	virtual void Init(D3DXVECTOR3& position, D3DXVECTOR3& size, Camera* pCamera);
+	static ObjectBillboard* Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, Camera* _camera);
+	virtual void Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, Camera* _camera);
 	virtual void Uninit(void);
 	virtual void Update(void) {}
 	virtual void Draw(void);
 
-	// カメラの設定
-	void SetCamera(Camera& pCamera) { m_pCamera = &pCamera; }
-
-	// 持っているカメラのポインタを返す
-	Camera* GetCamera() { return m_pCamera; }
+	void SetCamera(Camera* _camera);
+	Camera* GetCamera();
 
 private:
-	// ワールドマトリクスの更新
 	void UpdateWorldMatrix();
 
-	Camera* m_pCamera;	// カメラ
+	Camera* camera_;
 
 };
 
 #endif
-

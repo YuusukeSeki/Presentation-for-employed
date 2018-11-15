@@ -1,34 +1,28 @@
-//*****************************************************************************
-//
-//		塔
-//													Autohr : Yusuke Seki
-//*****************************************************************************
-#ifndef _TOWER_H_
-#define _TOWER_H_
+// author : yusuke seki
+// data   : 20181115
+#ifndef TOWER_H_
+#define TOWER_H_
 
-#include "main.h"
-#include "ObjectModel.h"
-
+#include "Unit.h"
 class Hold;
 class LifeGauge;
 class Icon;
+class SoldierGenerator;
 
-
-class Tower : public ObjectModel
+class Tower : public Unit
 {
 public:
-	//----- コンストラクタ / デストラクタ -----
 	Tower();
 	Tower(Object::TYPE type);
-	virtual ~Tower();
+	~Tower();
 
-
-	//----- 基本的な関数 -----
 	static Tower* Create(D3DXVECTOR3& position, const char* FileName, Object::GROUP group);
 	void Init(D3DXVECTOR3& position, const char* FileName, Object::GROUP group);
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
+
+
 
 	// 拠点にダメージを与える
 	// breakPower : 与えるダメージ
@@ -55,16 +49,10 @@ public:
 
 
 private:
-	//----- データ -----
-	float m_life;		// 現在の体力
-	float m_browRange;	// 殴れる範囲
-
-	Hold*      m_pHold;			// "HOLD"
-	LifeGauge* m_pLifeGauge;	// 体力ゲージ
-	Icon*      m_pIcon;			// アイコン
-	
-	int m_cntFrame;	// 兵士生成用カウンター
-
+	SoldierGenerator* soldierGenerator_;
+	Hold* hold_;
+	LifeGauge* lifeGauge_;
+	Icon* icon_;
 
 };
 

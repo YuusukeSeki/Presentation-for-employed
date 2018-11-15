@@ -75,15 +75,15 @@ void StraightShot::Uninit(void)
 void StraightShot::Update(void)
 {
 	// 未使用で処理無し
-	if (!Bullet3D::GetInstance()) return;
+	if (!Bullet3D::GetIsInstance()) return;
 
 	// 弾の移動
-	MovePosition(GetVecZ() * GetMove());
+	MovePosition(GetFront() * GetInitSpeed());
 
 	// 兵士、プレイヤー、壁との当たり判定
 	if (CollisionSoldier() || CollisionPlayer() || CollisionWall()) {
 		// 使用中フラグOFF
-		Bullet3D::SetInstance(false);
+		Bullet3D::SetIsInstance(false);
 	}
 	
 	// 消失地点を超えたら消す（内積）
@@ -94,7 +94,7 @@ void StraightShot::Update(void)
 
 		// 内積を取り、消失地点を超えていたらバレットを消す
 		float result = D3DXVec3Dot(&vec, &m_vecInitToUninit);
-		if (result <= 0) Bullet3D::SetInstance(false);
+		if (result <= 0) Bullet3D::SetIsInstance(false);
 	}
 
 }
@@ -132,7 +132,7 @@ void StraightShot::SetStraightShot(Player& player)
 	StraightShot* pNext = (StraightShot*)pStraightShot->GetNextPointer();
 	for (;;) {
 		// 未使用なら設定して終了
-		if (!pCurrent->GetInstance()) {
+		if (!pCurrent->GetIsInstance()) {
 			pCurrent->SetStraightShot_Private(player);
 			break;
 		}
@@ -169,10 +169,10 @@ void StraightShot::SetStraightShot_Private(Player& player)
 	this->SetGroup(player.GetGroup());
 
 	// 向きの設定
-	this->SetVecZ(player.GetFront());
+	this->SetFront(player.GetFront());
 
 	// 初速度の設定
-	this->SetMove(player.GetStraightShotSpeed());
+	this->SetInitSpeed(player.GetStraightShotSpeed());
 
 	// 加速度の設定
 	this->SetAccelerate(0);
@@ -185,7 +185,7 @@ void StraightShot::SetStraightShot_Private(Player& player)
 	D3DXVec3Normalize(&m_vecInitToUninit, &m_vecInitToUninit);
 
 	// 使用フラグON
-	this->SetInstance(true);
+	this->SetIsInstance(true);
 
 	// 親の設定
 	m_pParent = &player;
@@ -214,7 +214,7 @@ bool StraightShot::CollisionSoldier()
 			if (Collision_SphereToSphere(GetPosition(), GetRadius(), pCurrent->GetPosition(), pCurrent->GetRadius())) {
 
 				// 攻撃処理
-				pCurrent->Attack(m_pParent->GetStraightShotDamage(), GetVecZ(), m_pParent->GetStraightShotSpeed(), m_pParent);
+				pCurrent->Attack(m_pParent->GetStraightShotDamage(), GetFront(), m_pParent->GetStraightShotSpeed(), m_pParent);
 
 				return true;
 			}

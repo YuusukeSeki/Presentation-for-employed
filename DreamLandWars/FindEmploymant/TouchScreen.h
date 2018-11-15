@@ -7,10 +7,10 @@
 #define _TOUCHSCREEN_H_
 
 #include "main.h"
-#include "Object3D_Quaternion.h"
+#include "Object3D.h"
 
 
-class TouchScreen : public Object3D_Quaternion
+class TouchScreen : public Object3D
 {
 public:
 	//----- コンストラクタ / デストラクタ -----

@@ -51,6 +51,8 @@ public:
 	bool           GetInstance()             { return m_bInstance; }	// 使用中かどうかを返す：true で使用中
 	Player*        GetPlayer_DrawLine()      { return m_pPlayer; }		// 親プレイヤーを返す
 
+	D3DXVECTOR3 GetTailPosition() { return m_pTail->GetPosition(); }
+
 private:
 	//----- 設定処理 -----
 	void SetStartLine_private(D3DXVECTOR3& position, Player& player);			// 始点の設定

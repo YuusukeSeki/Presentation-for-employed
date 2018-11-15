@@ -14,7 +14,7 @@
 
 #include "collision.h"	// 3D当たり判定用の便利関数
 
-#include "Commander.h"	// 兵士生成のため
+#include "SoldierCommander.h"	// 兵士生成のため
 
 #include "TeamGaugeManager.h"	// チームゲージに影響を与えるため
 #include "TeamGauge.h"			// チームゲージに影響を与えるため
@@ -127,8 +127,12 @@ void Castle::Init(const char* FileName, Object::GROUP group)
 	// 殴れる範囲の設定
 	m_browRange = GetSize().x * 1.05f;
 
-	// 殴れる範囲のGUI生成
-	m_pHold = Hold::Create(this, MainGame::GetCamera(0));
+	// 殴れる範囲の生成
+
+	// get camera of this client
+	// ※下記は暫定処理
+	Camera* camera = MainGame::GetPlayer(0)->GetCamera();
+	m_pHold = Hold::Create(this, camera);
 
 	// 兵士生成用カウンターの初期値設定
 	m_frameCounter = 1500;

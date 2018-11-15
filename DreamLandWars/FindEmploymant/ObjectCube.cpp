@@ -116,34 +116,33 @@ void ObjectCube::Init(D3DXVECTOR3& position, D3DXVECTOR3& size)
 	D3DXVECTOR3 setPos  = D3DXVECTOR3(position.x, position.y + size.y * 0.5f, position.z);
 	D3DXVECTOR3 setSize = D3DXVECTOR3(size.x, size.z, 0);
 	_surface_TOP    = Object3D::Create(setPos, setSize);
-	_surface_TOP->SetRotate(D3DXVECTOR3(D3DXToRadian(90), 0, 0));
+	_surface_TOP->SetRotate(D3DXVECTOR3(1, 0, 0), D3DXToRadian(90));
 
 	// ’ê–Ê
 	setPos  = D3DXVECTOR3(position.x, position.y - size.y * 0.5f, position.z);
 	_surface_BOTTOM = Object3D::Create(setPos, setSize);
-	_surface_BOTTOM->SetRotate(D3DXVECTOR3(D3DXToRadian(-90), 0, 0));
+	_surface_BOTTOM->SetRotate(D3DXVECTOR3(1, 0, 0), D3DXToRadian(-90));
 
 	// ¶–Ê
 	setPos  = D3DXVECTOR3(position.x - size.x * 0.5f, position.y, position.z);
 	setSize = D3DXVECTOR3(size.z, size.y, 0);
 	_surface_LEFT   = Object3D::Create(setPos, setSize);
-	_surface_LEFT->SetRotate(D3DXVECTOR3(0, D3DXToRadian(90), 0));
+	_surface_LEFT->SetRotate(D3DXVECTOR3(0, 1, 0), D3DXToRadian(90));
 
 	// ‰E–Ê
 	setPos = D3DXVECTOR3(position.x + size.x * 0.5f, position.y, position.z);
 	_surface_RIGHT  = Object3D::Create(setPos, setSize);
-	_surface_RIGHT->SetRotate(D3DXVECTOR3(0, D3DXToRadian(-90), 0));
+	_surface_RIGHT->SetRotate(D3DXVECTOR3(0, 1, 0), D3DXToRadian(-90));
 
 	// ‘O–Ê
 	setPos = D3DXVECTOR3(position.x, position.y, position.z - size.z * 0.5f);
 	setSize = D3DXVECTOR3(size.x, size.y, 0);
 	_surface_FRONT  = Object3D::Create(setPos, setSize);
-	_surface_FRONT->SetRotate(D3DXVECTOR3(0, D3DXToRadian(0), 0));
 
 	// ”w–Ê
 	setPos = D3DXVECTOR3(position.x, position.y, position.z + size.z * 0.5f);
 	_surface_BACK   = Object3D::Create(setPos, setSize);
-	_surface_BACK->SetRotate(D3DXVECTOR3(0, D3DXToRadian(180), 0));
+	_surface_BACK->SetRotate(D3DXVECTOR3(0, 1, 0), D3DXToRadian(180));
 
 }
 
@@ -197,12 +196,12 @@ void ObjectCube::MoveRotate(D3DXVECTOR3& moveRotate)
 	// ‰ñ“]—¦‚Ì‘Œ¸
 	m_rotate += moveRotate;
 	
-	_surface_TOP->MoveRotate(moveRotate);		// ã–Ê
-	_surface_BOTTOM->MoveRotate(moveRotate);	// ’ê–Ê
-	_surface_LEFT->MoveRotate(moveRotate);		// ¶–Ê
-	_surface_RIGHT->MoveRotate(moveRotate);		// ‰E–Ê
-	_surface_FRONT->MoveRotate(moveRotate);		// ‘O–Ê
-	_surface_BACK->MoveRotate(moveRotate);		// ”w–Ê
+	//_surface_TOP->MoveRotate(moveRotate);		// ã–Ê
+	//_surface_BOTTOM->MoveRotate(moveRotate);	// ’ê–Ê
+	//_surface_LEFT->MoveRotate(moveRotate);		// ¶–Ê
+	//_surface_RIGHT->MoveRotate(moveRotate);		// ‰E–Ê
+	//_surface_FRONT->MoveRotate(moveRotate);		// ‘O–Ê
+	//_surface_BACK->MoveRotate(moveRotate);		// ”w–Ê
 
 }
 
@@ -220,24 +219,6 @@ void ObjectCube::MoveScale(D3DXVECTOR3& moveScale)
 	_surface_RIGHT->MoveScale(moveScale);	// ‰E–Ê
 	_surface_FRONT->MoveScale(moveScale);	// ‘O–Ê
 	_surface_BACK->MoveScale(moveScale);	// ”w–Ê
-
-}
-
-// –@ü‚Ì‘Œ¸
-void ObjectCube::MoveNormal(D3DXVECTOR3& moveNormal0, D3DXVECTOR3& moveNormal1, D3DXVECTOR3& moveNormal2, D3DXVECTOR3& moveNormal3)
-{
-	// –@ü‚Ì‘Œ¸
-	m_normal[0] += moveNormal0;
-	m_normal[1] += moveNormal1;
-	m_normal[2] += moveNormal2;
-	m_normal[3] += moveNormal3;
-	
-	_surface_TOP->MoveNormal(moveNormal0, moveNormal1, moveNormal2, moveNormal3);		// ã–Ê
-	_surface_BOTTOM->MoveNormal(moveNormal0, moveNormal1, moveNormal2, moveNormal3);	// ’ê–Ê
-	_surface_LEFT->MoveNormal(moveNormal0, moveNormal1, moveNormal2, moveNormal3);		// ¶–Ê
-	_surface_RIGHT->MoveNormal(moveNormal0, moveNormal1, moveNormal2, moveNormal3);		// ‰E–Ê
-	_surface_FRONT->MoveNormal(moveNormal0, moveNormal1, moveNormal2, moveNormal3);		// ‘O–Ê
-	_surface_BACK->MoveNormal(moveNormal0, moveNormal1, moveNormal2, moveNormal3);		// ”w–Ê
 
 }
 
@@ -269,12 +250,12 @@ void ObjectCube::MoveUV_StartPoint(D3DXVECTOR2& moveUV_StartPoint)
 	// UVŠJŽn“_‚Ì‘Œ¸
 	m_UV_StartPoint += moveUV_StartPoint;
 
-	_surface_TOP->MoveUV_StartPoint(moveUV_StartPoint);		// ã–Ê
-	_surface_BOTTOM->MoveUV_StartPoint(moveUV_StartPoint);	// ’ê–Ê
-	_surface_LEFT->MoveUV_StartPoint(moveUV_StartPoint);	// ¶–Ê
-	_surface_RIGHT->MoveUV_StartPoint(moveUV_StartPoint);	// ‰E–Ê
-	_surface_FRONT->MoveUV_StartPoint(moveUV_StartPoint);	// ‘O–Ê
-	_surface_BACK->MoveUV_StartPoint(moveUV_StartPoint);	// ”w–Ê
+	_surface_TOP->MoveUv_StartPoint(moveUV_StartPoint);		// ã–Ê
+	_surface_BOTTOM->MoveUv_StartPoint(moveUV_StartPoint);	// ’ê–Ê
+	_surface_LEFT->MoveUv_StartPoint(moveUV_StartPoint);	// ¶–Ê
+	_surface_RIGHT->MoveUv_StartPoint(moveUV_StartPoint);	// ‰E–Ê
+	_surface_FRONT->MoveUv_StartPoint(moveUV_StartPoint);	// ‘O–Ê
+	_surface_BACK->MoveUv_StartPoint(moveUV_StartPoint);	// ”w–Ê
 
 }
 
@@ -284,12 +265,12 @@ void ObjectCube::MoveUV_Size(D3DXVECTOR2& moveUV_Size)
 	// UVŠJŽn“_‚Ì‘Œ¸
 	m_UV_Size += moveUV_Size;
 
-	_surface_TOP->MoveUV_Size(moveUV_Size);		// ã–Ê
-	_surface_BOTTOM->MoveUV_Size(moveUV_Size);	// ’ê–Ê
-	_surface_LEFT->MoveUV_Size(moveUV_Size);	// ¶–Ê
-	_surface_RIGHT->MoveUV_Size(moveUV_Size);	// ‰E–Ê
-	_surface_FRONT->MoveUV_Size(moveUV_Size);	// ‘O–Ê
-	_surface_BACK->MoveUV_Size(moveUV_Size);	// ”w–Ê
+	_surface_TOP->MoveUv_Size(moveUV_Size);		// ã–Ê
+	_surface_BOTTOM->MoveUv_Size(moveUV_Size);	// ’ê–Ê
+	_surface_LEFT->MoveUv_Size(moveUV_Size);	// ¶–Ê
+	_surface_RIGHT->MoveUv_Size(moveUV_Size);	// ‰E–Ê
+	_surface_FRONT->MoveUv_Size(moveUV_Size);	// ‘O–Ê
+	_surface_BACK->MoveUv_Size(moveUV_Size);	// ”w–Ê
 
 }
 
@@ -369,32 +350,32 @@ void ObjectCube::SetSize(D3DXVECTOR3& size)
 // ‰ñ“]—¦‚ÌÝ’è
 void ObjectCube::SetRotate(D3DXVECTOR3& rotate)
 {
-	// ‰ñ“]—¦‚ÌÝ’è
-	m_rotate = rotate;
+	//// ‰ñ“]—¦‚ÌÝ’è
+	//m_rotate = rotate;
 
-	// ã–Ê
-	_surface_TOP->SetRotate(rotate);
-	_surface_TOP->MoveRotate(D3DXVECTOR3(D3DXToRadian(90), 0, 0));
+	//// ã–Ê
+	//_surface_TOP->SetRotate(rotate);
+	//_surface_TOP->MoveRotate(D3DXVECTOR3(D3DXToRadian(90), 0, 0));
 
-	// ’ê–Ê
-	_surface_BOTTOM->SetRotate(rotate);
-	_surface_BOTTOM->MoveRotate(D3DXVECTOR3(D3DXToRadian(-90), 0, 0));
+	//// ’ê–Ê
+	//_surface_BOTTOM->SetRotate(rotate);
+	//_surface_BOTTOM->MoveRotate(D3DXVECTOR3(D3DXToRadian(-90), 0, 0));
 
-	// ¶–Ê
-	_surface_LEFT->SetRotate(rotate);
-	_surface_LEFT->MoveRotate(D3DXVECTOR3(0, D3DXToRadian(-90), 0));
+	//// ¶–Ê
+	//_surface_LEFT->SetRotate(rotate);
+	//_surface_LEFT->MoveRotate(D3DXVECTOR3(0, D3DXToRadian(-90), 0));
 
-	// ‰E–Ê
-	_surface_RIGHT->SetRotate(rotate);
-	_surface_RIGHT->MoveRotate(D3DXVECTOR3(0, D3DXToRadian(90), 0));
+	//// ‰E–Ê
+	//_surface_RIGHT->SetRotate(rotate);
+	//_surface_RIGHT->MoveRotate(D3DXVECTOR3(0, D3DXToRadian(90), 0));
 
-	// ‘O–Ê
-	_surface_FRONT->SetRotate(rotate);
-	_surface_FRONT->MoveRotate(D3DXVECTOR3(0, 0, 0));
+	//// ‘O–Ê
+	//_surface_FRONT->SetRotate(rotate);
+	//_surface_FRONT->MoveRotate(D3DXVECTOR3(0, 0, 0));
 
-	// ”w–Ê
-	_surface_BACK->SetRotate(rotate);
-	_surface_FRONT->MoveRotate(D3DXVECTOR3(0, D3DXToRadian(180), 0));
+	//// ”w–Ê
+	//_surface_BACK->SetRotate(rotate);
+	//_surface_FRONT->MoveRotate(D3DXVECTOR3(0, D3DXToRadian(180), 0));
 
 }
 
@@ -412,24 +393,6 @@ void ObjectCube::SetScale(D3DXVECTOR3& scale)
 	_surface_RIGHT->SetScale(scale);	// ‰E–Ê
 	_surface_FRONT->SetScale(scale);	// ‘O–Ê
 	_surface_BACK->SetScale(scale);		// ”w–Ê
-
-}
-
-// –@ü‚ÌÝ’è
-void ObjectCube::SetNormal(D3DXVECTOR3& moveNormal0, D3DXVECTOR3& moveNormal1, D3DXVECTOR3& moveNormal2, D3DXVECTOR3& moveNormal3)
-{
-	// –@ü‚Ì‘Œ¸
-	m_normal[0] = moveNormal0;
-	m_normal[1] = moveNormal1;
-	m_normal[2] = moveNormal2;
-	m_normal[3] = moveNormal3;
-
-	_surface_TOP->SetNormal(moveNormal0, moveNormal1, moveNormal2, moveNormal3);	// ã–Ê
-	_surface_BOTTOM->SetNormal(moveNormal0, moveNormal1, moveNormal2, moveNormal3);	// ’ê–Ê
-	_surface_LEFT->SetNormal(moveNormal0, moveNormal1, moveNormal2, moveNormal3);	// ¶–Ê
-	_surface_RIGHT->SetNormal(moveNormal0, moveNormal1, moveNormal2, moveNormal3);	// ‰E–Ê
-	_surface_FRONT->SetNormal(moveNormal0, moveNormal1, moveNormal2, moveNormal3);	// ‘O–Ê
-	_surface_BACK->SetNormal(moveNormal0, moveNormal1, moveNormal2, moveNormal3);	// ”w–Ê
 
 }
 
@@ -454,12 +417,12 @@ void ObjectCube::SetUV_StartPoint(D3DXVECTOR2& UV_StartPoint)
 	// UVŠJŽn“_‚ÌÝ’è
 	m_UV_StartPoint = UV_StartPoint;
 
-	_surface_TOP->SetUV_StartPoint(UV_StartPoint);		// ã–Ê
-	_surface_BOTTOM->SetUV_StartPoint(UV_StartPoint);	// ’ê–Ê
-	_surface_LEFT->SetUV_StartPoint(UV_StartPoint);	// ¶–Ê
-	_surface_RIGHT->SetUV_StartPoint(UV_StartPoint);	// ‰E–Ê
-	_surface_FRONT->SetUV_StartPoint(UV_StartPoint);	// ‘O–Ê
-	_surface_BACK->SetUV_StartPoint(UV_StartPoint);	// ”w–Ê
+	_surface_TOP->SetUv_StartPoint(UV_StartPoint);		// ã–Ê
+	_surface_BOTTOM->SetUv_StartPoint(UV_StartPoint);	// ’ê–Ê
+	_surface_LEFT->SetUv_StartPoint(UV_StartPoint);	// ¶–Ê
+	_surface_RIGHT->SetUv_StartPoint(UV_StartPoint);	// ‰E–Ê
+	_surface_FRONT->SetUv_StartPoint(UV_StartPoint);	// ‘O–Ê
+	_surface_BACK->SetUv_StartPoint(UV_StartPoint);	// ”w–Ê
 
 }
 
@@ -469,24 +432,24 @@ void ObjectCube::SetUV_Size(D3DXVECTOR2& UV_Size)
 	// UV‚Ì‘å‚«‚³‚ÌÝ’è
 	m_UV_StartPoint = UV_Size;
 
-	_surface_TOP->SetUV_Size(UV_Size);		// ã–Ê
-	_surface_BOTTOM->SetUV_Size(UV_Size);	// ’ê–Ê
-	_surface_LEFT->SetUV_Size(UV_Size);	// ¶–Ê
-	_surface_RIGHT->SetUV_Size(UV_Size);	// ‰E–Ê
-	_surface_FRONT->SetUV_Size(UV_Size);	// ‘O–Ê
-	_surface_BACK->SetUV_Size(UV_Size);	// ”w–Ê
+	_surface_TOP->SetUv_Size(UV_Size);		// ã–Ê
+	_surface_BOTTOM->SetUv_Size(UV_Size);	// ’ê–Ê
+	_surface_LEFT->SetUv_Size(UV_Size);	// ¶–Ê
+	_surface_RIGHT->SetUv_Size(UV_Size);	// ‰E–Ê
+	_surface_FRONT->SetUv_Size(UV_Size);	// ‘O–Ê
+	_surface_BACK->SetUv_Size(UV_Size);	// ”w–Ê
 
 }
 
 // •`‰æˆ—‚Ì—L–³‚ÌÝ’è
 void ObjectCube::SetDraw(bool bDraw)
 {
-	_surface_TOP->SetDraw(bDraw);		// ã–Ê
-	_surface_BOTTOM->SetDraw(bDraw);	// ’ê–Ê
-	_surface_LEFT->SetDraw(bDraw);		// ¶–Ê
-	_surface_RIGHT->SetDraw(bDraw);		// ‰E–Ê
-	_surface_FRONT->SetDraw(bDraw);		// ‘O–Ê
-	_surface_BACK->SetDraw(bDraw);		// ”w–Ê
+	_surface_TOP->SetIsDraw(bDraw);		// ã–Ê
+	_surface_BOTTOM->SetIsDraw(bDraw);	// ’ê–Ê
+	_surface_LEFT->SetIsDraw(bDraw);		// ¶–Ê
+	_surface_RIGHT->SetIsDraw(bDraw);		// ‰E–Ê
+	_surface_FRONT->SetIsDraw(bDraw);		// ‘O–Ê
+	_surface_BACK->SetIsDraw(bDraw);		// ”w–Ê
 
 }
 

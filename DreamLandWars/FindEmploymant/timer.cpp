@@ -65,10 +65,10 @@ void Timer::Init(const D3DXVECTOR3& posLeftEdge, const D3DXVECTOR3& sizeAll)
 	m_pSecondRight = Object2D::Create(posBuf4, D3DXVECTOR3(sizeAll.x * 0.32f, sizeAll.y, 0.f));
 
 	// UV値の設定
-	m_pMinute     ->SetUV_Size(D3DXVECTOR2(0.1f, 1.f));
-	m_pColon      ->SetUV_Size(D3DXVECTOR2(1.0f, 1.f));
-	m_pSecondLeft ->SetUV_Size(D3DXVECTOR2(0.1f, 1.f));
-	m_pSecondRight->SetUV_Size(D3DXVECTOR2(0.1f, 1.f));
+	m_pMinute     ->SetUv_Size(D3DXVECTOR2(0.1f, 1.f));
+	m_pColon      ->SetUv_Size(D3DXVECTOR2(1.0f, 1.f));
+	m_pSecondLeft ->SetUv_Size(D3DXVECTOR2(0.1f, 1.f));
+	m_pSecondRight->SetUv_Size(D3DXVECTOR2(0.1f, 1.f));
 
 	
 	// 残り時間とフレームカウンター初期化
@@ -129,9 +129,9 @@ void Timer::Update(void)
 	second2 = m_numSeconds % 10;
 
 	// UV値の設定
-	m_pMinute     ->SetUV_StartPoint(D3DXVECTOR2(minute  * 0.1f, 0.f));
-	m_pSecondLeft ->SetUV_StartPoint(D3DXVECTOR2(second1 * 0.1f, 0.f));
-	m_pSecondRight->SetUV_StartPoint(D3DXVECTOR2(second2 * 0.1f, 0.f));
+	m_pMinute     ->SetUv_StartPoint(D3DXVECTOR2(minute  * 0.1f, 0.f));
+	m_pSecondLeft ->SetUv_StartPoint(D3DXVECTOR2(second1 * 0.1f, 0.f));
+	m_pSecondRight->SetUv_StartPoint(D3DXVECTOR2(second2 * 0.1f, 0.f));
 
 
 	// 残り時間は残ってる？
@@ -260,9 +260,9 @@ void Timer::SetTimer(unsigned int minutes, unsigned int seconds)
 	second2 = m_numSeconds % 10;
 
 	// UV値の設定
-	m_pMinute->SetUV_StartPoint(D3DXVECTOR2(minute  * 0.1f, 0.f));
-	m_pSecondLeft->SetUV_StartPoint(D3DXVECTOR2(second1 * 0.1f, 0.f));
-	m_pSecondRight->SetUV_StartPoint(D3DXVECTOR2(second2 * 0.1f, 0.f));
+	m_pMinute->SetUv_StartPoint(D3DXVECTOR2(minute  * 0.1f, 0.f));
+	m_pSecondLeft->SetUv_StartPoint(D3DXVECTOR2(second1 * 0.1f, 0.f));
+	m_pSecondRight->SetUv_StartPoint(D3DXVECTOR2(second2 * 0.1f, 0.f));
 }
 
 

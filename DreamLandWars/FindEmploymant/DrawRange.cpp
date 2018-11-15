@@ -1,113 +1,134 @@
-//*****************************************************************************
-//
-//		ドローショット射程範囲
-//												Autohr : Yusuke Seki
-//*****************************************************************************
+// author : yusuke seki
+// data   : 20181111
 #include "DrawRange.h"
 #include "player.h"
+#include "main.h"
 
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
-DrawRange::DrawRange() :Object3D(Object::TYPE::TYPE_3D)
+DrawRange::DrawRange() : parentPlayer_(nullptr)
 {
-	// メンバ変数初期化
-	m_pPlayer = nullptr;
-
+	Release();
 }
 
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
-DrawRange::DrawRange(Object::TYPE type) :Object3D(type)
+DrawRange::DrawRange(Player* _parentPlayer) : parentPlayer_(_parentPlayer)
 {
-	// メンバ変数初期化
-	m_pPlayer = nullptr;
+	if (_parentPlayer == nullptr)
+	{
+		_MSGERROR("親プレイヤーの取得に失敗しました", "DrawRange::DrawRange(Player*)");
+		Release();
+		return;
+	}
 
+	object_ = nullptr;
+	preRange_ = 0;
 }
 
-
-//-----------------------------------------------------------------------------
-// デストラクタ
-//-----------------------------------------------------------------------------
 DrawRange::~DrawRange()
 {
-	// 終了処理
 	Uninit();
-
 }
 
-
-//-----------------------------------------------------------------------------
-// 実体の生成
-//-----------------------------------------------------------------------------
-DrawRange* DrawRange::Create(Player* pPlayer)
+DrawRange* DrawRange::Create(Player* const _parentPlayer)
 {
-	// 生成
-	DrawRange* pDrawRange = new DrawRange(Object::TYPE::TYPE_3D_DRAWRANGE);
+	DrawRange* drawRange = new DrawRange(_parentPlayer);
+	drawRange->Init();
 
-	// 初期化
-	pDrawRange->Init(pPlayer);
-
-	return pDrawRange;
+	return drawRange;
 }
 
-
-//-----------------------------------------------------------------------------
-// 初期化処理
-//-----------------------------------------------------------------------------
-void DrawRange::Init(Player* pPlayer)
+void DrawRange::Init()
 {
-	//----- データの設定 -----
-	m_pPlayer = pPlayer;														// 親プレイヤーの取得
-	float radius = m_pPlayer->GetDrawShotRange() * 2;							// 射程範囲の取得
-	Object3D::Init(m_pPlayer->GetPosition(), D3DXVECTOR3(radius, radius, 0));	// 継承データの初期化
-	SetRotate(D3DXVECTOR3(D3DXToRadian(90), 0, 0));								// 地面と平行に回転させる
+	D3DXVECTOR3 objectSize(parentPlayer_->GetDrawShotRange() * 2, parentPlayer_->GetDrawShotRange() * 2, 0);
 
+	object_ = Object3D::Create(parentPlayer_->GetPosition(), objectSize);
+	object_->SetRotate(D3DXVECTOR3(1, 0, 0), D3DXToRadian(90));
+
+	preRange_ = parentPlayer_->GetDrawShotRange();
 }
 
-
-//-----------------------------------------------------------------------------
-// 終了処理
-//-----------------------------------------------------------------------------
 void DrawRange::Uninit(void)
 {
-	Object3D::Uninit();
-
+	if (object_ != nullptr)
+	{
+		object_->Uninit();
+	}
 }
 
-
-//-----------------------------------------------------------------------------
-// 更新処理
-//-----------------------------------------------------------------------------
 void DrawRange::Update(void)
 {
-	// 座標を親プレイヤーに追従させる
-	SetPosition(m_pPlayer->GetPosition());
+	UpdateIsDraw();
 
+	if (object_->GetIsDraw() == true)
+	{
+		SneakPlayerPosition();
+
+		if (IsChangeSize() == true)
+		{
+			ChangeSize();
+		}
+
+		preRange_ = parentPlayer_->GetDrawShotRange();
+	}
 }
 
-
-//-----------------------------------------------------------------------------
-// 描画処理
-//-----------------------------------------------------------------------------
-void DrawRange::Draw(void)
+void DrawRange::Release()
 {
-	// 【描画判定】DS準備中かどうか
-	if (m_pPlayer->GetPosture() != Player::POSTURE::POSTURE_DRREADY) return;	// 無処理で返す
+	if (object_ != nullptr)
+	{
+		object_->Release();
+		object_ = nullptr;
+	}
 
-	// 描画処理
-	Object3D::Draw();
-
+	delete this;
 }
 
+void DrawRange::SetColor(const unsigned int& _rgba)
+{
+	object_->SetColor(_rgba);
+}
 
+void DrawRange::SetColor(const unsigned char& _r, const unsigned char& _g, const unsigned char& _b, const unsigned char& _a)
+{
+	object_->SetColor(_r, _g, _b, _a);
+}
 
-//=============================================================================
-//	増減処理
+void DrawRange::SetTexture(const LPDIRECT3DTEXTURE9& _texture)
+{
+	object_->SetTexture(_texture);
+}
 
-//=============================================================================
-//	設定処理
+void DrawRange::UpdateIsDraw()
+{
+	if (parentPlayer_->GetBehave() == Player::Behave::READY_DRAW_SHOT)
+	{
+		object_->SetIsDraw(true);
+	}
+	else
+	{
+		object_->SetIsDraw(false);
+	}
+}
 
+void DrawRange::SneakPlayerPosition()
+{
+	object_->SetPosition(parentPlayer_->GetPosition());
+}
+
+bool DrawRange::IsChangeSize()
+{
+	if (preRange_ != parentPlayer_->GetDrawShotRange())
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void DrawRange::ChangeSize()
+{
+	float currentRange = parentPlayer_->GetDrawShotRange();
+	D3DXVECTOR3 objectSize(currentRange * 2, currentRange * 2, 0);
+
+	object_->SetSize(objectSize);
+}

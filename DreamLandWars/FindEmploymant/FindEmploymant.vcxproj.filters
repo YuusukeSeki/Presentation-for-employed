@@ -309,9 +309,6 @@
     <ClCompile Include="StraightShot.cpp">
       <Filter>ソース ファイル\GameManager\MainGame\Object\Player</Filter>
     </ClCompile>
-    <ClCompile Include="Commander.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Soldier</Filter>
-    </ClCompile>
     <ClCompile Include="SoldierBullet.cpp">
       <Filter>ソース ファイル\GameManager\MainGame\Object\Soldier</Filter>
     </ClCompile>
@@ -384,12 +381,6 @@
     <ClCompile Include="Object3D.cpp">
       <Filter>ソース ファイル\Object_base</Filter>
     </ClCompile>
-    <ClCompile Include="Object3D_Quaternion.cpp">
-      <Filter>ソース ファイル\Object_base</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectBillboard.cpp">
-      <Filter>ソース ファイル\Object_base</Filter>
-    </ClCompile>
     <ClCompile Include="ObjectCube.cpp">
       <Filter>ソース ファイル\Object_base</Filter>
     </ClCompile>
@@ -397,6 +388,33 @@
       <Filter>ソース ファイル\Object_base</Filter>
     </ClCompile>
     <ClCompile Include="Part.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerFix.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Controller.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Controller_KeyboardAndMouse.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectBillboard.cpp">
+      <Filter>ソース ファイル\Object_base</Filter>
+    </ClCompile>
+    <ClCompile Include="SoldierGenerator.cpp">
+      <Filter>ソース ファイル\GameManager\MainGame\Object\Soldier</Filter>
+    </ClCompile>
+    <ClCompile Include="SoldierCommander.cpp">
+      <Filter>ソース ファイル\GameManager\MainGame\Object\Soldier</Filter>
+    </ClCompile>
+    <ClCompile Include="RelayPoint.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Collider.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Unit.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -435,9 +453,6 @@
       <Filter>ヘッダー ファイル\EffectManager</Filter>
     </ClInclude>
     <ClInclude Include="SoldierBullet.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Soldier</Filter>
-    </ClInclude>
-    <ClInclude Include="Commander.h">
       <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Soldier</Filter>
     </ClInclude>
     <ClInclude Include="field.h">
@@ -602,12 +617,6 @@
     <ClInclude Include="Object3D.h">
       <Filter>ヘッダー ファイル\Object_base</Filter>
     </ClInclude>
-    <ClInclude Include="Object3D_Quaternion.h">
-      <Filter>ヘッダー ファイル\Object_base</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectBillboard.h">
-      <Filter>ヘッダー ファイル\Object_base</Filter>
-    </ClInclude>
     <ClInclude Include="ObjectCube.h">
       <Filter>ヘッダー ファイル\Object_base</Filter>
     </ClInclude>
@@ -615,6 +624,36 @@
       <Filter>ヘッダー ファイル\Object_base</Filter>
     </ClInclude>
     <ClInclude Include="Part.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerFix.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Controller.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Controller_KeyboardAndMouse.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectBillboard.h">
+      <Filter>ヘッダー ファイル\Object_base</Filter>
+    </ClInclude>
+    <ClInclude Include="SoldierGenerator.h">
+      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Soldier</Filter>
+    </ClInclude>
+    <ClInclude Include="SoldierCommander.h">
+      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Soldier</Filter>
+    </ClInclude>
+    <ClInclude Include="RelayPoint.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="BasePoint.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Unit.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Collider.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

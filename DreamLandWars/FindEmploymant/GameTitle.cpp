@@ -9,7 +9,7 @@
 //-----------------------------------------------------------------------------
 // コンストラクタ
 //-----------------------------------------------------------------------------
-GameTitle::GameTitle() :Object3D_Quaternion(Object::TYPE::TYPE_3D_GAMETITLE)
+GameTitle::GameTitle() :Object3D(Object::TYPE::TYPE_3D_GAMETITLE)
 {
 	// メンバ変数初期化
 
@@ -19,7 +19,7 @@ GameTitle::GameTitle() :Object3D_Quaternion(Object::TYPE::TYPE_3D_GAMETITLE)
 //-----------------------------------------------------------------------------
 // コンストラクタ
 //-----------------------------------------------------------------------------
-GameTitle::GameTitle(Object::TYPE type) :Object3D_Quaternion(type)
+GameTitle::GameTitle(Object::TYPE type) :Object3D(type)
 {
 	// メンバ変数初期化
 
@@ -58,7 +58,7 @@ GameTitle* GameTitle::Create(D3DXVECTOR3& pos, D3DXVECTOR3& size)
 void GameTitle::Init(D3DXVECTOR3& position, D3DXVECTOR3& size)
 {
 	// 継承データの初期化
-	Object3D_Quaternion::Init(position, size);
+	Object3D::Init(position, size);
 
 }
 
@@ -69,7 +69,7 @@ void GameTitle::Init(D3DXVECTOR3& position, D3DXVECTOR3& size)
 void GameTitle::Uninit(void)
 {
 	// 継承データの終了
-	Object3D_Quaternion::Uninit();
+	Object3D::Uninit();
 
 }
 
@@ -89,7 +89,7 @@ void GameTitle::Update(void)
 void GameTitle::Draw(void)
 {
 	// 描画
-	Object3D_Quaternion::Draw();
+	Object3D::Draw();
 
 }
 

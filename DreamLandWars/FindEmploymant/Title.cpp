@@ -104,31 +104,31 @@ void Title::Init()
 				}
 
 				// UV size
-				_gameTitle[i]->SetUV_Size(numUV);
-				_gameTitle_Border[i]->SetUV_Size(numUV);
+				_gameTitle[i]->SetUv_Size(numUV);
+				_gameTitle_Border[i]->SetUv_Size(numUV);
 
 			}
 
 			// UV start point
-			_gameTitle[0] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 3, numUV.y * 0));	// D
-			_gameTitle[1] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 5, numUV.y * 2));	// r
-			_gameTitle[2] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 4, numUV.y * 0));	// e
-			_gameTitle[3] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 0, numUV.y * 0));	// a
-			_gameTitle[4] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 0, numUV.y * 2));	// m
-			_gameTitle[5] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 5, numUV.y * 1));	// L
-			_gameTitle[6] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 0, numUV.y * 0));	// a
-			_gameTitle[7] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 1, numUV.y * 2));	// n
-			_gameTitle[8] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 3, numUV.y * 0));	// d
-			_gameTitle[9] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 4, numUV.y * 3));	// W
-			_gameTitle[10]->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 0, numUV.y * 0));	// a
-			_gameTitle[11]->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 5, numUV.y * 2));	// r
-			_gameTitle[12]->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 1, numUV.y * 4));	// s
+			_gameTitle[0] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 3, numUV.y * 0));	// D
+			_gameTitle[1] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 5, numUV.y * 2));	// r
+			_gameTitle[2] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 4, numUV.y * 0));	// e
+			_gameTitle[3] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 0, numUV.y * 0));	// a
+			_gameTitle[4] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 0, numUV.y * 2));	// m
+			_gameTitle[5] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 5, numUV.y * 1));	// L
+			_gameTitle[6] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 0, numUV.y * 0));	// a
+			_gameTitle[7] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 1, numUV.y * 2));	// n
+			_gameTitle[8] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 3, numUV.y * 0));	// d
+			_gameTitle[9] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 4, numUV.y * 3));	// W
+			_gameTitle[10]->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 0, numUV.y * 0));	// a
+			_gameTitle[11]->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 5, numUV.y * 2));	// r
+			_gameTitle[12]->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 1, numUV.y * 4));	// s
 
 			// border common paramater
 			for (int i = 0; i < NUM_CHARACTER_TITLENAME; i++)
 			{
 				// UV start point
-				_gameTitle_Border[i]->SetUV_StartPoint(_gameTitle[i]->GetUV_StartPoint());
+				_gameTitle_Border[i]->SetUv_StartPoint(_gameTitle[i]->GetUv_StartPoint());
 
 				// color
 				_gameTitle_Border[i]->SetColor(0x000000ff);
@@ -173,22 +173,22 @@ void Title::Init()
 				_touchScreen[i]->SetTexture(_texture[List_LoadTexture_Title::TEXT_TEXNAME]->GetTexture());
 
 				// UV size
-				_touchScreen[i]->SetUV_Size(numUV);
+				_touchScreen[i]->SetUv_Size(numUV);
 
 			}
 
 			// UV start point
-			_touchScreen[0] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 1, numUV.y * 3));	// T
-			_touchScreen[1] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 2, numUV.y * 2));	// O
-			_touchScreen[2] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 2, numUV.y * 3));	// U
-			_touchScreen[3] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 2, numUV.y * 0));	// C
-			_touchScreen[4] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 1, numUV.y * 1));	// H
-			_touchScreen[5] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 0, numUV.y * 3));	// S
-			_touchScreen[6] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 2, numUV.y * 0));	// C
-			_touchScreen[7] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 5, numUV.y * 2));	// R
-			_touchScreen[8] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 4, numUV.y * 0));	// E
-			_touchScreen[9] ->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 4, numUV.y * 0));	// E
-			_touchScreen[10]->SetUV_StartPoint(D3DXVECTOR2(numUV.x * 1, numUV.y * 2));	// N
+			_touchScreen[0] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 1, numUV.y * 3));	// T
+			_touchScreen[1] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 2, numUV.y * 2));	// O
+			_touchScreen[2] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 2, numUV.y * 3));	// U
+			_touchScreen[3] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 2, numUV.y * 0));	// C
+			_touchScreen[4] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 1, numUV.y * 1));	// H
+			_touchScreen[5] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 0, numUV.y * 3));	// S
+			_touchScreen[6] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 2, numUV.y * 0));	// C
+			_touchScreen[7] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 5, numUV.y * 2));	// R
+			_touchScreen[8] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 4, numUV.y * 0));	// E
+			_touchScreen[9] ->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 4, numUV.y * 0));	// E
+			_touchScreen[10]->SetUv_StartPoint(D3DXVECTOR2(numUV.x * 1, numUV.y * 2));	// N
 
 		}
 

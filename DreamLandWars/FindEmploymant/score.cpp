@@ -86,7 +86,7 @@ void Score::Init(const D3DXVECTOR3& centerPosition, const D3DXVECTOR3& sizeAll, 
 		// 設定する
 		for (int i = 0; i < (int)m_numDigit; i++) {
 			pDigit->Init(cPos, size);					// 中心点とサイズ
-			pDigit->SetUV_Size(D3DXVECTOR2(0.1f, 1.f));	// UVサイズ
+			pDigit->SetUv_Size(D3DXVECTOR2(0.1f, 1.f));	// UVサイズ
 
 			// 次のポリゴンの中心点算出
 			cPos.x -= size.x;
@@ -147,7 +147,7 @@ void Score::Update(void)
 		number = scoreAll % 10;
 
 		// 数値をUV値に反映
-		pDigit->SetUV_StartPoint(D3DXVECTOR2(number * 0.1f, 0.f));
+		pDigit->SetUv_StartPoint(D3DXVECTOR2(number * 0.1f, 0.f));
 
 		// 桁を一桁下げる
 		scoreAll /= 10;

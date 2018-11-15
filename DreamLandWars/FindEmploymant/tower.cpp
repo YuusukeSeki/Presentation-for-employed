@@ -13,7 +13,7 @@
 #include "Hold.h"
 #include "LifeGauge.h"
 #include "Icon.h"
-#include "Commander.h"
+#include "SoldierCommander.h"
 
 // etc...
 #include "player.h"
@@ -98,12 +98,15 @@ void Tower::Init(D3DXVECTOR3& position, const char* FileName, Object::GROUP grou
 
 	m_cntFrame = 1500;	// 兵士生成用カウンター
 
+	// get camera of this client
+	// ※下記は暫定処理
+	Camera* camera = MainGame::GetPlayer(0)->GetCamera();
 
 	// ポリゴンの生成
-	m_pLifeGauge = LifeGauge::Create(this, MainGame::GetCamera(0));	// 体力ゲージ
-	m_pHold      = Hold::Create(this, MainGame::GetCamera(0));		// "HOLD"
+	m_pLifeGauge = LifeGauge::Create(this, camera);	// 体力ゲージ
+	m_pHold      = Hold::Create(this, camera);		// "HOLD"
 	m_pIcon      = Icon::Create(m_pLifeGauge->GetPosition() + D3DXVECTOR3(0, m_pLifeGauge->GetSize().y * 1.f, 5),
-								D3DXVECTOR3(m_pLifeGauge->GetSize().x * 0.3f, m_pLifeGauge->GetSize().x * 0.3f, 0), MainGame::GetCamera(0), group);	// アイコン
+								D3DXVECTOR3(m_pLifeGauge->GetSize().x * 0.3f, m_pLifeGauge->GetSize().x * 0.3f, 0), camera, group);	// アイコン
 	
 	m_pIcon->SetTexture(MainGame::GetTexture(List_LoadTexture_MainGame::ICON_CASTLE)->GetTexture());
 
