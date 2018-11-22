@@ -90,9 +90,6 @@ Field* Field::Create(D3DXVECTOR3 pos , D3DXVECTOR3 size, D3DXVECTOR3 rot, D3DXVE
 //-----------------------------------------------------------------------------
 HRESULT Field::Init( D3DXVECTOR3 pos, D3DXVECTOR3 size, D3DXVECTOR3 rot, D3DXVECTOR3 scl, int numFieldHorizon, int numFieldVertical)
 {
-	// デバイスの取得
-	LPDIRECT3DDEVICE9 pDevice = Renderer::GetDevice();
-
 	// メンバ変数設定
 	//Scene::SetPos(pos);
 	Object::SetPosition(pos);
@@ -182,11 +179,24 @@ void Field::Draw(void)
 	// 頂点フォーマットの設定
 	pDevice->SetFVF( FVF_VERTEX_3D );
 
-	// テクスチャ貼り付け
-	pDevice->SetTexture(0, m_pTexture->GetTexture());
-
 	// マテリアル情報設定
-	pDevice->SetMaterial( &m_mat );
+	D3DMATERIAL9 defaultMaterial;
+
+	pDevice->GetMaterial(&defaultMaterial);
+
+	pDevice->SetMaterial(&m_mat);
+
+	pDevice->SetMaterial(&defaultMaterial);
+
+	// テクスチャ貼り付け
+	if (m_pTexture != nullptr)
+	{
+		pDevice->SetTexture(0, m_pTexture->GetTexture());
+	}
+	else
+	{
+		pDevice->SetTexture(0, nullptr);
+	}
 
 	// 描画
 	pDevice->DrawIndexedPrimitive(D3DPT_TRIANGLESTRIP, 0, 0, numVtx, 0, numPolygon);
@@ -223,13 +233,14 @@ void Field::MakeVertexBuf(void)
 	m_pVtxBuf->Lock(0, 0, (void**)&pVtx, 0);
 
 	// 頂点座標の設定
-	for (int i = 0; i < m_numFieldHorizon + 1; i++)
+	for (int i = 0; i < m_numFieldVertical + 1; i++)
 	{
-		for (int j = 0; j < m_numFieldVertical + 1; j++)
+		for (int j = 0; j < m_numFieldHorizon + 1; j++)
 		{
 			pVtx[indexNum].pos.x = leftEdgeVertex_X + fieldWidth  * j;
-			pVtx[indexNum].pos.y = g_FieldHeight[i][j];
-			pVtx[indexNum].pos.z = topEdgeVertex_Z  - fieldHeight * i;
+			//pVtx[indexNum].pos.y = g_FieldHeight[i][j];
+			pVtx[indexNum].pos.y = 0;
+			pVtx[indexNum].pos.z = topEdgeVertex_Z - fieldHeight * i;
 			indexNum++;
 		}
 	}
@@ -251,29 +262,38 @@ void Field::MakeVertexBuf(void)
 	for (int i = 0; i < numVtx; i++)
 	{
 		// 法線の設定
-		pVtx[i].normal = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+		pVtx[i].normal = D3DXVECTOR3(0.0f, 1.0f, 0.0f);
 
 		// 頂点色の設定
 		pVtx[i].color = D3DCOLOR_RGBA(255, 255, 255, 255);
+		//pVtx[i].color = D3DCOLOR_RGBA(255, 255, 255, 64);
 	}
 
 	// 法線の設定
-	for(int z = 1; z < m_numFieldVertical; z++) {
-		for(int x = 1; x < m_numFieldHorizon; x++) {
+	for(int z = 1; z < m_numFieldVertical - 1; z++)
+	{
+		for(int x = 1; x < m_numFieldHorizon - 1; x++)
+		{
 			// X方向の計算
-			D3DXVECTOR3 vx = pVtx[z * (m_numFieldVertical + 1) + x + 1].pos - pVtx[z * (m_numFieldVertical + 1) + x - 1].pos;
-			D3DXVECTOR3 nx;
-			nx.x = -vx.y;
-			nx.y = vx.x;
-			nx.z = 0.0f;
+			//int indexA = z * (m_numFieldVertical + 1) + x + 1;
+			//int indexB = z * (m_numFieldVertical + 1) + x - 1;
+			int indexA = z * (m_numFieldHorizon + 1) + x + 1;
+			int indexB = z * (m_numFieldHorizon + 1) + x - 1;
+
+			D3DXVECTOR3 vx = pVtx[indexA].pos - pVtx[indexB].pos;
+			D3DXVECTOR3 nx(-vx.y, vx.x, 0.0f);
 
 			// Z方向の計算
-			D3DXVECTOR3 vz = pVtx[z * (m_numFieldVertical + 1) + x - z * (m_numFieldVertical + 1)].pos 
-				           - pVtx[z * (m_numFieldVertical + 1) + x + z * (m_numFieldVertical + 1)].pos;
-			D3DXVECTOR3 nz;
-			nz.x = 0.0f;
-			nz.y = vz.z;
-			nz.z = -vz.y;
+			indexA = z * (m_numFieldHorizon + 1) + x - z * (m_numFieldHorizon + 1);
+			indexB = z * (m_numFieldHorizon + 1) + x + z * (m_numFieldHorizon + 1);
+
+			if (indexB > numVtx)
+			{
+				indexB = numVtx;
+			}
+
+			D3DXVECTOR3 vz = pVtx[indexA].pos - pVtx[indexB].pos;
+			D3DXVECTOR3 nz(0.0f, vz.z, -vz.y);
 
 			// Y方向の算出
 			D3DXVECTOR3 n = nx + nz;
@@ -331,8 +351,8 @@ void Field::MakeIdxBuf(void)
 	int addFirstLineNumber = m_numFieldHorizon * 2 + 4;	    // 3行目以降で上記変数に足される数
 	int lastLineNumber     = m_numFieldHorizon * 2 + 2;	    // 行毎のの最後の頂点番号
 	int addLastLineNumber  = m_numFieldHorizon * 2 + 4;	    // 2行目以降で上記変数に足される数
-	float leftEdgeVertex_X = -m_size.x * 0.5f;	            // 左端頂点のX座標
-	float topEdgeVertex_Z  = m_size.z * 0.5f;	            // 上端頂点のZ座標
+	//float leftEdgeVertex_X = -m_size.x * 0.5f;	            // 左端頂点のX座標
+	//float topEdgeVertex_Z  = m_size.z * 0.5f;	            // 上端頂点のZ座標
 	int firstLineIndex     = m_numFieldHorizon + 1;	        // 折り返し時の頂点番号 
 
 	// デバイスの取得
@@ -445,7 +465,8 @@ float Field::GetHeight(D3DXVECTOR3 pos)
 		for (int j = 0; j <= m_numFieldHorizon; j++)
 		{
 			pVertex[indexNum].pos.x = leftVertex_X + fieldWidth * j;
-			pVertex[indexNum].pos.y = g_FieldHeight[i][j];
+			//pVertex[indexNum].pos.y = g_FieldHeight[i][j];
+			pVertex[indexNum].pos.y = 0;
 			pVertex[indexNum].pos.z = topVertex_Z - fieldHeight * i;
 			indexNum++;
 		}

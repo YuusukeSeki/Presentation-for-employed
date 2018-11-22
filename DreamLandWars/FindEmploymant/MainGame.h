@@ -6,25 +6,55 @@
 #include "main.h"
 #include "GameScene.h"
 #include "list_LoadTexture_MainGame.h"
-#include "camera.h"
-#include "light.h"
-#include "field.h"
-#include "skybox.h"
 #include "texture.h"
 #include "player.h"
 #include "DrawRange.h"
-#include "tower.h"
-#include "castle.h"
-#include "Wall.h"
 #include "timer.h"
 #include "score.h"
 #include "FrameBorder.h"
 #include "Object2D.h"
+
 #include <vector>
+#include <map>
+#include <string>
+
+class Field;
+class RelayPoint;
+class Wall;
+class Tower;
+class Castle;
+class Camera;
+class Light;
+class SkyBox;
 
 class MainGame : public GameScene
 {
+public:
+	static std::vector<Player*> GetPlayers() { return players; }
+	static Player* GetPlayer(unsigned int index);
+	static Field* GetField() { return m_pField; }
+	static SkyBox* GetSkyBox() { return m_pSkyBox; }
+	static Camera* GetCamera() { return camera_; }
+	static Texture* GetTexture(List_LoadTexture_MainGame::TEXTURE_NAME texName) { return m_pTexture[texName]; }
+	static Wall* GetWall(int index);
+
+	void Init();
+	void Uninit();
+	GameScene* Update();
+	void Draw();
+	void Release();
+
 private:
+	void CreateField();
+	void CreateWall();
+	void CreateRelayPoint();
+	void CreateUnit();
+	void CreateBasePoint();
+	void CreateUI();
+	void CreateCamera();
+	void CreateLight();
+	void CreateBackGround();
+
 	static const int NUM_WALL = 4;
 	static const int NUM_TOWER = 4;
 	static std::vector<Player*> players;
@@ -43,24 +73,22 @@ private:
 	Object2D* _tutorial;
 	int _switchControl;
 
-public:
-	static std::vector<Player*> GetPlayers() { return players; }
-	static Player* GetPlayer(unsigned int index);
-	static Field* GetField() { return m_pField; }
-	static SkyBox* GetSkyBox() { return m_pSkyBox; }
-	//static Camera* GetCamera(int index) { return m_pCamera[index]; }
-	static Texture* GetTexture(List_LoadTexture_MainGame::TEXTURE_NAME texName) { return m_pTexture[texName]; }
-	static Wall* GetWall(int index);
 
-	void Init();
-	void Uninit();
-	GameScene* Update();
-	void Draw();
-	void Release();
 
-private:
 	bool Start_NextScene();
 	void InputManage();
+
+	Field* field_;
+	std::map<std::string, ObjectModel*> wallList_;
+	std::map<std::string, RelayPoint*> relayPoints_;
+
+	static Camera* camera_;
+	std::map<std::string, Light*> lights_;
+
+	std::map<std::string, Tower*> towers_;
+	std::map<std::string, Castle*> castles_;
+
+	SkyBox* skyBox_;
 
 };
 

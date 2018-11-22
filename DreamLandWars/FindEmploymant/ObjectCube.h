@@ -74,14 +74,6 @@ public:
 	D3DXVECTOR3& GetPosition_FRONT()	{ return _surface_FRONT->GetPosition(); }
 	D3DXVECTOR3& GetPosition_BACK()		{ return _surface_BACK->GetPosition(); }
 
-protected:
-	//----- 共用体の定義 -----
-	union Color { // 色
-		unsigned int color;
-		unsigned char rgba[4];
-	};
-
-
 private:
 	//----- データ -----
 	Object3D* _surface_TOP;		// Surface of Top

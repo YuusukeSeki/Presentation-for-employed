@@ -246,50 +246,54 @@ void DrawShot::SetDrawShot(DrawLine* pStartPoint)
 // 兵士との当たり判定
 void DrawShot::CollisionSoldier()
 {
-	Soldier* pSoldier = (Soldier*)Object::GetLDATA_HEAD(TYPE_MODEL_SOLDIER);
+	Soldier* soldier = (Soldier*)Object::GetLDATA_HEAD(TYPE_MODEL_SOLDIER);
 
-	if (pSoldier == nullptr) return;
+	if (soldier == nullptr)
+	{
+		return;
+	}
 
-	Soldier* pCurrent = pSoldier;
-	Soldier* pNext = (Soldier*)pSoldier->GetNextPointer();
+	for (;;)
+	{
+		if (soldier->GetActive() == true && soldier->GetGroup() != GetGroup())
+		{
+			if (Collision_SphereToSphere(GetPosition(), GetRadius(), soldier->GetPosition(), soldier->GetRadius()))
+			{
+				//// まだ当たっていない対象かを判定
+				//for (int i = 0; i <= m_cntCollisionSoldier; i++)
+				//{
+				//	if (m_CollisionID_Soldier[i] == soldier->GetID())
+				//	{
+				//		// 当たっている
+				//		break;
+				//	}
+				//	else if (m_CollisionID_Soldier[i] == CLEAR_ID)
+				//	{
+				//		// まだ当たっていない
 
-	for (;;) {
+				//		// 当たった相手のIDを記憶
+				//		m_CollisionID_Soldier[m_cntCollisionSoldier] = soldier->GetID();
+				//		m_cntCollisionSoldier++;
 
-		// 実体があり、自分と違う陣営の兵士かを判定
-		if (pCurrent->GetInstance() && pCurrent->GetGroup() != GetGroup())
-			
-			// 当たってる？
-			if (Collision_SphereToSphere(GetPosition(), GetRadius(), pCurrent->GetPosition(), pCurrent->GetRadius())) {
+				//		// ダメージを与える
+				//		soldier->Attack(m_pPlayer->GetDrawShotDamage(), m_vecPrevToNext, m_pPlayer->GetDrawShotSpeed(), m_pPlayer);
+				//		//pCurrent->Damage(m_pPlayer->GetDrawShotDamage());
 
-				// まだ当たっていない対象かを判定
-				for (int i = 0; i <= m_cntCollisionSoldier; i++) {
-					if (m_CollisionID_Soldier[i] == pCurrent->GetID()) {
-						// 当たっている
-						break;
-					}
-					else if (m_CollisionID_Soldier[i] == CLEAR_ID) {
-						// まだ当たっていない
+				//		break;
 
-						// 当たった相手のIDを記憶
-						m_CollisionID_Soldier[m_cntCollisionSoldier] = pCurrent->GetID();
-						m_cntCollisionSoldier++;
+				//	}
+				//}
 
-						// ダメージを与える
-						pCurrent->Attack(m_pPlayer->GetDrawShotDamage(), m_vecPrevToNext, m_pPlayer->GetDrawShotSpeed(), m_pPlayer);
-						//pCurrent->Damage(m_pPlayer->GetDrawShotDamage());
-
-						break;
-
-					}
-				}
+				soldier->ReceiveDamage(m_pPlayer->GetDrawShotDamage());
 			}
 
-		pCurrent = pNext;
+			soldier = (Soldier*)soldier->GetNextPointer();
 
-		if (pCurrent == nullptr) return;
-
-		pNext = (Soldier*)pCurrent->GetNextPointer();
-
+			if (soldier == nullptr)
+			{
+				return;
+			}
+		}
 	}
 
 }

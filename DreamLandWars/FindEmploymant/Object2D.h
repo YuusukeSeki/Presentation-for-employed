@@ -12,8 +12,8 @@ public:
 	Object2D(const Object::TYPE& _type);
 	virtual ~Object2D();
 
-	static Object2D* Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size);
-	virtual void Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size);
+	static Object2D* Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, bool _positionIsLeftTop = false);
+	virtual void Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, bool _positionIsLeftTop = false);
 	virtual void Uninit(void);
 	virtual void Update(void) {}
 	virtual void Draw(void);
@@ -48,13 +48,6 @@ public:
 
 	void SetDraw(const bool& _isDraw);
 
-protected:
-	union Color
-	{
-		unsigned int color;
-		unsigned char rgba[4];
-	};
-
 private:
 	void MakeVertexBuf();
 	void UpdateVertexBuf();
@@ -72,6 +65,8 @@ private:
 
 	bool isUpdateVertexBuf_;
 	bool isDraw_;
+
+	bool positionIsLeftTop_;
 
 };
 

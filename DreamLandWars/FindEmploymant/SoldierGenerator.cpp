@@ -4,6 +4,7 @@
 #include "SoldierCommander.h"
 #include "Soldier.h"
 #include "RelayPoint.h"
+#include "BasePoint.h"
 
 const unsigned int SoldierGenerator::kInterval_CreateOneSoldier_ = 20;
 
@@ -11,13 +12,13 @@ SoldierGenerator::SoldierGenerator(const unsigned int _kInterval_CreateSoldierLi
 	, const unsigned int _kInterval_CreateSoldierLine_Subsequent, const unsigned int _kNumSoldier_Subsequent)
 	: kInterval_CreateSoldierLine_First_(_kInterval_CreateSoldierLine_First), kNumSoldier_First_(_kNumSoldier_First)
 	, kInterval_CreateSoldierLine_Subsequent_(_kInterval_CreateSoldierLine_Subsequent), kNumSoldier_Subsequent_(_kNumSoldier_Subsequent)
+	,Object(Object::TYPE::TYPE_GENERATOR)
 {
 	parentObject_ = nullptr;
 	timer_ = 0;
 	countCreateSoldier_ = 0;
 	isFirstCreate_ = false;
 	isUpdateTimer_ = false;
-	group_ = Object::GROUP::GROUP_NONE;
 	soldierCommander_ = nullptr;
 }
 
@@ -26,7 +27,7 @@ SoldierGenerator::~SoldierGenerator()
 	Uninit();
 }
 
-SoldierGenerator* SoldierGenerator::Create(ObjectModel* _parentObject
+SoldierGenerator* SoldierGenerator::Create(BasePoint* _parentObject
 	, const unsigned int _kInterval_CreateSoldierLine_First, const unsigned int _kNumSoldier_First
 	, const unsigned int _kInterval_CreateSoldierLine_Subsequent, const unsigned int _kNumSoldier_Subsequent)
 {
@@ -36,26 +37,30 @@ SoldierGenerator* SoldierGenerator::Create(ObjectModel* _parentObject
 	return soldierGenerator;
 }
 
-void SoldierGenerator::Release()
-{
-	delete this;
-}
-
-void SoldierGenerator::Init(ObjectModel* _parentObject)
+void SoldierGenerator::Init(BasePoint* _parentObject)
 {
 	parentObject_ = _parentObject;
 
+	SetPosition(_parentObject->GetPosition());
+
 	timer_ = kInterval_CreateSoldierLine_First_;
+	
 	countCreateSoldier_ = 0;
+	
 	isFirstCreate_ = true;
+	
 	isUpdateTimer_ = false;
-	group_ = parentObject_->GetGroup();
+	
+	SetGroup(parentObject_->GetGroup());
+	
+	nextRelayPoint_ = parentObject_->GetNextRelayPoint();
+	
 	soldierCommander_ = nullptr;
 }
 
 void SoldierGenerator::Uninit()
 {
-
+	SetActive(false);
 }
 
 void SoldierGenerator::Update()
@@ -74,6 +79,7 @@ void SoldierGenerator::Update()
 				soldierCommander_ = nullptr;
 				countCreateSoldier_ = 0;
 				ResetTimer(kInterval_CreateSoldierLine_Subsequent_);
+				isFirstCreate_ = false;
 			}
 			else
 			{
@@ -83,14 +89,9 @@ void SoldierGenerator::Update()
 	}
 }
 
-D3DXVECTOR3 SoldierGenerator::GetPosition()
+void SoldierGenerator::SetNextRelayPoint(RelayPoint* _relayPoint)
 {
-	return GetPosition();
-}
-
-Object::GROUP SoldierGenerator::GetGroup()
-{
-	return GetGroup();
+	nextRelayPoint_ = _relayPoint;
 }
 
 RelayPoint* SoldierGenerator::GetNextRelayPoint()

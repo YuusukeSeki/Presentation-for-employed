@@ -1,9 +1,16 @@
 // author : yusuke seki
 // data   : 20181110
 #include "Object.h"
+#include "renderer.h"
+
+#include "SoldierCommander.h"
 
 Object* Object::headObj_[Object::TYPE::TYPE_MAX] = {};
 Object* Object::tailObj_[Object::TYPE::TYPE_MAX] = {};
+#ifdef _DEBUG
+bool Object::isDrawCollider_ = true;
+#endif
+
 
 Object::Object()
 {
@@ -83,41 +90,78 @@ void Object::UpdateAll()
 {
 	int cnt[Object::TYPE::TYPE_MAX] = {};
 
+	static int j;
+	j = 0;
+
 	for (int i = 0; i < Object::TYPE::TYPE_MAX; i++)
 	{
-		Object* pCurrent = headObj_[i];
+		Object* current = headObj_[i];
 
-		for (;;)
+		if (current != nullptr)
 		{
-			if (pCurrent == nullptr)
-			{
-				break;
-			}
-			else
-			{
-				if (pCurrent->GetActive() == true)
-				{
-					pCurrent->Update();
-				}
+			Object* next = current->nextObj_;
 
-				pCurrent = pCurrent->nextObj_;
-				cnt[i]++;
+			for (;;)
+			{
+				if (current != nullptr)
+				{
+					cnt[i]++;
+
+					//if (i == TYPE_SOLDIERGAUGE)
+					//{
+					//	OX::DebugFont::print(0, 60 + 20 * j, 0xffffffff
+					//		, "commander : %f, %f, %f", current->GetPosition().x, current->GetPosition().y, current->GetPosition().z);
+
+					//	j++;
+					//}
+					//else if (i == TYPE_MODEL_SOLDIER)
+					//{
+					//	OX::DebugFont::print(0, 60 + 20 * j, 0xffffffff
+					//		, "soldier : %f, %f, %f", current->GetPosition().x, current->GetPosition().y, current->GetPosition().z);
+
+					//	j++;
+					//}
+
+					if (current->GetActive() == true)
+					{
+						current->Update();
+					}
+
+					if (next == nullptr)
+					{
+						break;
+					}
+
+					current = next;
+					next = current->nextObj_;
+				}
 			}
 		}
 	}
 
-	OX::DebugFont::print(0, SCREEN_HEIGHT - 420, 0xffff8080, "___Create Object___");
-	OX::DebugFont::print(0, SCREEN_HEIGHT - 380, 0xffff0000, "TYPE_COMMANDER           : %d", cnt[TYPE_COMMANDER]);
-	OX::DebugFont::print(0, SCREEN_HEIGHT - 360, 0xffff0000, "TYPE_MODEL_SOLDIER       : %d", cnt[TYPE_MODEL_SOLDIER]);
-	OX::DebugFont::print(0, SCREEN_HEIGHT - 300, 0xffff0000, "TYPE_MODEL_TOWER         : %d", cnt[TYPE_MODEL_TOWER]);
-	OX::DebugFont::print(0, SCREEN_HEIGHT - 260, 0xffff0000, "TYPE_3D_BILLBOARD        : %d", cnt[TYPE_3D_BILLBOARD]);
-	OX::DebugFont::print(0, SCREEN_HEIGHT - 240, 0xffff0000, "TYPE_3D_SOLDIERBULLET    : %d", cnt[TYPE_3D_SOLDIERBULLET]);
-	OX::DebugFont::print(0, SCREEN_HEIGHT - 220, 0xffff0000, "TYPE_3D_BILLBOARD_BULLET : %d", cnt[TYPE_3D_BILLBOARD_BULLET]);
-	OX::DebugFont::print(0, SCREEN_HEIGHT - 200, 0xffff0000, "TYPE_3D_BILLBOARD_EFFECT : %d", cnt[TYPE_3D_BILLBOARD_EFFECT]);
-	OX::DebugFont::print(0, SCREEN_HEIGHT - 180, 0xffff0000, "TYPE_3D_STRAIGHTSHOT     : %d", cnt[TYPE_3D_STRAIGHTSHOT]);
-	OX::DebugFont::print(0, SCREEN_HEIGHT - 160, 0xffff0000, "TYPE_3D_DRAWLINE         : %d", cnt[TYPE_3D_DRAWLINE]);
-	OX::DebugFont::print(0, SCREEN_HEIGHT - 140, 0xffff0000, "TYPE_3D_DRAWSHOT         : %d", cnt[TYPE_3D_DRAWSHOT]);
+	int posY = SCREEN_HEIGHT - 140;
+	int a = 0;
 
+	OX::DebugFont::print(0, posY - 20 * a, 0xffff0000, "gauge     : %d", cnt[TYPE_SOLDIERGAUGE]);
+	a++;
+	OX::DebugFont::print(0, posY - 20 * a, 0xffff0000, "billboard : %d", cnt[TYPE_3D_BILLBOARD]);
+	a++;
+	OX::DebugFont::print(0, posY - 20 * a, 0xffff0000, "collider  : %d", cnt[COLLIDER]);
+	a++;
+	OX::DebugFont::print(0, posY - 20 * a, 0xffff0000, "model     : %d", cnt[TYPE_MODEL]);
+	a++;
+	OX::DebugFont::print(0, posY - 20 * a, 0xffff0000, "castle    : %d", cnt[TYPE_MODEL_CASTLE]);
+	a++;
+	OX::DebugFont::print(0, posY - 20 * a, 0xffff0000, "tower     : %d", cnt[TYPE_MODEL_TOWER]);
+	a++;
+	OX::DebugFont::print(0, posY - 20 * a, 0xffff0000, "soldier   : %d", cnt[TYPE_MODEL_SOLDIER]);
+	a++;
+	OX::DebugFont::print(0, posY - 20 * a, 0xffff0000, "commander : %d", cnt[TYPE_COMMANDER]);
+	a++;
+	OX::DebugFont::print(0, posY - 20 * a, 0xffff0000, "generator : %d", cnt[TYPE_GENERATOR]);
+	a++;
+	OX::DebugFont::print(0, posY - 20 * a, 0xffff8080, "___Create Object___");
+	a++;
 }
 
 
@@ -128,6 +172,20 @@ void Object::DrawAll()
 {
 	for (int i = 0; i < Object::TYPE::TYPE_MAX; i++)
 	{
+#ifdef _DEBUG
+		if (i == Object::TYPE::COLLIDER)
+		{
+			if (isDrawCollider_ == false)
+			{
+				continue;
+			}
+			else
+			{
+				//Renderer::GetDevice()->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+			}
+		}
+#endif
+
 		Object* pCurrent = headObj_[i];
 
 		for (;;)
@@ -146,6 +204,10 @@ void Object::DrawAll()
 				pCurrent = pCurrent->nextObj_;
 			}
 		}
+
+#ifdef _DEBUG
+		//Renderer::GetDevice()->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
+#endif
 	}
 
 }

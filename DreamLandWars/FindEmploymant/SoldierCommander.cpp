@@ -3,13 +3,14 @@
 #include "SoldierCommander.h"
 #include "soldier.h"
 #include "collision.h"
-#include "ObjectModel.h"
+#include "BasePoint.h"
 #include "ModelData.h"
 #include "Etc_Paramaters.h"
 #include "RelayPoint.h"
 
 const unsigned int SoldierCommander::kInterval_ShotBullet_ = 300;
-const float SoldierCommander::kLength_SoldierToSoldier = 10.0f;
+const float SoldierCommander::kLength_SoldierToSoldier_ = 2.5f;
+const float SoldierCommander::kSpeed_SoldierRun_ = 0.2f;
 
 SoldierCommander::SoldierCommander() : Object(Object::TYPE::TYPE_COMMANDER)
 {
@@ -25,7 +26,6 @@ SoldierCommander::SoldierCommander() : Object(Object::TYPE::TYPE_COMMANDER)
 	soldierDestinationList_.clear();
 	bulletTimer_ = 0;
 	isMarchedStart_ = false;
-	isActive_ = false;
 }
 
 SoldierCommander::~SoldierCommander()
@@ -83,6 +83,8 @@ void SoldierCommander::Init(SoldierGenerator* _soldierGenerator)
 
 	targetBasePoint_ = nullptr;
 
+	speed_ = kSpeed_SoldierRun_;
+
 	soldierList_.clear();
 
 	soldierDestinationList_.clear();
@@ -93,51 +95,59 @@ void SoldierCommander::Init(SoldierGenerator* _soldierGenerator)
 
 	isMarchedStart_ = false;
 
-	isActive_ = true;
+	SetActive(true);
 }
 
 void SoldierCommander::Uninit()
 {
-	currentOrder_ = Order::STOP;
-	soldierGenerator_ = nullptr;
-	front_ = D3DXVECTOR3(0, 0, 0);
-	right_ = D3DXVECTOR3(0, 0, 0);
-	speed_ = 0.0f;
-	targetRelayPoint_ = nullptr;
-	vectorToReleyPoint_ = D3DXVECTOR3(0, 0, 0);
-	targetBasePoint_ = nullptr;
+	for each (auto soldier in soldierList_)
+	{
+		soldier->Uninit();
+	}
 	soldierList_.clear();
+
 	soldierDestinationList_.clear();
-	bulletTimer_ = 0;
-	isMarchedStart_ = false;
-	isActive_ = false;
+
+	SetActive(false);
 }
 
 void SoldierCommander::Update()
 {
-	if (isActive_ == false)
-	{
-		return;
-	}
-
 	if (isMarchedStart_ == true)
 	{
-		if (IsCorrectFormLine() == false)
+		if (targetBasePoint_ == nullptr)
 		{
-			if (IsChangeOrder(Order::FORM) == true)
+			if (IsPathedTurnPoint() == true)
 			{
-				ChangeOrder(Order::FORM);
+				if (IsChangeOrder(Order::TURN) == true)
+				{
+					ChangeOrder(Order::TURN);
+				}
 			}
-		}
-		if (IsPathedTurnPoint() == true)
-		{
-			if (IsChangeOrder(Order::TURN) == true)
+			else if (IsCorrectFormLine() == false)
 			{
-				ChangeOrder(Order::TURN);
+				if (IsChangeOrder(Order::FORM) == true)
+				{
+					ChangeOrder(Order::FORM);
+				}
 			}
-		}
 
-		ExecOrder();
+			ExecOrder();
+
+			ChangeOrder(Order::RUN);
+		}
+		else
+		{
+			if (targetBasePoint_->IsBreak() == true)
+			{
+				Order_Death();
+				return;
+			}
+			else
+			{
+				ExecOrder();
+			}
+		}
 	}
 	else
 	{
@@ -165,7 +175,7 @@ void SoldierCommander::MarchedStart()
 	ChangeOrder(Order::RUN);
 }
 
-void SoldierCommander::ReceiveReport(Soldier::Report _report, Soldier* _reporter, ObjectModel* _findBasePoint)
+void SoldierCommander::ReceiveReport(Soldier::Report _report, Soldier* _reporter, BasePoint* _findBasePoint)
 {
 	switch (_report)
 	{
@@ -191,20 +201,30 @@ void SoldierCommander::ReceiveReport(Soldier::Report _report, Soldier* _reporter
 	}
 }
 
+D3DXVECTOR3 SoldierCommander::GetFront()
+{
+	return front_;
+}
+
+float SoldierCommander::GetSpeed()
+{
+	return speed_;
+}
+
+RelayPoint* SoldierCommander::GetTargetRelayPoint()
+{
+	return targetRelayPoint_;
+}
+
 SoldierCommander* SoldierCommander::FindNonActiveSoldierCommander()
 {
 	SoldierCommander* soldierCommander = (SoldierCommander*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_COMMANDER);
 
-	D3DXCreateSphere(, , , , , );
-
-	// case is zero create
 	if (soldierCommander != nullptr)
 	{
-		//SoldierCommander* next = (SoldierCommander*)soldierCommander->GetNextPointer();
-
 		for (;;)
 		{
-			if (soldierCommander->GetIsActive() == false)
+			if (soldierCommander->GetActive() == false)
 			{
 				break;
 			}
@@ -215,36 +235,6 @@ SoldierCommander* SoldierCommander::FindNonActiveSoldierCommander()
 			{
 				break;
 			}
-
-			//// 未使用なら兵士を生成して終了
-			//if (!pCurrent->GetInstance()) {
-			//	// 設定処理
-			//	pCurrent->SetSoldierCommander_private(position, front, group);
-
-			//	// 兵士を生成する
-			//	pCurrent->SpawnSoldier();
-
-			//	return pCurrent;
-			//}
-
-			//// 未使用領域が見つからなければ、新しく生成する
-			//if (pNext == nullptr) {
-			//	// 生成処理
-			//	pNext = SoldierCommander::CreateBuffer();
-
-			//	// 設定処理
-			//	pNext->SetSoldierCommander_private(position, front, group);
-
-			//	// 兵士を生成する
-			//	pNext->SpawnSoldier();
-
-			//	return pNext;
-			//}
-
-			//// ポインタをずらす
-			//pCurrent = pNext;
-			//pNext = (SoldierCommander*)pCurrent->GetNextPointer();
-
 		}
 	}
 
@@ -301,9 +291,9 @@ void SoldierCommander::Order_Run()
 
 	MovePosition(front_ * speed_);
 
-	for each (auto position in soldierDestinationList_)
+	for (unsigned int i = 0; i < soldierDestinationList_.size(); ++i)
 	{
-		position += front_ * speed_;
+		soldierDestinationList_[i] += front_ * speed_;
 	}
 }
 
@@ -331,7 +321,7 @@ void SoldierCommander::Order_Death()
 {
 	SoldierLine_Kill();
 
-	isActive_ = false;
+	SetActive(false);
 }
 
 void SoldierCommander::SoldierLine_Stop()
@@ -380,17 +370,17 @@ void SoldierCommander::SoldierLine_ShotBullet()
 
 void SoldierCommander::SoldierLine_AssaultBasePoint()
 {
-	for each (auto soldier in soldierList_)
+	for (unsigned int i = 0; i < soldierList_.size(); ++i)
 	{
-		soldier->AssaultBasePoint();
+		soldierList_[i]->AssaultBasePoint();
 	}
 }
 
 void SoldierCommander::SoldierLine_Kill()
 {
-	for (unsigned int i = soldierList_.size(); i == 0; --i)
+	for (unsigned int i = soldierList_.size(); i > 0; --i)
 	{
-		soldierList_[i - 1]->SelfDelete();
+		soldierList_[i - 1]->Death();
 	}
 }
 
@@ -400,7 +390,7 @@ void SoldierCommander::ReceiveReport_Death(Soldier* _soldier)
 
 	if (soldierList_.size() == 0)
 	{
-		isActive_ = false;
+		SetActive(false);
 	}
 	else
 	{
@@ -425,15 +415,17 @@ void SoldierCommander::ReceiveReport_FindEnemyUnit()
 	}
 }
 
-void SoldierCommander::ReceiveReport_FindEnemyBasePoint(ObjectModel* _enemyBasePoint)
+void SoldierCommander::ReceiveReport_FindEnemyBasePoint(BasePoint* _enemyBasePoint)
 {
 	if (IsChangeOrder(Order::ASSAULT_ENEMY_BASEPOINT) == true)
 	{
 		ChangeOrder(Order::ASSAULT_ENEMY_BASEPOINT);
 
+		targetBasePoint_ = _enemyBasePoint;
+
 		for each (auto soldier in soldierList_)
 		{
-			soldier->SetTargetBasePoint(_enemyBasePoint);
+			soldier->SetTargetBasePoint(targetBasePoint_);
 		}
 	}
 }
@@ -443,14 +435,6 @@ void SoldierCommander::ReceiveReport_BreakBasePoint()
 	if (IsChangeOrder(Order::DEATH) == true)
 	{
 		ChangeOrder(Order::DEATH);
-	}
-}
-
-void SoldierCommander::ReceiveReport_None()
-{
-	if (IsChangeOrder(Order::RUN) == true)
-	{
-		ChangeOrder(Order::RUN);
 	}
 }
 
@@ -478,10 +462,7 @@ bool SoldierCommander::IsChangeOrder(const Order& _changeOrder)
 			break;
 
 		case Order::RUN:
-			if ((currentOrder_ == Order::STOP) == true)
-			{
-				return true;
-			}
+			// RUN 状態には、毎フレームのExecOrder()後の強制変更以外には変更しない
 			break;
 
 		case Order::TURN:
@@ -538,9 +519,9 @@ void SoldierCommander::ChangeOrder(const Order& _changeOrder)
 
 		case Order::TURN:
 			SetPosition(FindPositionAfterTurned());
+			targetRelayPoint_ = targetRelayPoint_->GetNextRelayPoint(GetGroup());
 			front_ = FindFront();
 			right_ = FindRight();
-			targetRelayPoint_ = FindNextRelayPoint();
 			ResetDestinationToSoldier();
 			break;
 
@@ -597,13 +578,11 @@ void SoldierCommander::ResetBulletTimer(const unsigned int& _time)
 
 bool SoldierCommander::IsCorrectFormLine()
 {
-	const float kErrorRange = 1.0f;
-
 	for (unsigned int i = 0; i < soldierList_.size(); ++i)
 	{
 		float distance = Distance3D(soldierList_[i]->GetPosition(), soldierDestinationList_[i]);
 
-		if (distance > kErrorRange)
+		if (distance > 0)
 		{
 			return false;
 		}
@@ -614,14 +593,20 @@ bool SoldierCommander::IsCorrectFormLine()
 
 void SoldierCommander::ResetDestinationToSoldier()
 {
-	const float lengthSoldierLine = (soldierList_.size() - 1) * kLength_SoldierToSoldier;
-	D3DXVECTOR3 leftEdgePosition = GetPosition() - right_ * lengthSoldierLine * 0.5f;
-	D3DXVECTOR3 soldierDestination = leftEdgePosition;
+	float maxLength = kLength_SoldierToSoldier_ * 8;
+	float soldierToSoldier = maxLength / (soldierList_.size() + 1);
+
+	D3DXVECTOR3 destination = soldierList_.size() % 2 != 0
+		? GetPosition()
+		: GetPosition() - (right_ * soldierToSoldier * 0.5f);
 
 	for (unsigned int i = 0; i < soldierList_.size(); ++i)
 	{
-		soldierDestination += right_ * kLength_SoldierToSoldier;
-		soldierDestinationList_[i] = soldierDestination;
+		destination = i % 2 != 0
+			? destination + (right_ * soldierToSoldier * (float)i)
+			: destination - (right_ * soldierToSoldier * (float)i);
+
+		soldierDestinationList_[i] = destination;
 	}
 }
 
@@ -655,7 +640,7 @@ D3DXVECTOR3 SoldierCommander::FindPositionAfterTurned()
 {
 	D3DXVECTOR3 position(0.0f, 0.0f, 0.0f);
 	D3DXVECTOR3 nextPosition = targetRelayPoint_->GetNextRelayPoint(GetGroup())->GetPosition();
-	float mostNearDistanceNextRelayPointFromOneSoldier = -1;
+	float mostFrontSoldierPosZ = -1;
 
 	position.x = targetRelayPoint_->GetPosition().x;
 	position.y = targetRelayPoint_->GetPosition().y;
@@ -664,9 +649,9 @@ D3DXVECTOR3 SoldierCommander::FindPositionAfterTurned()
 	{
 		float distance = Distance3D(nextPosition, soldier->GetPosition());
 
-		if (mostNearDistanceNextRelayPointFromOneSoldier == -1 || mostNearDistanceNextRelayPointFromOneSoldier > distance)
+		if (mostFrontSoldierPosZ == -1 || mostFrontSoldierPosZ > distance)
 		{
-			mostNearDistanceNextRelayPointFromOneSoldier = distance;
+			mostFrontSoldierPosZ = distance;
 			position.z = soldier->GetPosition().z;
 		}
 	}
@@ -674,18 +659,13 @@ D3DXVECTOR3 SoldierCommander::FindPositionAfterTurned()
 	return position;
 }
 
-RelayPoint* SoldierCommander::FindNextRelayPoint()
-{
-	return targetRelayPoint_->GetNextRelayPoint(GetGroup());
-}
-
 D3DXVECTOR3 SoldierCommander::FindFront()
 {
 	D3DXVECTOR3 front;
-	D3DXVECTOR3 currentRelayPosition = targetRelayPoint_->GetPosition();
-	D3DXVECTOR3 nextRelayPosition = targetRelayPoint_->GetNextRelayPoint(GetGroup())->GetPosition();
+	D3DXVECTOR3 currentPosition = GetPosition();
+	D3DXVECTOR3 destination = targetRelayPoint_->GetPosition();
 
-	front = nextRelayPosition - currentRelayPosition;
+	front = destination - currentPosition;
 	D3DXVec3Normalize(&front, &front);
 
 	return front;
@@ -702,4 +682,3 @@ D3DXVECTOR3 SoldierCommander::FindRight()
 
 	return right;
 }
-

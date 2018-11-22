@@ -48,14 +48,14 @@ public:
 	Player(Object::TYPE type, const Player::Character& character);
 	~Player();
 
-	static Player* Create(const D3DXVECTOR3& position, const Player::Character& character);
+	static Player* Create(const D3DXVECTOR3& position, const Player::Character& character, const Object::GROUP& _group);
 
-	void Init(const D3DXVECTOR3& position, const Player::Character& character);
+	void Init(const D3DXVECTOR3& position, const Player::Character& character, const Object::GROUP& _group);
 	void Uninit();
 	void Update();
 	void Draw();
 
-	void ReceiveDamage(const float& _damage);
+	void ReceiveDamage(const float& _damage, Unit* _unit = nullptr);
 
 	void SetBehave(const Player::Behave& _behave);
 	Player::Behave GetBehave();
@@ -71,8 +71,6 @@ public:
 	float GetDrawShotRange();
 
 	Camera* GetCamera();
-
-	Collider* GetObjectCollider();
 
 private:
 	// method
@@ -195,9 +193,6 @@ private:
 	float drawShotRange_;
 	float drawShotLength_;
 	float breakPower_;
-
-	Collider* objectCollider_;
-	
 
 
 public:

@@ -147,8 +147,6 @@ Player::Player(Object::TYPE type, const Player::Character& character) : Unit(typ
 	drawShotLength_ = 0.0f;
 
 	breakPower_ = 0.0f;
-
-	objectCollider_ = nullptr;
 }
 
 Player::~Player()
@@ -156,15 +154,15 @@ Player::~Player()
 	Uninit();
 }
 
- Player* Player::Create(const D3DXVECTOR3& position, const Player::Character& character)
+ Player* Player::Create(const D3DXVECTOR3& position, const Player::Character& character, const Object::GROUP& _group)
 {
 	Player* player = new Player(Object::TYPE_MODEL_PLAYER, character);
-	player->Init(position, character);
+	player->Init(position, character, _group);
 
 	return player;
 }
 
-void Player::Init(const D3DXVECTOR3& position, const Player::Character& character)
+void Player::Init(const D3DXVECTOR3& position, const Player::Character& character, const Object::GROUP& _group)
 {
 	// create controller
 	if (controller_ == nullptr)
@@ -172,7 +170,7 @@ void Player::Init(const D3DXVECTOR3& position, const Player::Character& characte
 		controller_ = Controller::Create(Controller::Device::KEYBOARDANDMOUSE);
 	}
 
-	Unit::Init(position);
+	Unit::Init(position, _group);
 
 	// create model
 	//const std::string modelPass = FindModelPass(character);
@@ -195,8 +193,6 @@ void Player::Init(const D3DXVECTOR3& position, const Player::Character& characte
 	startRotate_ = GetFront();
 	endRotate_ = GetFront();
 	countTime_Rotate_ = 1.0f;
-
-	objectCollider_ = Collider::Create(this);
 }
 
 void Player::Uninit(void)
@@ -206,14 +202,6 @@ void Player::Uninit(void)
 		camera_->Release();
 		camera_ = nullptr;
 	}
-
-	if (objectCollider_ != nullptr)
-	{
-		objectCollider_->Release();
-		objectCollider_ = nullptr;
-	}
-
-	Unit::Uninit();
 
 	//if (controller_ != nullptr)
 	//{
@@ -420,7 +408,7 @@ void Player::TempInput()
 
 }
 
-void Player::ReceiveDamage(const float& _damage)
+void Player::ReceiveDamage(const float& _damage, Unit* _unit)
 {
 	currentHp_ -= _damage;
 
@@ -428,7 +416,6 @@ void Player::ReceiveDamage(const float& _damage)
 	{
 		// 死亡処理
 	}
-
 }
 
 bool Player::IsRun()
@@ -817,9 +804,9 @@ void Player::Create_DrawLine(const D3DXVECTOR3& _cursorPosition_3D)
 
 //#ifdef _DEBUG
 //	// デバック表示
-//	OX::DebugFont::print(0, 20, 0xff00ff00, "PlayerPos.x         : %f", ObjectModel::GetPosition().x);
-//	OX::DebugFont::print(0, 40, 0xff00ff00, "PlayerPos.y         : %f", ObjectModel::GetPosition().y);
-//	OX::DebugFont::print(0, 60, 0xff00ff00, "PlayerPos.z         : %f", ObjectModel::GetPosition().z);
+//	OX::DebugFont::print(0, 20, 0xff00ff00, "PlayerPos.x         : %f", BasePoint::GetPosition().x);
+//	OX::DebugFont::print(0, 40, 0xff00ff00, "PlayerPos.y         : %f", BasePoint::GetPosition().y);
+//	OX::DebugFont::print(0, 60, 0xff00ff00, "PlayerPos.z         : %f", BasePoint::GetPosition().z);
 //	OX::DebugFont::print(0, 80, 0xff00ff00, "mousePos.x          : %f", mousePos.x);
 //	OX::DebugFont::print(0, 100, 0xff00ff00, "mousePos.y          : %f", mousePos.y);
 //	OX::DebugFont::print(0, 120, 0xff00ff00, "mousePos.z          : %f", mousePos.z);
@@ -851,27 +838,22 @@ void Player::Cancel_DrawShot()
 
 void Player::Break_BasePoint()
 {
-	Tower* pTower = CollisionCursorToBasePoint();
-	D3DXVECTOR3 position(0, 0, 0);
+	Tower* tower = CollisionCursorToBasePoint();
 
-	if (pTower == nullptr)
+	if (tower != nullptr)
 	{
-		return;
+		D3DXVECTOR3 front(0, 0, 0);
+
+		front = tower->GetPosition();
+
+		tower->ReceiveDamage(breakPower_, this);
+
+		SetBehave(Behave::BREAK_BASEPOINT);
+
+		SetRotateToPosition(front);
+
+		SetCoolTime(coolTimeBreakBasePoint_);
 	}
-
-	position = pTower->GetPosition();
-
-	if (pTower->BrowTower(breakPower_))
-	{
-		// 壊した時の処理
-
-	}
-
-	SetBehave(Behave::BREAK_BASEPOINT);
-
-	SetRotateToPosition(position);
-
-	SetCoolTime(coolTimeBreakBasePoint_);
 }
 
 void Player::Move()
@@ -1021,56 +1003,51 @@ bool Player::CollisionCursorToPlayer(const D3DXVECTOR3& _cursorPosition_3D)
 
 Tower* Player::CollisionCursorToBasePoint()
 {
-	D3DXVECTOR3 P1, P2;
+	Tower* tower = (Tower*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_MODEL_TOWER);
 
-	// カーソル座標の取得
-	POINT cursorPos;
-	D3DXVECTOR3 mousePos;
-	GetCursorPos(&cursorPos);
-	ScreenToClient(GetHWnd(), &cursorPos);
+	if (tower != nullptr)
+	{
+		for (;;)
+		{
+			if (tower->GetGroup() != GetGroup())
+			{
+				if (tower->IsBrowedRange(this) == true)
+				{
+					POINT cursorPosition2D;
+					GetCursorPos(&cursorPosition2D);
+					ScreenToClient(GetHWnd(), &cursorPosition2D);
 
-	Tower* pTower = (Tower*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_MODEL_TOWER);
+					D3DXVECTOR3 cursolPosition3D;
+					cursolPosition3D.x = (float)cursorPosition2D.x;
+					cursolPosition3D.y = (float)cursorPosition2D.y;
 
-	if (pTower == nullptr) return nullptr;
+					for (int i = 9900000; i < 10000000; i++)
+					{
+						// 【座標の変換】カーソル座標 → 3D座標
+						//transScreenToWorld(&mousePos, pDevice, cursorPos.x, cursorPos.y, (1.f / 10000000) * i, &camera_->GetMtxView(), &camera_->GetMtxProj());
+						cursolPosition3D.z = (float)(1. / 10000000) * i;
+						D3DXVec3TransformCoord(&cursolPosition3D, &cursolPosition3D, &inverseMatrix_);
 
-	Tower* pCurrent = pTower;
-	Tower* pNext    = (Tower*)pTower->GetNextPointer();
-
-	for (;;) {
-		// 敵グループの塔かどうか
-		if (pCurrent->GetGroup() != GetGroup()) {
-
-			// 殴れる範囲内にいるかどうか
-			if (pCurrent->CollisionBrowRange(GetPosition())) {
-
-				// 座標変換のために逆行列を掛ける
-				for (int i = 9900000; i < 10000000; i++) {
-
-					// 【座標の変換】カーソル座標 → 3D座標
-					//transScreenToWorld(&mousePos, pDevice, cursorPos.x, cursorPos.y, (1.f / 10000000) * i, &camera_->GetMtxView(), &camera_->GetMtxProj());
-					mousePos.x = (float)cursorPos.x;
-					mousePos.y = (float)cursorPos.y;
-					mousePos.z = (float)(1. / 10000000) * i;
-					D3DXVec3TransformCoord(&mousePos, &mousePos, &inverseMatrix_);
-
-					// 【当たり判定】カーソルと"HOLD"
-					if (CalcSphereRayCollision(pCurrent->GetHold()->GetRadius(), &pCurrent->GetHold()->GetPosition(), &mousePos, &camera_->GetVecZ_UnNormal(), nullptr, nullptr)) {
-						return pCurrent;
+						// 【当たり判定】カーソルと"HOLD"
+						//if (CalcSphereRayCollision(tower->GetHold()->GetRadius(), &tower->GetHold()->GetPosition(), &mousePos, &camera_->GetVecZ_UnNormal(), nullptr, nullptr))
+						if (tower->GetObjectCollider()->Collision(cursolPosition3D) == true)
+						{
+							break;
+						}
 					}
 				}
+			}
 
-				return nullptr;
+			tower = (Tower*)tower->GetNextPointer();
 
+			if (tower == nullptr)
+			{
+				break;
 			}
 		}
-
-		pCurrent = pNext;
-
-		if (pCurrent == nullptr) return nullptr;
-
-		pNext = (Tower*)pCurrent->GetNextPointer();
 	}
 
+	return tower;
 }
 
 void Player::CollisionTower()
@@ -1135,86 +1112,86 @@ void Player::CollisionCastle()
 
 void Player::CollisionWall()
 {
-	Wall* pCurrent = (Wall*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_3D_WALL);
+	//Wall* pCurrent = (Wall*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_3D_WALL);
 
-	if (pCurrent == nullptr) return;
+	//if (pCurrent == nullptr) return;
 
-	Wall* pNext = (Wall*)pCurrent->GetNextPointer();
+	//Wall* pNext = (Wall*)pCurrent->GetNextPointer();
 
-	for (int i = 0; i < 4; i++)
-	{
-		// Left Wall
-		if (GetPosition().x - GetRadius() < pCurrent->GetPosition_RIGHT().x)
-		{
-			D3DXVECTOR3 pos = GetPosition();
-			SetPosition(D3DXVECTOR3(pCurrent->GetPosition_RIGHT().x + GetRadius(), pos.y, pos.z));
+	//for (int i = 0; i < 4; i++)
+	//{
+	//	// Left Wall
+	//	if (GetPosition().x - GetRadius() < pCurrent->GetPosition_RIGHT().x)
+	//	{
+	//		D3DXVECTOR3 pos = GetPosition();
+	//		SetPosition(D3DXVECTOR3(pCurrent->GetPosition_RIGHT().x + GetRadius(), pos.y, pos.z));
 
-			return;
-		}
+	//		return;
+	//	}
 
-		pCurrent = pNext;
-		pNext = (Wall*)pCurrent->GetNextPointer();
+	//	pCurrent = pNext;
+	//	pNext = (Wall*)pCurrent->GetNextPointer();
 
-		// Right Wall
-		if (GetPosition().x + GetRadius() > pCurrent->GetPosition_LEFT().x)
-		{
-			D3DXVECTOR3 pos = GetPosition();
-			SetPosition(D3DXVECTOR3(pCurrent->GetPosition_LEFT().x - GetRadius(), pos.y, pos.z));
+	//	// Right Wall
+	//	if (GetPosition().x + GetRadius() > pCurrent->GetPosition_LEFT().x)
+	//	{
+	//		D3DXVECTOR3 pos = GetPosition();
+	//		SetPosition(D3DXVECTOR3(pCurrent->GetPosition_LEFT().x - GetRadius(), pos.y, pos.z));
 
-			return;
-		}
+	//		return;
+	//	}
 
-		pCurrent = pNext;
-		pNext = (Wall*)pCurrent->GetNextPointer();
+	//	pCurrent = pNext;
+	//	pNext = (Wall*)pCurrent->GetNextPointer();
 
 
-		// Front Wall
-		if (GetPosition().z - GetRadius() < pCurrent->GetPosition_BACK().z)
-		{
-			D3DXVECTOR3 pos = GetPosition();
-			SetPosition(D3DXVECTOR3(pos.x, pos.y, pCurrent->GetPosition_BACK().z + GetRadius()));
+	//	// Front Wall
+	//	if (GetPosition().z - GetRadius() < pCurrent->GetPosition_BACK().z)
+	//	{
+	//		D3DXVECTOR3 pos = GetPosition();
+	//		SetPosition(D3DXVECTOR3(pos.x, pos.y, pCurrent->GetPosition_BACK().z + GetRadius()));
 
-			return;
-		}
+	//		return;
+	//	}
 
-		pCurrent = pNext;
-		pNext = (Wall*)pCurrent->GetNextPointer();
+	//	pCurrent = pNext;
+	//	pNext = (Wall*)pCurrent->GetNextPointer();
 
-		// Back Wall
-		if (GetPosition().z + GetRadius() > pCurrent->GetPosition_FRONT().z)
-		{
-			D3DXVECTOR3 pos = GetPosition();
-			SetPosition(D3DXVECTOR3(pos.x, pos.y, pCurrent->GetPosition_FRONT().z - GetRadius()));
+	//	// Back Wall
+	//	if (GetPosition().z + GetRadius() > pCurrent->GetPosition_FRONT().z)
+	//	{
+	//		D3DXVECTOR3 pos = GetPosition();
+	//		SetPosition(D3DXVECTOR3(pos.x, pos.y, pCurrent->GetPosition_FRONT().z - GetRadius()));
 
-			return;
-		}
-		else
-			return;
+	//		return;
+	//	}
+	//	else
+	//		return;
 
-		//D3DXVECTOR3 collisionPoint;
+	//	//D3DXVECTOR3 collisionPoint;
 
-		//if (CalcParticlePlaneCollision(GetRadius(), &prePosition_, &GetPosition(), &pCurrent->GetNormal_RIGHT(), &pCurrent->GetPosition_RIGHT(), nullptr, &collisionPoint))
-		//{
-		//	D3DXVECTOR3 moveVec = GetPosition() - prePosition_;
-		//	D3DXVECTOR3 vec;
-		//	calcWallScratchVector(&vec, moveVec, pCurrent->GetNormal_RIGHT());
+	//	//if (CalcParticlePlaneCollision(GetRadius(), &prePosition_, &GetPosition(), &pCurrent->GetNormal_RIGHT(), &pCurrent->GetPosition_RIGHT(), nullptr, &collisionPoint))
+	//	//{
+	//	//	D3DXVECTOR3 moveVec = GetPosition() - prePosition_;
+	//	//	D3DXVECTOR3 vec;
+	//	//	calcWallScratchVector(&vec, moveVec, pCurrent->GetNormal_RIGHT());
 
-		//	D3DXVECTOR3 vec = GetPosition() - pCurrent->GetPosition();
-		//	D3DXVec3Normalize(&vec, &vec);
-		//	SetPosition(D3DXVECTOR3(pCurrent->GetPosition().x + vec.x * (GetHalfSize().x + pCurrent->GetHalfSize().x),
-		//							0,
-		//							pCurrent->GetPosition().z + vec.z * (GetHalfSize().x + pCurrent->GetHalfSize().x)));
+	//	//	D3DXVECTOR3 vec = GetPosition() - pCurrent->GetPosition();
+	//	//	D3DXVec3Normalize(&vec, &vec);
+	//	//	SetPosition(D3DXVECTOR3(pCurrent->GetPosition().x + vec.x * (GetHalfSize().x + pCurrent->GetHalfSize().x),
+	//	//							0,
+	//	//							pCurrent->GetPosition().z + vec.z * (GetHalfSize().x + pCurrent->GetHalfSize().x)));
 
-		//	return;
-		//}
+	//	//	return;
+	//	//}
 
-		//if (pNext == nullptr) return;
+	//	//if (pNext == nullptr) return;
 
-		//pCurrent = pNext;
-		//pNext = (Wall*)pCurrent->GetNextPointer();
-	}
+	//	//pCurrent = pNext;
+	//	//pNext = (Wall*)pCurrent->GetNextPointer();
+	//}
 
-	return;
+	//return;
 }
 
 void Player::CollisionField()
@@ -1317,86 +1294,86 @@ void Player::AroundParts()
 	//m_Part[8] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_LLEG);
 	//m_Part[9] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_LLEG_EDGE);
 
-	m_Part[0]->SetParent(nullptr);		// BODY
-	m_Part[1]->SetParent(m_Part[0]);	// HEAD
-	m_Part[2]->SetParent(m_Part[0]);	// RARM
-	m_Part[3]->SetParent(m_Part[2]);	// REDGE
-	m_Part[4]->SetParent(m_Part[0]);	// LARM
-	m_Part[5]->SetParent(m_Part[4]);	// LEDGE
-	m_Part[6]->SetParent(m_Part[0]);	// RLEG
-	m_Part[7]->SetParent(m_Part[6]);	// REDGE
-	m_Part[8]->SetParent(m_Part[0]);	// LLEG
-	m_Part[9]->SetParent(m_Part[8]);	// LEDGE
+	//m_Part[0]->SetParent(nullptr);		// BODY
+	//m_Part[1]->SetParent(m_Part[0]);	// HEAD
+	//m_Part[2]->SetParent(m_Part[0]);	// RARM
+	//m_Part[3]->SetParent(m_Part[2]);	// REDGE
+	//m_Part[4]->SetParent(m_Part[0]);	// LARM
+	//m_Part[5]->SetParent(m_Part[4]);	// LEDGE
+	//m_Part[6]->SetParent(m_Part[0]);	// RLEG
+	//m_Part[7]->SetParent(m_Part[6]);	// REDGE
+	//m_Part[8]->SetParent(m_Part[0]);	// LLEG
+	//m_Part[9]->SetParent(m_Part[8]);	// LEDGE
 
-										// BODY
-	D3DXVECTOR3 pos = D3DXVECTOR3(0, 20, 0);
-	D3DXVECTOR3 rotate = D3DXVECTOR3(0, 0, 0);
-	m_Part[0]->SetPosition(pos);
-	m_Part[0]->SetRotate(rotate);
+	//									// BODY
+	//D3DXVECTOR3 pos = D3DXVECTOR3(0, 20, 0);
+	//D3DXVECTOR3 rotate = D3DXVECTOR3(0, 0, 0);
+	//m_Part[0]->SetPosition(pos);
+	//m_Part[0]->SetRotate(rotate);
 
-	// HEAD
-	pos = D3DXVECTOR3(0, m_Part[1]->GetParent()->GetSize().y * 0.75f, m_Part[1]->GetHalfSize().z * 0.5f);
-	m_Part[1]->SetPosition(pos);
+	//// HEAD
+	//pos = D3DXVECTOR3(0, m_Part[1]->GetParent()->GetSize().y * 0.75f, m_Part[1]->GetHalfSize().z * 0.5f);
+	//m_Part[1]->SetPosition(pos);
 
-	// RARM
-	pos = D3DXVECTOR3(m_Part[2]->GetParent()->GetHalfSize().x, m_Part[2]->GetParent()->GetHalfSize().y, 0);
-	//rotate = D3DXVECTOR3(0, 0, 0.81f);
-	m_Part[2]->SetPosition(pos);
-	m_Part[2]->SetRotate(rotate);
+	//// RARM
+	//pos = D3DXVECTOR3(m_Part[2]->GetParent()->GetHalfSize().x, m_Part[2]->GetParent()->GetHalfSize().y, 0);
+	////rotate = D3DXVECTOR3(0, 0, 0.81f);
+	//m_Part[2]->SetPosition(pos);
+	//m_Part[2]->SetRotate(rotate);
 
-	// REDGE
-	pos = D3DXVECTOR3(m_Part[3]->GetParent()->GetSize().x, 0, 0);
-	//rotate = D3DXVECTOR3(0, 0, 1.68f);
-	m_Part[3]->SetPosition(pos);
-	m_Part[3]->SetRotate(rotate);
+	//// REDGE
+	//pos = D3DXVECTOR3(m_Part[3]->GetParent()->GetSize().x, 0, 0);
+	////rotate = D3DXVECTOR3(0, 0, 1.68f);
+	//m_Part[3]->SetPosition(pos);
+	//m_Part[3]->SetRotate(rotate);
 
-	// LARM
-	pos = D3DXVECTOR3(-m_Part[4]->GetParent()->GetHalfSize().x, m_Part[4]->GetParent()->GetHalfSize().y, 0);
-	//rotate = D3DXVECTOR3(0, 0, 0.9f);
-	m_Part[4]->SetPosition(pos);
-	m_Part[4]->SetRotate(rotate);
+	//// LARM
+	//pos = D3DXVECTOR3(-m_Part[4]->GetParent()->GetHalfSize().x, m_Part[4]->GetParent()->GetHalfSize().y, 0);
+	////rotate = D3DXVECTOR3(0, 0, 0.9f);
+	//m_Part[4]->SetPosition(pos);
+	//m_Part[4]->SetRotate(rotate);
 
-	// LEDGE
-	pos = D3DXVECTOR3(-m_Part[5]->GetParent()->GetSize().x, 0, 0);
-	//rotate = D3DXVECTOR3(0, 0, 1.56f);
-	m_Part[5]->SetPosition(pos);
-	m_Part[5]->SetRotate(rotate);
+	//// LEDGE
+	//pos = D3DXVECTOR3(-m_Part[5]->GetParent()->GetSize().x, 0, 0);
+	////rotate = D3DXVECTOR3(0, 0, 1.56f);
+	//m_Part[5]->SetPosition(pos);
+	//m_Part[5]->SetRotate(rotate);
 
-	// RLEG
-	pos = D3DXVECTOR3(m_Part[6]->GetParent()->GetHalfSize().x, -m_Part[6]->GetParent()->GetHalfSize().y * 0.5f, 0);
-	//rotate = D3DXVECTOR3(0, 0, 0.33f);
-	m_Part[6]->SetPosition(pos);
-	m_Part[6]->SetRotate(rotate);
+	//// RLEG
+	//pos = D3DXVECTOR3(m_Part[6]->GetParent()->GetHalfSize().x, -m_Part[6]->GetParent()->GetHalfSize().y * 0.5f, 0);
+	////rotate = D3DXVECTOR3(0, 0, 0.33f);
+	//m_Part[6]->SetPosition(pos);
+	//m_Part[6]->SetRotate(rotate);
 
-	// REDGE
-	pos = D3DXVECTOR3(0, -m_Part[7]->GetParent()->GetSize().y, 0);
-	m_Part[7]->SetPosition(pos);
+	//// REDGE
+	//pos = D3DXVECTOR3(0, -m_Part[7]->GetParent()->GetSize().y, 0);
+	//m_Part[7]->SetPosition(pos);
 
-	// LLEG
-	pos = D3DXVECTOR3(-m_Part[8]->GetParent()->GetHalfSize().x, -m_Part[8]->GetParent()->GetHalfSize().y * 0.5f, 0);
-	//rotate = D3DXVECTOR3(0, 0, -0.15f);
-	m_Part[8]->SetPosition(pos);
-	m_Part[8]->SetRotate(rotate);
+	//// LLEG
+	//pos = D3DXVECTOR3(-m_Part[8]->GetParent()->GetHalfSize().x, -m_Part[8]->GetParent()->GetHalfSize().y * 0.5f, 0);
+	////rotate = D3DXVECTOR3(0, 0, -0.15f);
+	//m_Part[8]->SetPosition(pos);
+	//m_Part[8]->SetRotate(rotate);
 
-	// LEDGE
-	pos = D3DXVECTOR3(0, -m_Part[9]->GetParent()->GetSize().y, 0);
-	m_Part[9]->SetPosition(pos);
+	//// LEDGE
+	//pos = D3DXVECTOR3(0, -m_Part[9]->GetParent()->GetSize().y, 0);
+	//m_Part[9]->SetPosition(pos);
 
 
-	// Initialize Key Frame
-	g_KeyFrameWalk[0].Frame = 20;
-	g_KeyFrameWalk[1].Frame = 20;
+	//// Initialize Key Frame
+	//g_KeyFrameWalk[0].Frame = 20;
+	//g_KeyFrameWalk[1].Frame = 20;
 
-	for (int j = 0; j < KEY_MAX; j++) {
-		for (int i = 0; i < 10; i++) {
-			g_KeyFrameWalk[j].Key[i].Position = m_Part[i]->GetPosition();
-			//g_KeyFrameWalk[j].Key[i].Rotation = m_Part[i]->GetRotate();
-		}
-	}
+	//for (int j = 0; j < KEY_MAX; j++) {
+	//	for (int i = 0; i < 10; i++) {
+	//		g_KeyFrameWalk[j].Key[i].Position = m_Part[i]->GetPosition();
+	//		//g_KeyFrameWalk[j].Key[i].Rotation = m_Part[i]->GetRotate();
+	//	}
+	//}
 
-	m_KeyFrame = g_KeyFrameWalk;
-	m_Key = 0;
-	m_Frame = 0;
+	//m_KeyFrame = g_KeyFrameWalk;
+	//m_Key = 0;
+	//m_Frame = 0;
 }
 
 D3DXVECTOR3 Player::FindCursorPosition_3D()

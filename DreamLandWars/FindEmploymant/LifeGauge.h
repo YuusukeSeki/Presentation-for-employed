@@ -8,7 +8,7 @@
 
 #include "main.h"
 #include "ObjectBillboard.h"
-#include "ObjectModel.h"
+#include "BasePoint.h"
 
 class Camera;
 
@@ -21,8 +21,8 @@ public:
 	~LifeGauge();
 
 	//----- 基本的な関数 -----
-	static LifeGauge* Create(ObjectModel* pObjModel, Camera* pCamera);
-	void Init(ObjectModel* pObjModel, Camera* pCamera);
+	static LifeGauge* Create(BasePoint* pObjModel, Camera* pCamera);
+	void Init(BasePoint* pObjModel, Camera* pCamera);
 	void Uninit(void);
 	void Update(void);
 	void Draw(void);
@@ -37,7 +37,7 @@ public:
 
 private:
 	//----- データ -----
-	ObjectModel* m_pParent;	// 親モデル
+	BasePoint* m_pParent;	// 親モデル
 
 	float m_initLife;		// 初期体力
 	float m_initWidth;		// ポリゴンの初期幅

@@ -2,8 +2,10 @@
 // data   : 20181115
 #include "Unit.h"
 #include "collision.h"
+#include "Part.h"
+#include "Collider.h"
 
-Unit::Unit(const Object::TYPE& _type)
+Unit::Unit(const Object::TYPE& _type) : Object(_type)
 {
 	objectParts_.clear();
 
@@ -13,30 +15,39 @@ Unit::Unit(const Object::TYPE& _type)
 	radius_ = 0.0f;
 	color_.color = D3DCOLOR_RGBA(255, 255, 255, 255);
 	front_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+	isUpdateWorldMatrix_ = false;
+
+	objectCollider_ = Collider::Create(this);
 }
 
 Unit::~Unit()
 {
-	Uninit();
+
 }
 
 void Unit::Release()
 {
+	objectParts_.clear();
+
+	Object::Release();
+}
+
+void Unit::ReleaseParts()
+{
 	for each (auto part in objectParts_)
 	{
-		if (part.second != nullptr)
-		{
-			part.second->Release();
-			part.second = nullptr;
-		}
+		part.second->Release();
 	}
 
 	objectParts_.clear();
 }
 
-void Unit::Init(const D3DXVECTOR3& _position)
+void Unit::Init(const D3DXVECTOR3& _position, const Object::GROUP& _group)
 {
 	SetPosition(_position);
+
+	SetGroup(_group);
 
 	rotate_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	scale_ = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
@@ -47,16 +58,24 @@ void Unit::Init(const D3DXVECTOR3& _position)
 	ResetRadius();
 
 	UpdateWorldMatrix();
+
+	if (objectCollider_ == nullptr)
+	{
+		objectCollider_ = Collider::Create(this);
+	}
+	else
+	{
+		objectCollider_->SetParentUnit(this);
+	}
+
+#ifdef _DEBUG
+	objectCollider_->SetColor(1.0f, 1.0f, 1.0f, 0.75f);
+#endif
 }
 
-void Unit::Uninit(void)
+void Unit::Uninit()
 {
-
-}
-
-void Unit::Update(void)
-{
-
+	SetActive(false);
 }
 
 void Unit::Draw(void)
@@ -65,8 +84,34 @@ void Unit::Draw(void)
 	{
 		UpdateWorldMatrix();
 
+		for each (auto part in objectParts_)
+		{
+			part.second->SetUpdateWorldMatrix(true);
+		}
+
 		isUpdateWorldMatrix_ = false;
 	}
+}
+
+Part* Unit::AddPart(const std::string& _key, const std::string& _fileName)
+{
+	float halfSize;
+	Part* part = Part::Create(D3DXVECTOR3(0.0f, 0.0f, 0.0f), _fileName, &worldMatrix_);
+
+	part->SetFront(front_);
+	part->SetColor(color_.color);
+	part->SetGroup(GetGroup());
+	part->SetActive(GetActive());
+
+	objectParts_.emplace(_key, part);
+
+	ResetRadius();
+
+	halfSize = GetHalfSize().x < GetHalfSize().z ? GetHalfSize().x : GetHalfSize().z;
+
+	objectCollider_->SetRadius(halfSize);
+
+	return part;
 }
 
 void Unit::SetPosition(const D3DXVECTOR3& _position)
@@ -76,9 +121,25 @@ void Unit::SetPosition(const D3DXVECTOR3& _position)
 	isUpdateWorldMatrix_ = true;
 }
 
+void Unit::SetPosition(const D3DXVECTOR3& _position, const D3DXVECTOR3& _front)
+{
+	Object::SetPosition(_position);
+
+	front_ = _front;
+
+	isUpdateWorldMatrix_ = true;
+}
+
 void Unit::MovePosition(const D3DXVECTOR3& _move)
 {
 	Object::MovePosition(_move);
+
+	isUpdateWorldMatrix_ = true;
+}
+
+void Unit::MovePosition(const D3DXVECTOR3& _moveVector, const float& _speed)
+{
+	Object::MovePosition(_moveVector * _speed);
 
 	isUpdateWorldMatrix_ = true;
 }
@@ -194,6 +255,11 @@ void Unit::MoveColor(const int& _r, const int& _g, const int& _b, const int& _a)
 	}
 }
 
+Unit::Color Unit::GetColor()
+{
+	return color_;
+}
+
 void Unit::SetRotateToPosition(const D3DXVECTOR3& _position)
 {
 	float angle;
@@ -239,15 +305,15 @@ void Unit::SetActive(const bool& _isActive)
 
 	for each (auto part in objectParts_)
 	{
-		part.second->SetActive(GetActive());
+		part.second->SetActive(_isActive);
 	}
+
+	objectCollider_->SetActive(_isActive);
 }
 
-void Unit::AddPart(const std::string& _key, const std::string& _fileName)
+Collider* Unit::GetObjectCollider()
 {
-	Part* part = Part::Create(GetPosition(), _fileName, &worldMatrix_);
-
-	objectParts_.emplace(_key, part);
+	return objectCollider_;
 }
 
 void Unit::ErasePart(const std::string& _key)
@@ -280,6 +346,11 @@ Part* Unit::GetPart(const std::string& _key)
 	return objectParts_[_key];
 }
 
+std::map<std::string, Part*>* Unit::GetParts()
+{
+	return &objectParts_;
+}
+
 void Unit::ResetRadius()
 {
 	float radius = 0.0f;
@@ -291,20 +362,20 @@ void Unit::ResetRadius()
 	{
 		if (first == true)
 		{
-			minPosition = part.second->GetPosition();
-			maxPosition = part.second->GetPosition();
+			minPosition = part.second->GetMinVertex();
+			maxPosition = part.second->GetMaxVertex();
 
 			first = false;
 		}
 		else
 		{
-			minPosition.x = part.second->GetPosition().x < minPosition.x ? part.second->GetPosition().x : minPosition.x;
-			minPosition.y = part.second->GetPosition().y < minPosition.y ? part.second->GetPosition().y : minPosition.y;
-			minPosition.z = part.second->GetPosition().z < minPosition.z ? part.second->GetPosition().z : minPosition.z;
+			minPosition.x = part.second->GetMinVertex().x < minPosition.x ? part.second->GetMinVertex().x : minPosition.x;
+			minPosition.y = part.second->GetMinVertex().y < minPosition.y ? part.second->GetMinVertex().y : minPosition.y;
+			minPosition.z = part.second->GetMinVertex().z < minPosition.z ? part.second->GetMinVertex().z : minPosition.z;
 
-			maxPosition.x = part.second->GetPosition().x > maxPosition.x ? part.second->GetPosition().x : maxPosition.x;
-			maxPosition.y = part.second->GetPosition().y > maxPosition.y ? part.second->GetPosition().y : maxPosition.y;
-			maxPosition.z = part.second->GetPosition().z > maxPosition.z ? part.second->GetPosition().z : maxPosition.z;
+			maxPosition.x = part.second->GetMaxVertex().x > maxPosition.x ? part.second->GetMaxVertex().x : maxPosition.x;
+			maxPosition.y = part.second->GetMaxVertex().y > maxPosition.y ? part.second->GetMaxVertex().y : maxPosition.y;
+			maxPosition.z = part.second->GetMaxVertex().z > maxPosition.z ? part.second->GetMaxVertex().z : maxPosition.z;
 		}
 	}
 
@@ -330,4 +401,9 @@ void Unit::UpdateWorldMatrix()
 	D3DXMatrixMultiply(&worldMatrix_, &worldMatrix_, &rotateMatrix);
 
 	D3DXMatrixMultiply(&worldMatrix_, &worldMatrix_, &translateMatrix);
+
+	for each (auto part in objectParts_)
+	{
+		part.second->SetUpdateWorldMatrix(true);
+	}
 }

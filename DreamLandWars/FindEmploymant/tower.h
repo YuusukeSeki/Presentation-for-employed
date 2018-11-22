@@ -3,56 +3,42 @@
 #ifndef TOWER_H_
 #define TOWER_H_
 
-#include "Unit.h"
-class Hold;
-class LifeGauge;
-class Icon;
-class SoldierGenerator;
+#include "BasePoint.h"
+class RelayPoint;
+class ObjectBillboard;
+class Gauge;
 
-class Tower : public Unit
+class Tower : public BasePoint
 {
 public:
-	Tower();
-	Tower(Object::TYPE type);
+	Tower(const Object::TYPE& _type);
 	~Tower();
 
-	static Tower* Create(D3DXVECTOR3& position, const char* FileName, Object::GROUP group);
-	void Init(D3DXVECTOR3& position, const char* FileName, Object::GROUP group);
-	void Uninit(void);
-	void Update(void);
-	void Draw(void);
+	static Tower* Create(const D3DXVECTOR3& _position, const Object::GROUP& _group, RelayPoint* _nextRelayPoint);
 
+	void Init(const D3DXVECTOR3& _position, const Object::GROUP& _group, RelayPoint* _nextRelayPoint);
+	void Uninit();
+	void Update();
+	void Draw();
 
+	void ReceiveDamage(const float& _damage, Unit* _unit);
+	bool IsBreak();
 
-	// 拠点にダメージを与える
-	// breakPower : 与えるダメージ
-	// 【返り値】	true  : 拠点が壊れた
-	//				false : 拠点が壊れてない
-	bool BrowTower(float breakPower);
-
-	// 塔を殴れる範囲との当たり判定
-	// position : 対象キャストの位置
-	// 【返り値】	true  : 殴れる
-	//				false : 殴れない
-	bool CollisionBrowRange(D3DXVECTOR3& position);
-
-	// 体力を返す
-	// 【返り値】現在の体力
-	float GetLife() { return m_life; }
-
-	// "Hold"の実体を返す
-	// 【返り値】"Hold"の実体
-	Hold* GetHold() { return m_pHold; }
-
-	// 移動処理
-	void MovePosition(D3DXVECTOR3& movePosition);
-
+	float GetMaxHp();
+	float GetCurrentHp();
 
 private:
-	SoldierGenerator* soldierGenerator_;
-	Hold* hold_;
-	LifeGauge* lifeGauge_;
-	Icon* icon_;
+	static const unsigned int kNumSoldier_First_;
+	static const unsigned int kNumSoldier_Subsequent_;
+	static const float kMaxHp_;
+
+	float maxHp_;
+	float currentHp_;
+
+	unsigned int releaseTimer_;
+
+	ObjectBillboard* icon_;
+	Gauge* hpGauge_;
 
 };
 

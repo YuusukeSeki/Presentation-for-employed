@@ -3,29 +3,27 @@
 #ifndef SOLDIER_GENERATOR_
 #define SOLDIER_GENERATOR_
 
-#include "ObjectModel.h"
+#include "Object.h"
+class BasePoint;
 class RelayPoint;
 class SoldierCommander;
 
-class SoldierGenerator
+class SoldierGenerator : public Object
 {
 public:
 	SoldierGenerator(const unsigned int _kInterval_CreateSoldierLine_First, const unsigned int _kNumSoldier_First
 		, const unsigned int _kInterval_CreateSoldierLine_Subsequent, const unsigned int _kNumSoldier_Subsequent);
 	~SoldierGenerator();
 
-	static SoldierGenerator* Create(ObjectModel* _parentObject
+	static SoldierGenerator* Create(BasePoint* _parentObject
 		, const unsigned int _kInterval_CreateSoldierLine_First, const unsigned int _kNumSoldier_First
 		, const unsigned int _kInterval_CreateSoldierLine_Subsequent, const unsigned int _kNumSoldier_Subsequent);
-	void Release();
-	void Init(ObjectModel* _parentObject);
+	void Init(BasePoint* _parentObject);
 	void Uninit();
 	void Update();
+	void Draw() {}
 
-	D3DXVECTOR3 GetPosition();
-
-	Object::GROUP GetGroup();
-
+	void SetNextRelayPoint(RelayPoint* _relayPoint);
 	RelayPoint* GetNextRelayPoint();
 
 	const unsigned int GetMaxNumSoldierInOneSoldierLine();
@@ -48,15 +46,14 @@ private:
 	const unsigned int kInterval_CreateSoldierLine_Subsequent_;
 	const unsigned int kNumSoldier_Subsequent_;
 
-	ObjectModel* parentObject_;
+	BasePoint* parentObject_;
 	unsigned int timer_;
 	unsigned int countCreateSoldier_;
+	RelayPoint* nextRelayPoint_;
 	bool isFirstCreate_;
 	bool isUpdateTimer_;
-	Object::GROUP group_;
 
 	SoldierCommander* soldierCommander_;
-	RelayPoint* nextRelayPoint_;
 };
 
 #endif

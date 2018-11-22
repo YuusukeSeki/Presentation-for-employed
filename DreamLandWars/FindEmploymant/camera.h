@@ -27,6 +27,7 @@ public:
 	// 増減
 	void MovePosEye_Z(float moveZ);  // 移動（前後）
 	void MovePosEye_X(float moveX);  // 移動（左右）
+	void MovePosEye_Y(float moveY);  // 移動（上下）
 	void MoveRotEye  (float move);	 // 回転
 	void MoveTurnEye (float move);	 // 旋回
 

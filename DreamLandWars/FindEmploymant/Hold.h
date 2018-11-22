@@ -9,7 +9,7 @@
 #include "main.h"
 #include "ObjectBillboard.h"
 
-class ObjectModel;
+class BasePoint;
 class Camera;
 
 
@@ -22,8 +22,8 @@ public:
 
 
 	//----- 基本的な関数 -----
-	static Hold* Create(ObjectModel* pObjModel, Camera* pCamera);
-	virtual void Init(ObjectModel* pObjModel, Camera* pCamera);
+	static Hold* Create(BasePoint* pObjModel, Camera* pCamera);
+	virtual void Init(BasePoint* pObjModel, Camera* pCamera);
 	virtual void Uninit(void);
 	virtual void Update(void);
 	virtual void Draw(void);
@@ -43,7 +43,7 @@ public:
 
 private:
 	//----- データ -----
-	ObjectModel*     m_pParent;				// 親のポインタ
+	BasePoint*     m_pParent;				// 親のポインタ
 	ObjectBillboard* m_pBackGround;			// 照準：背景
 	ObjectBillboard* m_pLockOn_OutLine;		// 照準：外側
 	ObjectBillboard* m_pLockOn_InnerLine;	// 照準：内側

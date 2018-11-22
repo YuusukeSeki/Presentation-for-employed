@@ -74,7 +74,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -92,7 +92,7 @@
     <ClCompile Include="Controller.cpp" />
     <ClCompile Include="Controller_KeyboardAndMouse.cpp" />
     <ClCompile Include="GameTitle.cpp" />
-    <ClCompile Include="Gauge.cpp" />
+    <ClCompile Include="SoldierGauge.cpp" />
     <ClCompile Include="Icon.cpp" />
     <ClCompile Include="LifeGauge.cpp" />
     <ClCompile Include="Bullet3D.cpp" />
@@ -114,7 +114,6 @@
     <ClCompile Include="ObjectBillboard.cpp" />
     <ClCompile Include="ObjectCube.cpp" />
     <ClCompile Include="Part.cpp" />
-    <ClCompile Include="PlayerFix.cpp" />
     <ClCompile Include="SkyDome.cpp" />
     <ClCompile Include="SoldierBullet.cpp" />
     <ClCompile Include="SoldierGenerator.cpp" />
@@ -163,16 +162,13 @@
     <ClInclude Include="Etc_Paramaters.h" />
     <ClInclude Include="EventButton.h" />
     <ClInclude Include="GameTitle.h" />
-    <ClInclude Include="Gauge.h" />
+    <ClInclude Include="SoldierGauge.h" />
     <ClInclude Include="ObjectBillboard.h" />
     <ClInclude Include="Part.h" />
-    <ClInclude Include="PlayerFix.h" />
     <ClInclude Include="SkyDome.h" />
     <ClInclude Include="RelayPoint.h" />
     <ClInclude Include="SoldierGenerator.h" />
-    <ClInclude Include="Soldier_LifeGauge.h" />
     <ClInclude Include="TouchScreen.h" />
-    <ClInclude Include="UniqueArea.h" />
     <ClInclude Include="SoldierCommander.h" />
     <ClInclude Include="Icon.h" />
     <ClInclude Include="LifeGauge.h" />

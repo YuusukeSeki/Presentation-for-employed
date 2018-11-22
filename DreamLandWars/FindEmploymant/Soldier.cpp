@@ -10,12 +10,13 @@
 #include "SoldierBullet.h"
 #include "MainGame.h"
 #include "collision.h"
+#include "SoldierGauge.h"
 
-const std::string Soldier::kSoldierModelPath_ = "data/model/MainGame/soldier03.x";
 const float Soldier::kBreakPower_ = 10.0f;
 const float Soldier::kAttackPower_ = 50.0f;
 const float Soldier::kMaxHp_ = 100.0f;;
-const float Soldier::kSearchRange_ = 10.0f;
+const float Soldier::kSearchEnemyRange_ = 4.0f;
+const float Soldier::kSearchFriendRange_ = 4.0f;
 
 Soldier::Soldier() : Unit(TYPE_MODEL_SOLDIER)
 {
@@ -25,7 +26,8 @@ Soldier::Soldier() : Unit(TYPE_MODEL_SOLDIER)
 	attackPower_ = 0.0f;
 	defencePower_ = 0.0f;
 	breakPower_ = kBreakPower_;
-	searchRange_ = 0.0f;
+	searchEnemyRange_ = 0.0f;
+	searchFriendRange_ = 0.0f;
 	parentCommander_ = nullptr;
 
 	destination_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
@@ -33,8 +35,29 @@ Soldier::Soldier() : Unit(TYPE_MODEL_SOLDIER)
 
 	targetBasePoint_ = nullptr;
 
-	objectCollider_ = nullptr;
-	searchCollider_ = nullptr;
+	searchEnemyCollider_ = nullptr;
+	searchFriendCollider_ = nullptr;
+
+	Part* body = AddPart("body", "data/model/MainGame/soldier_body.x");
+
+	Part* head = AddPart("head", "data/model/MainGame/soldier_head.x");
+	head->SetParent(body);
+
+	Part* arm_left = AddPart("arm_left", "data/model/MainGame/soldier_arm_left.x");
+	arm_left->SetParent(body);
+
+	Part* arm_right = AddPart("arm_right", "data/model/MainGame/soldier_arm_right.x");
+	arm_right->SetParent(body);
+
+	Part* leg_left = AddPart("leg_left", "data/model/MainGame/soldier_leg_left.x");
+	leg_left->SetParent(body);
+
+	Part* leg_right = AddPart("leg_right", "data/model/MainGame/soldier_leg_right.x");
+	leg_right->SetParent(body);
+
+	body->MovePosition(D3DXVECTOR3(0, 1, 0) * leg_right->GetSize().y);
+
+	hpGauge_ = nullptr;
 }
 
 Soldier::~Soldier()
@@ -46,7 +69,8 @@ void Soldier::CreateBuffer(const unsigned int& _numCreate)
 {
 	for (unsigned int i = 0; i < _numCreate; ++i)
 	{
-		new Soldier();
+		Soldier* buf = new Soldier();
+		buf->SetActive(false);
 	}
 }
 
@@ -78,10 +102,10 @@ void Soldier::Init(SoldierCommander* _soldierCommander)
 {
 	parentCommander_ = _soldierCommander;
 
-	SetPosition(parentCommander_->GetPosition());
+	Unit::Init(parentCommander_->GetPosition(), parentCommander_->GetGroup());
+
 	SetFront(parentCommander_->GetFront());
 	speed_ = parentCommander_->GetSpeed();
-	SetGroup(parentCommander_->GetGroup());
 
 	if (GetGroup() == Object::GROUP_A)
 	{
@@ -94,20 +118,58 @@ void Soldier::Init(SoldierCommander* _soldierCommander)
 		SetRotate(D3DXVECTOR3(0, D3DXToRadian(180), 0));
 	}
 
+	GetObjectCollider()->SetRadius(GetHalfSize().x);
+
 	maxHp_ = kMaxHp_;
 	currentHp_ = kMaxHp_;
 	attackPower_ = kAttackPower_;
 	defencePower_ = 0.0f;
-	searchRange_ = kSearchRange_;
+	searchEnemyRange_ = kSearchEnemyRange_;
+	searchFriendRange_ = kSearchFriendRange_;
 
 	destination_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 	frontAfterArriveDestination_ = parentCommander_->GetFront();
 	targetBasePoint_ = nullptr;
 
-	objectCollider_ = Collider::Create(this);
+	if (searchEnemyCollider_ == nullptr)
+	{
+		searchEnemyCollider_ = Collider::Create(this);
+	}
+	else
+	{
+		searchEnemyCollider_->SetParentUnit(this);
+	}
+	searchEnemyCollider_->SetRadius(searchEnemyRange_);
 
-	searchCollider_ = Collider::Create(this);
-	searchCollider_->SetRadius(searchRange_);
+	if (searchFriendCollider_ == nullptr)
+	{
+		searchFriendCollider_ = Collider::Create(this);
+	}
+	else
+	{
+		searchFriendCollider_->SetParentUnit(this);
+	}
+	searchFriendCollider_->SetRadius(searchFriendRange_);
+	searchFriendCollider_->MovePosition(GetFront() * (searchFriendRange_ * 0.5f + GetHalfSize().z * 0.5f));
+
+#ifdef _DEBUG
+	searchEnemyCollider_->SetColor(1.0f, 0.3f, 0.3f, 0.5f);
+	searchFriendCollider_->SetColor(0.3f, 0.3f, 1.0f, 0.5f);
+	//searchEnemyCollider_->SetDraw(false);
+	searchFriendCollider_->SetDraw(false);
+#endif
+
+	// hp gauge
+	D3DXVECTOR3 gaugePosition = GetPosition();
+	gaugePosition.y += GetSize().y * 1.2f;
+
+	D3DXVECTOR3 gaugeSize(GetSize().x, GetSize().x * 0.25f, 0);
+
+	hpGauge_ = SoldierGauge::DynamicCreate(gaugePosition, gaugeSize, MainGame::GetCamera(), this);
+	hpGauge_->SetMaxHpPointer(&maxHp_);
+	hpGauge_->SetCurrentHpPointer(&currentHp_);
+
+	SetActive(true);
 }
 
 void Soldier::Uninit(void)
@@ -117,29 +179,29 @@ void Soldier::Uninit(void)
 
 void Soldier::Update(void)
 {
-	BasePoint* basePoint = SearchEnemyBasePoint();
+	if (targetBasePoint_ == nullptr)
+	{
+		BasePoint* basePoint = SearchEnemyBasePoint();
 
-	if (basePoint != nullptr)
-	{
-		parentCommander_->ReceiveReport(Report::FIND_ENEMY_BASEPOINT, this, basePoint);
+		if (basePoint != nullptr)
+		{
+			parentCommander_->ReceiveReport(Report::FIND_ENEMY_BASEPOINT, this, basePoint);
+		}
+		else if (IsSearchEnemyUnit() == true)
+		{
+			parentCommander_->ReceiveReport(Report::FIND_ENEMY_UNIT, this);
+		}
+		else if (IsSearchFriendSoldier() == true)
+		{
+			parentCommander_->ReceiveReport(Report::FIND_FRIEND_UNIT, this);
+		}
 	}
-	else if (IsSearchEnemyUnit() == true)
-	{
-		parentCommander_->ReceiveReport(Report::FIND_ENEMY_UNIT, this);
-	}
-	else if (IsSearchFriendSoldier() == true)
-	{
-		parentCommander_->ReceiveReport(Report::FIND_FRIEND_UNIT, this);
-	}
-	else
-	{
-		parentCommander_->ReceiveReport(Report::NONE, this);
-	}
+
 }
 
 void Soldier::Draw(void)
 {
-
+	Unit::Draw();
 }
 
 void Soldier::Stop()
@@ -149,23 +211,28 @@ void Soldier::Stop()
 
 void Soldier::Run()
 {
+	SetFront(parentCommander_->GetFront());
+
 	MovePosition(GetFront(), speed_);
+	SetRotateToPosition(GetPosition() + GetFront() * speed_);
 }
 
 void Soldier::FormLine()
 {
-	const float kErrorDistance = 1.0f;
 	float distance = Distance3D(destination_, GetPosition());
 
 	if (distance < speed_ * speed_)
 	{
 		SetPosition(destination_);
+
+		SetRotateToPosition(GetPosition() + frontAfterArriveDestination_ * speed_);
 	}
 	else
 	{
 		D3DXVECTOR3 moveVector = destination_ - GetPosition();
 		D3DXVec3Normalize(&moveVector, &moveVector);
 
+		SetRotateToPosition(GetPosition() + moveVector * speed_);
 		MovePosition(moveVector, speed_);
 	}
 }
@@ -176,25 +243,32 @@ void Soldier::ShotBullet()
 
 	if (nearEnemy != nullptr)
 	{
-		Camera* camera = MainGame::GetPlayer(0)->GetCamera();
+		Camera* camera = MainGame::GetCamera();
 
 		SetRotateToPosition(nearEnemy->GetPosition());
-		SoldierBullet::SetBullet(GetPosition(), nearEnemy, camera);
+
+		SoldierBullet::DynamicCreate(this, nearEnemy);
 	}
 }
 
 void Soldier::AssaultBasePoint()
 {
+	D3DXVECTOR3 vector = targetBasePoint_->GetPosition() - GetPosition();
+	D3DXVec3Normalize(&vector, &vector);
+
+	MovePosition(vector * speed_);
+
 	if (CollidedBasePoint() == true)
 	{
 		BreakBasePoint();
-		SelfDelete();
+		Death();
 	}
 }
 
-void Soldier::SelfDelete()
+void Soldier::Death()
 {
 	parentCommander_->ReceiveReport(Report::DEATH, this);
+
 	SetActive(false);
 }
 
@@ -208,31 +282,54 @@ void Soldier::SetEndFront(const D3DXVECTOR3& _endFront)
 	frontAfterArriveDestination_ = _endFront;
 }
 
-void Soldier::SetTargetBasePoint(ObjectModel* _targetBasePoint)
+void Soldier::SetTargetBasePoint(BasePoint* _targetBasePoint)
 {
 	targetBasePoint_ = _targetBasePoint;
 }
 
-void Soldier::ReceiveDamage(const float& _damage, const D3DXVECTOR3& _bulletPosition)
+Collider* Soldier::GetSearchCollider()
 {
-	float speed = 5.0f;
-	D3DXVECTOR3 moveVector = GetPosition() - _bulletPosition;
-	D3DXVec3Normalize(&moveVector, &moveVector);
+	return searchEnemyCollider_;
+}
 
-	MovePosition(moveVector, speed);
+void Soldier::ReceiveDamage(const float& _damage, Unit* _unit)
+{
+	if (_unit != nullptr)
+	{
+		//// ‚«”ò‚Î‚µˆ—
+		//float speed = 5.0f;
+		//D3DXVECTOR3 moveVector = GetPosition() - _unit->GetPosition();
+		//D3DXVec3Normalize(&moveVector, &moveVector);
+
+		//MovePosition(moveVector, speed);
+	}
 
 	currentHp_ -= _damage;
 
 	if (currentHp_ <= 0.0f)
 	{
-		parentCommander_->ReceiveReport(Report::DEATH, this);
-		SetActive(false);
+		Death();
 	}
 }
 
-void Soldier::SetTargetBasePoint(ObjectModel* _targetBasePoint)
+void Soldier::SetActive(const bool& _isActive)
 {
-	targetBasePoint_ = _targetBasePoint;
+	if (searchEnemyCollider_ != nullptr)
+	{
+		searchEnemyCollider_->SetActive(_isActive);
+	}
+
+	if (searchFriendCollider_ != nullptr)
+	{
+		searchFriendCollider_->SetActive(_isActive);
+	}
+
+	if (hpGauge_ != nullptr)
+	{
+		hpGauge_->SetActive(_isActive);
+	}
+
+	Unit::SetActive(_isActive);
 }
 
 Soldier* Soldier::FindNonActiveSoldier()
@@ -296,18 +393,14 @@ Soldier* Soldier::FindNearEnemySoldier()
 {
 	Soldier* soldier = (Soldier*)Object::GetLDATA_HEAD(Object::TYPE_MODEL_SOLDIER);
 
-	if (soldier == nullptr)
-	{
-		return nullptr;
-	}
-	else
+	if (soldier != nullptr)
 	{
 		Soldier* nearEnemySoldier = nullptr;
 		float minDistance = 0.0f;
 
 		for (;;)
 		{
-			if (soldier->GetActive() == true && soldier->GetGroup() != GetGroup() && soldier->GetBehave() != Soldier::Behave::DEAD)
+			if (soldier->GetActive() == true && soldier->GetGroup() != GetGroup())
 			{
 				float distance = Distance3D(GetPosition(), soldier->GetPosition());
 
@@ -327,7 +420,10 @@ Soldier* Soldier::FindNearEnemySoldier()
 		}
 
 		return nearEnemySoldier;
+
 	}
+
+	return nullptr;
 }
 
 Player* Soldier::FindNearEnemyPlayer()
@@ -391,19 +487,15 @@ Tower* Soldier::SearchEnemyTower()
 {
 	Tower* tower = (Tower*)Object::GetLDATA_HEAD(TYPE_MODEL_TOWER);
 
-	if (tower == nullptr)
-	{
-		return nullptr;
-	}
-	else
+	if (tower != nullptr)
 	{
 		for (;;) {
 
-			if (tower->GetGroup() != GetGroup())
+			if (tower->GetGroup() != GetGroup() && tower->IsBreak() == false)
 			{
-				if (Collision_SphereToSphere(GetPosition(), searchRange_, tower->GetPosition(), tower->GetRadius()))
+				if (searchEnemyCollider_->Collision(tower->GetObjectCollider()) == true)
 				{
-					break;
+					return tower;
 				}
 			}
 
@@ -411,31 +503,28 @@ Tower* Soldier::SearchEnemyTower()
 
 			if (tower == nullptr)
 			{
-				break;
+				return nullptr;
 			}
 		}
-
-		return tower;
 	}
+
+	return nullptr;
+
 }
 
 Castle* Soldier::SearchEnemyCastle()
 {
 	Castle* castle = (Castle*)Object::GetLDATA_HEAD(TYPE_MODEL_CASTLE);
 
-	if (castle == nullptr)
-	{
-		return nullptr;
-	}
-	else
+	if (castle != nullptr)
 	{
 		for (;;) {
 
 			if (castle->GetGroup() != GetGroup())
 			{
-				if (Collision_SphereToSphere(GetPosition(), searchRange_, castle->GetPosition(), castle->GetRadius()))
+				if (Collision_SphereToSphere(GetPosition(), searchEnemyRange_, castle->GetPosition(), castle->GetRadius()))
 				{
-					break;
+					return castle;
 				}
 			}
 
@@ -443,12 +532,12 @@ Castle* Soldier::SearchEnemyCastle()
 
 			if (castle == nullptr)
 			{
-				break;
+				return nullptr;
 			}
 		}
-
-		return castle;
 	}
+
+	return nullptr;
 }
 
 bool Soldier::IsSearchEnemyUnit()
@@ -473,7 +562,7 @@ bool Soldier::IsSearchEnemySoldier()
 		{
 			if (soldier->GetActive() == true && soldier->GetGroup() != GetGroup())
 			{
-				if (searchCollider_->Collision(soldier->GetObjectCollider()) == true)
+				if (searchEnemyCollider_->Collision(soldier->GetObjectCollider()) == true)
 				{
 					return true;
 				}
@@ -501,7 +590,7 @@ bool Soldier::IsSearchEnemyPlayer()
 		{
 			if (player->GetGroup() != GetGroup())
 			{
-				if (searchCollider_->Collision(player->GetObjectCollider()) == true)
+				if (searchEnemyCollider_->Collision(player->GetObjectCollider()) == true)
 				{
 					return true;
 				}
@@ -521,35 +610,41 @@ bool Soldier::IsSearchEnemyPlayer()
 
 bool Soldier::IsSearchFriendSoldier()
 {
+	SoldierCommander* soldierCommander = (SoldierCommander*)Object::GetLDATA_HEAD(TYPE_COMMANDER);
 
+	if (soldierCommander != nullptr)
+	{
+		for (;;)
+		{
+			if (soldierCommander->GetActive() == true && soldierCommander->GetGroup() == GetGroup() && soldierCommander != parentCommander_)
+			{
+				if (soldierCommander->GetTargetRelayPoint() == parentCommander_->GetTargetRelayPoint())
+				{
+					if (searchFriendCollider_->Collision(soldierCommander->GetPosition()) == true)
+					{
+						return true;
+					}
+				}
+			}
+
+			soldierCommander = (SoldierCommander*)soldierCommander->GetNextPointer();
+
+			if (soldierCommander == nullptr)
+			{
+				break;
+			}
+		}
+	}
+
+	return false;
 }
 
 bool Soldier::CollidedBasePoint()
 {
-	const float kRadius = 0.0001f;
-
-	if (Collision_SphereToSphere(GetPosition(), kRadius, targetBasePoint_->GetPosition(), targetBasePoint_->GetRadius()) == true)
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	return targetBasePoint_->GetObjectCollider()->Collision(GetPosition());
 }
 
 void Soldier::BreakBasePoint()
 {
-	if (targetBasePoint_->GetType() == Object::TYPE::TYPE_MODEL_CASTLE)
-	{
-		//dynamic_cast<Castle*>(m_pAssaultBasePoint)->
-	}
-	else
-	{
-		if (dynamic_cast<Tower*>(targetBasePoint_)->BrowTower(breakPower_))
-		{
-			parentCommander_->ReceiveReport(Report::DEATH);
-			return;
-		}
-	}
+	targetBasePoint_->ReceiveDamage(breakPower_, this);
 }

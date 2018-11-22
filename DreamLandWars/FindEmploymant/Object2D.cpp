@@ -17,6 +17,7 @@ Object2D::Object2D() :Object(Object::TYPE::TYPE_2D)
 	texture_ = nullptr;
 	isUpdateVertexBuf_ = false;
 	isDraw_ = true;
+	positionIsLeftTop_ = false;
 }
 
 Object2D::Object2D(const Object::TYPE& type) :Object(type)
@@ -39,15 +40,15 @@ Object2D::~Object2D()
 	Uninit();
 }
 
-Object2D* Object2D::Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& size)
+Object2D* Object2D::Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& size, bool _positionIsLeftTop)
 {
 	Object2D* object = new Object2D(Object::TYPE::TYPE_2D);
-	object->Init(_position, size);
+	object->Init(_position, size, _positionIsLeftTop);
 
 	return object;
 }
 
-void Object2D::Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size)
+void Object2D::Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, bool _positionIsLeftTop)
 {
 	LPDIRECT3DDEVICE9 pDevice = Renderer::GetDevice();
 
@@ -62,6 +63,8 @@ void Object2D::Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size)
 	SetUv_StartPoint(D3DXVECTOR2(0, 0));
 
 	SetUv_Size(D3DXVECTOR2(1, 1));
+
+	positionIsLeftTop_ = _positionIsLeftTop;
 
 	MakeVertexBuf();
 
@@ -275,10 +278,20 @@ void Object2D::MakeVertexBuf()
 
 	vertexBuf_->Lock(0, 0, (void**)&vertexBuf, 0);
 
-	vertexBuf[0].pos = D3DXVECTOR3(position.x - halfSize_.x, position.y - halfSize_.y, 0.0f);
-	vertexBuf[1].pos = D3DXVECTOR3(position.x + halfSize_.x, position.y - halfSize_.y, 0.0f);
-	vertexBuf[2].pos = D3DXVECTOR3(position.x - halfSize_.x, position.y + halfSize_.y, 0.0f);
-	vertexBuf[3].pos = D3DXVECTOR3(position.x + halfSize_.x, position.y + halfSize_.y, 0.0f);
+	if (positionIsLeftTop_ == false)
+	{
+		vertexBuf[0].pos = D3DXVECTOR3(position.x - halfSize_.x, position.y - halfSize_.y, 0.0f);
+		vertexBuf[1].pos = D3DXVECTOR3(position.x + halfSize_.x, position.y - halfSize_.y, 0.0f);
+		vertexBuf[2].pos = D3DXVECTOR3(position.x - halfSize_.x, position.y + halfSize_.y, 0.0f);
+		vertexBuf[3].pos = D3DXVECTOR3(position.x + halfSize_.x, position.y + halfSize_.y, 0.0f);
+	}
+	else
+	{
+		vertexBuf[0].pos = D3DXVECTOR3(position.x                  , position.y                  , 0.0f);
+		vertexBuf[1].pos = D3DXVECTOR3(position.x + halfSize_.x * 2, position.y                  , 0.0f);
+		vertexBuf[2].pos = D3DXVECTOR3(position.x                  , position.y + halfSize_.y * 2, 0.0f);
+		vertexBuf[3].pos = D3DXVECTOR3(position.x + halfSize_.x * 2, position.y + halfSize_.y * 2, 0.0f);
+	}
 
 	vertexBuf[0].rhw = 1.0f;
 	vertexBuf[1].rhw = 1.0f;
@@ -305,14 +318,30 @@ void Object2D::UpdateVertexBuf()
 
 	vertexBuf_->Lock(0, 0, (void**)&vertexBuf, 0);
 
-	vertexBuf[0].pos = D3DXVECTOR3( position.x + cosf(rotate_ + angle_ + D3DX_PI) * radius_
-							      , position.y + sinf(rotate_ + angle_ + D3DX_PI) * radius_, 0.0f);
-	vertexBuf[1].pos = D3DXVECTOR3( position.x + cosf(rotate_ - angle_          ) * radius_
-							      , position.y + sinf(rotate_ - angle_          ) * radius_, 0.0f);
-	vertexBuf[2].pos = D3DXVECTOR3( position.x + cosf(rotate_ - angle_ + D3DX_PI) * radius_
-							      , position.y + sinf(rotate_ - angle_ + D3DX_PI) * radius_, 0.0f);
-	vertexBuf[3].pos = D3DXVECTOR3( position.x + cosf(rotate_ + angle_          ) * radius_
-							      , position.y + sinf(rotate_ + angle_          ) * radius_, 0.0f);
+	if (positionIsLeftTop_ == false)
+	{
+		vertexBuf[0].pos = D3DXVECTOR3( position.x + cosf(rotate_ + angle_ + D3DX_PI) * radius_
+									  , position.y + sinf(rotate_ + angle_ + D3DX_PI) * radius_, 0.0f);
+		vertexBuf[1].pos = D3DXVECTOR3( position.x + cosf(rotate_ - angle_          ) * radius_
+									  , position.y + sinf(rotate_ - angle_          ) * radius_, 0.0f);
+		vertexBuf[2].pos = D3DXVECTOR3( position.x + cosf(rotate_ - angle_ + D3DX_PI) * radius_
+									  , position.y + sinf(rotate_ - angle_ + D3DX_PI) * radius_, 0.0f);
+		vertexBuf[3].pos = D3DXVECTOR3( position.x + cosf(rotate_ + angle_          ) * radius_
+									  , position.y + sinf(rotate_ + angle_          ) * radius_, 0.0f);
+	}
+	else
+	{
+		position += halfSize_;
+
+		vertexBuf[0].pos = D3DXVECTOR3( position.x + cosf(rotate_ + angle_ + D3DX_PI) * radius_
+									  , position.y + sinf(rotate_ + angle_ + D3DX_PI) * radius_, 0.0f);
+		vertexBuf[1].pos = D3DXVECTOR3( position.x + cosf(rotate_ - angle_          ) * radius_
+									  , position.y + sinf(rotate_ - angle_          ) * radius_, 0.0f);
+		vertexBuf[2].pos = D3DXVECTOR3( position.x + cosf(rotate_ - angle_ + D3DX_PI) * radius_
+									  , position.y + sinf(rotate_ - angle_ + D3DX_PI) * radius_, 0.0f);
+		vertexBuf[3].pos = D3DXVECTOR3( position.x + cosf(rotate_ + angle_          ) * radius_
+									  , position.y + sinf(rotate_ + angle_          ) * radius_, 0.0f);
+	}
 
 	vertexBuf[0].color = D3DCOLOR_RGBA(color_.rgba[3], color_.rgba[2], color_.rgba[1], color_.rgba[0]);
 	vertexBuf[1].color = D3DCOLOR_RGBA(color_.rgba[3], color_.rgba[2], color_.rgba[1], color_.rgba[0]);

@@ -317,52 +317,52 @@ void SkyBox::MakeVertexBuf()
 #else
 	//----- 頂点座標の設定 -----
 	// 上面
-	pVtx[0].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y + halfWidth, pos.z - halfWidth); // 右上
-	pVtx[1].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y + halfWidth, pos.z + halfWidth); // 右下
-	pVtx[2].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y + halfWidth, pos.z - halfWidth); // 左上
-	pVtx[3].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y + halfWidth, pos.z - halfWidth); // 左上
-	pVtx[4].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y + halfWidth, pos.z + halfWidth); // 右下
-	pVtx[5].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y + halfWidth, pos.z + halfWidth); // 左下
+	pVtx[0].pos = D3DXVECTOR3(+ halfWidth, + halfWidth, - halfWidth); // 右上
+	pVtx[1].pos = D3DXVECTOR3(+ halfWidth, + halfWidth, + halfWidth); // 右下
+	pVtx[2].pos = D3DXVECTOR3(- halfWidth, + halfWidth, - halfWidth); // 左上
+	pVtx[3].pos = D3DXVECTOR3(- halfWidth, + halfWidth, - halfWidth); // 左上
+	pVtx[4].pos = D3DXVECTOR3(+ halfWidth, + halfWidth, + halfWidth); // 右下
+	pVtx[5].pos = D3DXVECTOR3(- halfWidth, + halfWidth, + halfWidth); // 左下
 
 	// 背面
-	pVtx[6].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y + halfWidth, pos.z + halfWidth); // 右上
-	pVtx[7].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y - halfWidth, pos.z + halfWidth); // 右下
-	pVtx[8].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y + halfWidth, pos.z + halfWidth); // 左上
-	pVtx[9].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y + halfWidth, pos.z + halfWidth); // 左上
-	pVtx[10].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y - halfWidth, pos.z + halfWidth); // 右下
-	pVtx[11].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y - halfWidth, pos.z + halfWidth); // 左下
+	pVtx[6].pos  = D3DXVECTOR3(+ halfWidth, + halfWidth, + halfWidth); // 右上
+	pVtx[7].pos  = D3DXVECTOR3(+ halfWidth, - halfWidth, + halfWidth); // 右下
+	pVtx[8].pos  = D3DXVECTOR3(- halfWidth, + halfWidth, + halfWidth); // 左上
+	pVtx[9].pos  = D3DXVECTOR3(- halfWidth, + halfWidth, + halfWidth); // 左上
+	pVtx[10].pos = D3DXVECTOR3(+ halfWidth, - halfWidth, + halfWidth); // 右下
+	pVtx[11].pos = D3DXVECTOR3(- halfWidth, - halfWidth, + halfWidth); // 左下
 
 	// 左面
-	pVtx[12].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y + halfWidth, pos.z + halfWidth); // 右上
-	pVtx[13].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y - halfWidth, pos.z + halfWidth); // 右下
-	pVtx[14].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y + halfWidth, pos.z - halfWidth); // 左上
-	pVtx[15].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y + halfWidth, pos.z - halfWidth); // 左上
-	pVtx[16].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y - halfWidth, pos.z + halfWidth); // 右下
-	pVtx[17].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y - halfWidth, pos.z - halfWidth); // 左下
+	pVtx[12].pos = D3DXVECTOR3(- halfWidth, + halfWidth, + halfWidth); // 右上
+	pVtx[13].pos = D3DXVECTOR3(- halfWidth, - halfWidth, + halfWidth); // 右下
+	pVtx[14].pos = D3DXVECTOR3(- halfWidth, + halfWidth, - halfWidth); // 左上
+	pVtx[15].pos = D3DXVECTOR3(- halfWidth, + halfWidth, - halfWidth); // 左上
+	pVtx[16].pos = D3DXVECTOR3(- halfWidth, - halfWidth, + halfWidth); // 右下
+	pVtx[17].pos = D3DXVECTOR3(- halfWidth, - halfWidth, - halfWidth); // 左下
 
 	// 右面
-	pVtx[18].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y + halfWidth, pos.z - halfWidth); // 右上
-	pVtx[19].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y - halfWidth, pos.z - halfWidth); // 右下
-	pVtx[20].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y + halfWidth, pos.z + halfWidth); // 左上
-	pVtx[21].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y + halfWidth, pos.z + halfWidth); // 左上
-	pVtx[22].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y - halfWidth, pos.z - halfWidth); // 右下
-	pVtx[23].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y - halfWidth, pos.z + halfWidth); // 左下
+	pVtx[18].pos = D3DXVECTOR3(+ halfWidth, + halfWidth, - halfWidth); // 右上
+	pVtx[19].pos = D3DXVECTOR3(+ halfWidth, - halfWidth, - halfWidth); // 右下
+	pVtx[20].pos = D3DXVECTOR3(+ halfWidth, + halfWidth, + halfWidth); // 左上
+	pVtx[21].pos = D3DXVECTOR3(+ halfWidth, + halfWidth, + halfWidth); // 左上
+	pVtx[22].pos = D3DXVECTOR3(+ halfWidth, - halfWidth, - halfWidth); // 右下
+	pVtx[23].pos = D3DXVECTOR3(+ halfWidth, - halfWidth, + halfWidth); // 左下
 
 	// 正面
-	pVtx[24].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y + halfWidth, pos.z - halfWidth); // 右上
-	pVtx[25].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y - halfWidth, pos.z - halfWidth); // 右下
-	pVtx[26].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y + halfWidth, pos.z - halfWidth); // 左上
-	pVtx[27].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y + halfWidth, pos.z - halfWidth); // 左上
-	pVtx[28].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y - halfWidth, pos.z - halfWidth); // 右下
-	pVtx[29].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y - halfWidth, pos.z - halfWidth); // 左下
+	pVtx[24].pos = D3DXVECTOR3(- halfWidth, + halfWidth, - halfWidth); // 右上
+	pVtx[25].pos = D3DXVECTOR3(- halfWidth, - halfWidth, - halfWidth); // 右下
+	pVtx[26].pos = D3DXVECTOR3(+ halfWidth, + halfWidth, - halfWidth); // 左上
+	pVtx[27].pos = D3DXVECTOR3(+ halfWidth, + halfWidth, - halfWidth); // 左上
+	pVtx[28].pos = D3DXVECTOR3(- halfWidth, - halfWidth, - halfWidth); // 右下
+	pVtx[29].pos = D3DXVECTOR3(+ halfWidth, - halfWidth, - halfWidth); // 左下
 
 	// 下面
-	pVtx[30].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y - halfWidth, pos.z + halfWidth); // 右上
-	pVtx[31].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y - halfWidth, pos.z - halfWidth); // 右下
-	pVtx[32].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y - halfWidth, pos.z + halfWidth); // 左上
-	pVtx[33].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y - halfWidth, pos.z + halfWidth); // 左上
-	pVtx[34].pos = D3DXVECTOR3(pos.x + halfWidth, pos.y - halfWidth, pos.z - halfWidth); // 右下
-	pVtx[35].pos = D3DXVECTOR3(pos.x - halfWidth, pos.y - halfWidth, pos.z - halfWidth); // 左下
+	pVtx[30].pos = D3DXVECTOR3(+ halfWidth, - halfWidth, + halfWidth); // 右上
+	pVtx[31].pos = D3DXVECTOR3(+ halfWidth, - halfWidth, - halfWidth); // 右下
+	pVtx[32].pos = D3DXVECTOR3(- halfWidth, - halfWidth, + halfWidth); // 左上
+	pVtx[33].pos = D3DXVECTOR3(- halfWidth, - halfWidth, + halfWidth); // 左上
+	pVtx[34].pos = D3DXVECTOR3(+ halfWidth, - halfWidth, - halfWidth); // 右下
+	pVtx[35].pos = D3DXVECTOR3(- halfWidth, - halfWidth, - halfWidth); // 左下
 
 	//----- 法線と頂点色の設定 -----
 	for (int i = 0; i < numVertex; i++) {

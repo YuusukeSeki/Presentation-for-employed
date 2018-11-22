@@ -39,15 +39,12 @@ public:
 	void AddSoldier();
 	void MarchedStart();
 
-	void ReceiveReport(Soldier::Report _report, Soldier* _reporter = nullptr, ObjectModel* _findBasePoint = nullptr);
-
-	bool GetIsActive() { return isActive_; }
+	void ReceiveReport(Soldier::Report _report, Soldier* _reporter = nullptr, BasePoint* _findBasePoint = nullptr);
 
 	D3DXVECTOR3 GetFront();
 	float GetSpeed();
 	RelayPoint* GetTargetRelayPoint();
-
-
+	
 private:
 	static SoldierCommander* FindNonActiveSoldierCommander();
 
@@ -71,9 +68,8 @@ private:
 	void ReceiveReport_Death(Soldier* _soldier);
 	void ReceiveReport_FindFriendUnit();
 	void ReceiveReport_FindEnemyUnit();
-	void ReceiveReport_FindEnemyBasePoint(ObjectModel* _enemyBasePoint);
+	void ReceiveReport_FindEnemyBasePoint(BasePoint* _enemyBasePoint);
 	void ReceiveReport_BreakBasePoint();
-	void ReceiveReport_None();
 
 	bool IsChangeOrder(const Order& _changeOrder);
 	void ChangeOrder(const Order& _changeOrder);
@@ -90,22 +86,21 @@ private:
 
 	bool IsPathedTurnPoint();
 	D3DXVECTOR3 FindPositionAfterTurned();
-	RelayPoint* FindNextRelayPoint();
 
 	D3DXVECTOR3 FindFront();
 	D3DXVECTOR3 FindRight();
 
 	static const unsigned int kInterval_ShotBullet_;
-	static const float kLength_SoldierToSoldier;
+	static const float kLength_SoldierToSoldier_;
+	static const float kSpeed_SoldierRun_;
 
 	Order currentOrder_;
 	D3DXVECTOR3 front_;
 	float speed_;
 	RelayPoint* targetRelayPoint_;
-	ObjectModel* targetBasePoint_;
+	BasePoint* targetBasePoint_;
 	unsigned int bulletTimer_;
 	bool isMarchedStart_;
-	bool isActive_;
 
 	SoldierGenerator* soldierGenerator_;
 	std::vector<Soldier*> soldierList_;

@@ -1,29 +1,37 @@
-//*****************************************************************************
-//
-//		壁
-//												Autohr : Yusuke Seki
-//*****************************************************************************
-#ifndef _WALL_H_
-#define _WALL_H_
+// author : yusuke seki
+// data   : 20181121
+#ifndef WALL_H_
+#define WALL_H_
 
-#include "main.h"
-#include "ObjectCube.h"
+#include "ObjectModel.h"
+class Player;
 
-class Wall : public ObjectCube
+class Wall : public ObjectModel
 {
 public:
-	//----- コンストラクタ / デストラクタ -----
+	enum Collide
+	{
+		FRONT,
+		BACK,
+		LEFT,
+		RIGHT,
+	};
+
 	Wall();
-	Wall(Object::TYPE type);
-	virtual ~Wall();
+	~Wall();
 
+	static Wall* Create(const D3DXVECTOR3& _position, const std::string& _fileName, const Collide& _collide);
+	void Init(const D3DXVECTOR3& _position, const std::string& _fileName, const Collide& _collide);
+	void Uninit(void);
+	void Update(void);
+	void Draw(void);
 
-	//----- 基本的な関数 -----
-	static Wall* Create(D3DXVECTOR3& position, D3DXVECTOR3& size);
-	virtual void Init(D3DXVECTOR3& position, D3DXVECTOR3& size);
-	virtual void Uninit(void);
-	virtual void Update(void);
-	virtual void Draw(void);
+	D3DXVECTOR3 GetCollidedPosition(Player& _player);
+
+private:
+	bool IsCollided(Player& _player);
+
+	Collide collde_;
 
 };
 

@@ -52,6 +52,11 @@ RelayPoint* RelayPoint::GetNextRelayPoint(Object::GROUP _group)
 	}
 }
 
+void RelayPoint::SetPosition(const D3DXVECTOR3& _position)
+{
+	position_ = _position;
+}
+
 D3DXVECTOR3 RelayPoint::GetPosition()
 {
 	return position_;

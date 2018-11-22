@@ -1,15 +1,18 @@
 // author : yusuke seki
 // data   : 20181111
 #include "ObjectBillboard.h"
+#include "Unit.h"
 
 ObjectBillboard::ObjectBillboard() : Object3D(Object::TYPE::TYPE_3D_BILLBOARD)
 {
 	camera_ = nullptr;
+	parentMatrix_ = nullptr;
 }
 
 ObjectBillboard::ObjectBillboard(const Object::TYPE& type) : Object3D(type)
 {
 	camera_ = nullptr;
+	parentMatrix_ = nullptr;
 }
 
 ObjectBillboard::~ObjectBillboard()
@@ -17,19 +20,47 @@ ObjectBillboard::~ObjectBillboard()
 	Uninit();
 }
 
-ObjectBillboard* ObjectBillboard::Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, Camera* _camera)
+void ObjectBillboard::CreateBuffer(const unsigned int& _numCreate)
 {
-	ObjectBillboard* bullet = new ObjectBillboard(Object::TYPE::TYPE_3D_BILLBOARD);
-	bullet->Init(_position, _size, _camera);
-
-	return bullet;
+	for (unsigned int i = 0; i < _numCreate; ++i)
+	{
+		ObjectBillboard* buf = new ObjectBillboard();
+		buf->SetActive(false);
+	}
 }
 
-void ObjectBillboard::Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, Camera* _camera)
+ObjectBillboard* ObjectBillboard::Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, Camera* _camera, bool _positionIsLeftTop)
+{
+	ObjectBillboard* billboard = new ObjectBillboard(Object::TYPE::TYPE_3D_BILLBOARD);
+	billboard->Init(_position, _size, _camera, _positionIsLeftTop);
+
+	return billboard;
+}
+
+ObjectBillboard* ObjectBillboard::DynamicCreate(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, Camera* _camera, bool _positionIsLeftTop)
+{
+	ObjectBillboard* billboard = FindNonActiveObjectBillboard();
+
+	if (billboard == nullptr)
+	{
+		billboard = Create(_position, _size, _camera, _positionIsLeftTop);
+	}
+	else
+	{
+		billboard->Init(_position, _size, _camera, _positionIsLeftTop);
+	}
+
+	return billboard;
+}
+
+void ObjectBillboard::Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, Camera* _camera, bool _positionIsLeftTop)
 {
 	camera_ = _camera;
+	parentMatrix_ = nullptr;
 
-	Object3D::Init(_position, _size);
+	Object3D::Init(_position, _size, _positionIsLeftTop);
+
+	SetActive(true);
 }
 
 void ObjectBillboard::Uninit(void)
@@ -50,6 +81,20 @@ void ObjectBillboard::SetCamera(Camera* _camera)
 Camera* ObjectBillboard::GetCamera()
 {
 	return camera_;
+}
+
+void ObjectBillboard::SetParent(Unit* _parentUnit)
+{
+	parentMatrix_ = _parentUnit->GetWorldMatrixPointer();
+
+	SetUpdateWorldMatrix(true);
+}
+
+void ObjectBillboard::SetParent(D3DXMATRIX* _parentMatrix)
+{
+	parentMatrix_ = _parentMatrix;
+
+	SetUpdateWorldMatrix(true);
 }
 
 void ObjectBillboard::UpdateWorldMatrix()
@@ -80,6 +125,35 @@ void ObjectBillboard::UpdateWorldMatrix()
 	D3DXMatrixMultiply(&worldMatrix, &worldMatrix, &viewMatrixInverse);
 	D3DXMatrixMultiply(&worldMatrix, &worldMatrix, &translateMatrix);
 
-	SetWorldMatrix(worldMatrix);
+	if (parentMatrix_ != nullptr)
+	{
+		D3DXMatrixMultiply(&worldMatrix, &worldMatrix, parentMatrix_);
+	}
 
+	SetWorldMatrix(worldMatrix);
+}
+
+ObjectBillboard* ObjectBillboard::FindNonActiveObjectBillboard()
+{
+	ObjectBillboard* billboard = (ObjectBillboard*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_3D_BILLBOARD);
+
+	if (billboard != nullptr)
+	{
+		for (;;)
+		{
+			if (billboard->GetActive() == false)
+			{
+				break;
+			}
+
+			billboard = (ObjectBillboard*)billboard->GetNextPointer();
+
+			if (billboard == nullptr)
+			{
+				break;
+			}
+		}
+	}
+
+	return billboard;
 }

@@ -89,4 +89,3 @@ void Part::UpdateWorldMatrix()
 
 	SetWorldMatrix(worldMatrix);
 }
-

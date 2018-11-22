@@ -53,6 +53,9 @@ void Light::Release(void)
 //-----------------------------------------------------------------------------
 void Light::Init(void)
 {
+	static int cnt;
+	index_ = cnt;
+
 	// デバイスの取得
 	LPDIRECT3DDEVICE9 pDevice = Renderer::GetDevice();
 
@@ -63,9 +66,11 @@ void Light::Init(void)
 	m_light.Specular	= D3DXCOLOR( 0.7f, 0.7f, 0.7f, 1.0f );			// 鏡面光
 	m_vecDir			= D3DXVECTOR3( 0.f , -1.0f , 0.f );				// ライトの向き
 	D3DXVec3Normalize( ( D3DXVECTOR3* )&m_light.Direction, &m_vecDir );	// 単位ベクトル化
-	pDevice->SetLight( 0, &m_light );									// ライトを設定
-	pDevice->LightEnable( 0, TRUE );									// 使います
+	pDevice->SetLight(index_, &m_light );									// ライトを設定
+	pDevice->LightEnable(index_, TRUE );									// 使います
 	pDevice->SetRenderState( D3DRS_LIGHTING, TRUE );					// 全体のライトを有効にする
+
+	cnt++;
 }
 
 //-----------------------------------------------------------------------------
@@ -80,6 +85,7 @@ void Light::Uninit(void)
 //-----------------------------------------------------------------------------
 void Light::Update(void)
 {
+
 }
 
 //-----------------------------------------------------------------------------
@@ -91,6 +97,8 @@ void Light::SetDiffuse(float r, float g, float b, float a)
 	m_light.Diffuse.g = g;
 	m_light.Diffuse.b = b;
 	m_light.Diffuse.a = a;
+
+	Renderer::GetDevice()->SetLight(index_, &m_light);
 }
 
 //-----------------------------------------------------------------------------
@@ -102,6 +110,8 @@ void Light::SetAmbient(float r, float g, float b, float a)
 	m_light.Ambient.g = g;
 	m_light.Ambient.b = b;
 	m_light.Ambient.a = a;
+
+	Renderer::GetDevice()->SetLight(index_, &m_light);
 }
 
 //-----------------------------------------------------------------------------
@@ -113,14 +123,16 @@ void Light::SetSpecular(float r, float g, float b, float a)
 	m_light.Specular.g = g;
 	m_light.Specular.b = b;
 	m_light.Specular.a = a;
+
+	Renderer::GetDevice()->SetLight(index_, &m_light);
 }
 
 // 向きの設定
 // vecDirection : 設定したい向き
-void Light::SetVectorDirection(D3DXVECTOR3& vecDirection)
+void Light::SetVectorDirection(const D3DXVECTOR3& _vecDirection)
 {
-	m_vecDir = vecDirection;
+	m_vecDir = _vecDirection;
 	D3DXVec3Normalize((D3DXVECTOR3*)&m_light.Direction, &m_vecDir);
-	Renderer::GetDevice()->SetLight(0, &m_light);
 
+	Renderer::GetDevice()->SetLight(index_, &m_light);
 }

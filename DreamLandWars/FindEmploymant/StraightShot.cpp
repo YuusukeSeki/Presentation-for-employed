@@ -198,32 +198,34 @@ void StraightShot::SetStraightShot_Private(Player& player)
 //	•ºŽm‚Æ‚Ì“–‚½‚è”»’èˆ—
 bool StraightShot::CollisionSoldier()
 {
-	Soldier* pSoldier = (Soldier*)Object::GetLDATA_HEAD(TYPE_MODEL_SOLDIER);
+	Soldier* soldier = (Soldier*)Object::GetLDATA_HEAD(TYPE_MODEL_SOLDIER);
 
-	if (pSoldier == nullptr) return false;
+	if (soldier == nullptr)
+	{
+		return false;
+	}
 
-	Soldier* pCurrent = pSoldier;
-	Soldier* pNext = (Soldier*)pSoldier->GetNextPointer();
-
-	for (;;) {
-
+	for (;;)
+	{
 		// w‰c‚Ì”»’è
-		if (pCurrent->GetInstance() && pCurrent->GetGroup() != GetGroup())
+		if (soldier->GetActive() == true && soldier->GetGroup() != GetGroup())
 
 			// “–‚½‚è”»’è
-			if (Collision_SphereToSphere(GetPosition(), GetRadius(), pCurrent->GetPosition(), pCurrent->GetRadius())) {
+			if (Collision_SphereToSphere(GetPosition(), GetRadius(), soldier->GetPosition(), soldier->GetRadius())) {
 
 				// UŒ‚ˆ—
-				pCurrent->Attack(m_pParent->GetStraightShotDamage(), GetFront(), m_pParent->GetStraightShotSpeed(), m_pParent);
+				//soldier->Attack(m_pParent->GetStraightShotDamage(), GetFront(), m_pParent->GetStraightShotSpeed(), m_pParent);
+				soldier->ReceiveDamage(m_pParent->GetStraightShotDamage());
 
 				return true;
 			}
 
-		if (pNext == nullptr) return false;
+		soldier = (Soldier*)soldier->GetNextPointer();
 
-		pCurrent = pNext;
-		pNext = (Soldier*)pCurrent->GetNextPointer();
-
+		if (soldier == nullptr)
+		{
+			return false;
+		}
 	}
 
 }

@@ -1,666 +1,485 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="ソース ファイル">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="ヘッダー ファイル">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="リソース ファイル">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="ソース ファイル\scene">
-      <UniqueIdentifier>{29f1c3df-f9a7-4fc1-a26c-694167e942ed}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\scene">
-      <UniqueIdentifier>{a5550292-1739-4b29-98a3-5148f1638931}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\外部ツール">
-      <UniqueIdentifier>{4d00dddb-1500-455c-a2c1-281867a4dc82}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\外部ツール">
-      <UniqueIdentifier>{80917fc6-414e-457c-b7fe-eb4309b00d71}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager">
-      <UniqueIdentifier>{66697c13-da1d-4fcc-9495-3e7f0199782d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\Framework">
-      <UniqueIdentifier>{b8bf3db7-00fa-4443-b429-f664ac397c44}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\EffectManager">
-      <UniqueIdentifier>{086a3451-45d7-4926-bf65-1227d0efc8cb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\EffectManager">
-      <UniqueIdentifier>{971b0099-558f-493c-ae4a-b4170e24c390}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\Framework">
-      <UniqueIdentifier>{55eb4dc1-8fea-4a48-b77e-46dbdf2c2230}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager">
-      <UniqueIdentifier>{13eba7b1-d7cd-44b4-8a3c-a4432201994a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\TextureManager">
-      <UniqueIdentifier>{6959beed-007b-4959-88aa-0173e27bda2f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\Title">
-      <UniqueIdentifier>{612a337e-aec1-4ed6-9eea-3a954291c8c0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame">
-      <UniqueIdentifier>{666d81f4-6408-4bc7-b5b2-772301f3e930}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\Result">
-      <UniqueIdentifier>{c228241a-ac7b-476b-abb7-03123bc04d65}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object">
-      <UniqueIdentifier>{e556d83a-9c73-4943-a29b-8b532ad96dce}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\Field">
-      <UniqueIdentifier>{bc60ad28-3a0b-4388-abe6-d3b252e75360}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\Field\Tower">
-      <UniqueIdentifier>{285b57ac-c53f-4a2c-9022-0028e744d34c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\Field\Castle">
-      <UniqueIdentifier>{7632eb16-aeca-429e-a88d-719b0f483456}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\Field\Wall">
-      <UniqueIdentifier>{1fe94557-ca6a-4703-beb1-73ae8fe620cd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\Field\UniqueArea">
-      <UniqueIdentifier>{99e90cff-d17b-4b17-8cc8-116270420113}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\Field\UniqueArea\Permanence">
-      <UniqueIdentifier>{6cd21a65-c738-4f8b-9632-c1960dd9a729}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\Field\UniqueArea\Permanence\HealPoint">
-      <UniqueIdentifier>{a923d77e-4530-4512-b8b4-9d303cbffc18}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\Field\UniqueArea\Permanence\Forest">
-      <UniqueIdentifier>{4ee918c7-e635-48c3-a093-51a3238b580d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\Field\UniqueArea\SwitchTime">
-      <UniqueIdentifier>{d980d342-2f92-4375-ba02-3389e30329ad}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\Field\UniqueArea\SwitchTime\SpeedUpPanel">
-      <UniqueIdentifier>{ed46109d-2205-46da-a30c-c139f2504f28}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\Player">
-      <UniqueIdentifier>{236e7ba7-229b-4e2d-8fec-a2e9b67f9861}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\Soldier">
-      <UniqueIdentifier>{03535caa-f133-402f-9057-057aa2eaaa21}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\UI">
-      <UniqueIdentifier>{d853c56c-0009-4879-a498-957ef0bef9f1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\UI\TeamData">
-      <UniqueIdentifier>{17a1f8f1-db0c-4be6-8150-7bd5c952dee4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\UI\Timer">
-      <UniqueIdentifier>{61b75a48-bd10-4cd4-9ba1-159e6c6c9591}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\UI\Score">
-      <UniqueIdentifier>{eacde1a7-4f2f-4c39-bdf2-94dceb24aa47}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\Title\Object">
-      <UniqueIdentifier>{b786266b-8032-4db7-a29c-338467407a17}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\Title\Object\Text">
-      <UniqueIdentifier>{0dd3083d-6d31-4e10-8e55-b815ad3db7a0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\Title">
-      <UniqueIdentifier>{17879849-5358-4d63-9ae9-8646b79daf1f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame">
-      <UniqueIdentifier>{c60006d0-d668-4df7-af29-b70e87e90add}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\Result">
-      <UniqueIdentifier>{1977ea93-0e09-4ef5-88fb-9322876658c6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object">
-      <UniqueIdentifier>{90ec6598-3c25-4212-94ab-6941f1469cf3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object\Field">
-      <UniqueIdentifier>{b8ca8c66-6e10-4a2d-a779-c5e64714f275}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object\Field\Castle">
-      <UniqueIdentifier>{5d378da6-03ce-41ee-bcf5-27a309ecf2d1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object\Field\Forest">
-      <UniqueIdentifier>{8bd3f80a-091a-45dd-8e73-9cb8663d6e8e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object\Field\Wall">
-      <UniqueIdentifier>{67c5d42e-fa17-4a83-9b6e-4924df367d81}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object\Field\Tower">
-      <UniqueIdentifier>{623dfbda-d601-469b-883e-dc40c3cda9a4}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object\Player">
-      <UniqueIdentifier>{2206a10b-bfa6-4b72-a500-76398adca61c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object\Soldier">
-      <UniqueIdentifier>{3da92c14-8873-4af0-a538-e9397856bc63}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object\UI">
-      <UniqueIdentifier>{14255f05-e316-4476-9d3a-eaab5405330b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\Title\Information">
-      <UniqueIdentifier>{d9262e36-2ae3-4ea7-865a-0630e29fa9a8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\Title\BackGround">
-      <UniqueIdentifier>{1513d594-7a82-42bf-8efc-f464c56e7c02}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\Title\Object\BackGround">
-      <UniqueIdentifier>{f049df0f-8bd8-4b0f-9aa1-eeb9fb81c2cd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\TextureManager">
-      <UniqueIdentifier>{a5c0d7a8-e11e-4693-92e6-6db046d502c1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object\UI\Score">
-      <UniqueIdentifier>{c5b7aa74-59a1-4701-9026-a445943d97aa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object\UI\TeamData">
-      <UniqueIdentifier>{4fbfc8a6-5a33-4aaf-aa82-abe82c84ba2c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object\UI\Timer">
-      <UniqueIdentifier>{d7f46a39-04ea-4e73-a921-d69123b92c1e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\GameManager\MainGame\Object\UI\Gauge">
-      <UniqueIdentifier>{29717d4b-4992-47ca-9cc0-2fae9eb552f6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\GameManager\MainGame\Object\UI\Gauge">
-      <UniqueIdentifier>{4012cddd-025c-4e96-808e-66364df4459a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\DataList">
-      <UniqueIdentifier>{733e9a27-493d-4c85-bb6f-a64756467259}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\DataList\Model">
-      <UniqueIdentifier>{61b72bdf-7bbe-4c53-910c-62a710cd7dce}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\DataList\Texture">
-      <UniqueIdentifier>{0bc2ebd5-4474-42c8-a02b-fc6ab8f05fbc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\DataList\Parameter">
-      <UniqueIdentifier>{74e71edf-91ec-49a2-b66a-efb1b0f9e851}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\Framework\Camera">
-      <UniqueIdentifier>{56bf43de-fee4-4e4b-a2f6-eab9b576d899}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\Framework\Light">
-      <UniqueIdentifier>{ee5b6272-acd2-4c07-a44f-533b056c7b41}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\Framework\etc...">
-      <UniqueIdentifier>{02bad5b5-90b8-4277-b5cb-bc9e7601fd69}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\Framework\Input">
-      <UniqueIdentifier>{de7bc2f5-45ed-40b1-b7f9-f06258c52856}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\Framework\Sound">
-      <UniqueIdentifier>{50d8f007-99e8-4873-8a8e-79220aeabdb6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\Framework\Renderer">
-      <UniqueIdentifier>{8809c868-80f4-43b6-aa1f-53dad419dc6a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\Object_base">
-      <UniqueIdentifier>{237da5d4-9b8b-46ba-9854-32734fd0ac0f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\Object_base">
-      <UniqueIdentifier>{6f5ef0dd-4454-4e1c-92bc-c112f01b9ee6}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="font.cpp">
-      <Filter>ソース ファイル\Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="input.cpp">
-      <Filter>ソース ファイル\Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="renderer.cpp">
-      <Filter>ソース ファイル\Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="sound.cpp">
-      <Filter>ソース ファイル\Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="camera.cpp">
-      <Filter>ソース ファイル\Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="light.cpp">
-      <Filter>ソース ファイル\Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="collision.cpp">
-      <Filter>ソース ファイル\Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="billboard.cpp">
-      <Filter>ソース ファイル\scene</Filter>
-    </ClCompile>
-    <ClCompile Include="effect.cpp">
-      <Filter>ソース ファイル\scene</Filter>
-    </ClCompile>
-    <ClCompile Include="scene.cpp">
-      <Filter>ソース ファイル\scene</Filter>
-    </ClCompile>
-    <ClCompile Include="scene2D.cpp">
-      <Filter>ソース ファイル\scene</Filter>
-    </ClCompile>
-    <ClCompile Include="scene3D.cpp">
-      <Filter>ソース ファイル\scene</Filter>
-    </ClCompile>
-    <ClCompile Include="sceneModel.cpp">
-      <Filter>ソース ファイル\scene</Filter>
-    </ClCompile>
-    <ClCompile Include="oxdebugfont_dx9.cpp">
-      <Filter>ソース ファイル\外部ツール</Filter>
-    </ClCompile>
-    <ClCompile Include="EffectManager.cpp">
-      <Filter>ソース ファイル\EffectManager</Filter>
-    </ClCompile>
-    <ClCompile Include="Effect3D.cpp">
-      <Filter>ソース ファイル\EffectManager</Filter>
-    </ClCompile>
-    <ClCompile Include="EffectBillboard.cpp">
-      <Filter>ソース ファイル\EffectManager</Filter>
-    </ClCompile>
-    <ClCompile Include="tower.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Field\Tower</Filter>
-    </ClCompile>
-    <ClCompile Include="Hold.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Field\Tower</Filter>
-    </ClCompile>
-    <ClCompile Include="LifeGauge.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Field\Tower</Filter>
-    </ClCompile>
-    <ClCompile Include="Icon.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Field\Tower</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureManager.cpp">
-      <Filter>ソース ファイル\TextureManager</Filter>
-    </ClCompile>
-    <ClCompile Include="texture.cpp">
-      <Filter>ソース ファイル\TextureManager</Filter>
-    </ClCompile>
-    <ClCompile Include="GameManager.cpp">
-      <Filter>ソース ファイル\GameManager</Filter>
-    </ClCompile>
-    <ClCompile Include="castle.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Field\Castle</Filter>
-    </ClCompile>
-    <ClCompile Include="player.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Player</Filter>
-    </ClCompile>
-    <ClCompile Include="field.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Field</Filter>
-    </ClCompile>
-    <ClCompile Include="skybox.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Field</Filter>
-    </ClCompile>
-    <ClCompile Include="DrawLine.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Player</Filter>
-    </ClCompile>
-    <ClCompile Include="DrawRange.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Player</Filter>
-    </ClCompile>
-    <ClCompile Include="StraightShot.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Player</Filter>
-    </ClCompile>
-    <ClCompile Include="SoldierBullet.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Soldier</Filter>
-    </ClCompile>
-    <ClCompile Include="Soldier.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Soldier</Filter>
-    </ClCompile>
-    <ClCompile Include="DrawShot.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Player</Filter>
-    </ClCompile>
-    <ClCompile Include="Wall.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Field\Wall</Filter>
-    </ClCompile>
-    <ClCompile Include="result.cpp">
-      <Filter>ソース ファイル\GameManager\Result</Filter>
-    </ClCompile>
-    <ClCompile Include="MainGame.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame</Filter>
-    </ClCompile>
-    <ClCompile Include="fade.cpp">
-      <Filter>ソース ファイル\Framework</Filter>
-    </ClCompile>
-    <ClCompile Include="GameTitle.cpp">
-      <Filter>ソース ファイル\GameManager\Title\Information</Filter>
-    </ClCompile>
-    <ClCompile Include="TouchScreen.cpp">
-      <Filter>ソース ファイル\GameManager\Title\Information</Filter>
-    </ClCompile>
-    <ClCompile Include="SkyDome.cpp">
-      <Filter>ソース ファイル\GameManager\Title\BackGround</Filter>
-    </ClCompile>
-    <ClCompile Include="Title.cpp">
-      <Filter>ソース ファイル\GameManager\Title</Filter>
-    </ClCompile>
-    <ClCompile Include="score.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\UI\Score</Filter>
-    </ClCompile>
-    <ClCompile Include="FrameBorder.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\UI\TeamData</Filter>
-    </ClCompile>
-    <ClCompile Include="TeamGauge.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\UI\TeamData</Filter>
-    </ClCompile>
-    <ClCompile Include="TeamGaugeManager.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\UI\TeamData</Filter>
-    </ClCompile>
-    <ClCompile Include="TeamLevel.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\UI\TeamData</Filter>
-    </ClCompile>
-    <ClCompile Include="timer.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\UI\Timer</Filter>
-    </ClCompile>
-    <ClCompile Include="Gauge.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\UI\Gauge</Filter>
-    </ClCompile>
-    <ClCompile Include="LifeGauge_Soldier.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\UI\Gauge</Filter>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="BasePoint.cpp">
+      <Filter>object\basepoint</Filter>
     </ClCompile>
     <ClCompile Include="Bullet3D.cpp">
-      <Filter>ソース ファイル\Object_base</Filter>
+      <Filter>object\bullet</Filter>
     </ClCompile>
     <ClCompile Include="BulletBillboard.cpp">
-      <Filter>ソース ファイル\Object_base</Filter>
+      <Filter>object\bullet</Filter>
     </ClCompile>
-    <ClCompile Include="Object.cpp">
-      <Filter>ソース ファイル\Object_base</Filter>
-    </ClCompile>
-    <ClCompile Include="Object2D.cpp">
-      <Filter>ソース ファイル\Object_base</Filter>
-    </ClCompile>
-    <ClCompile Include="Object3D.cpp">
-      <Filter>ソース ファイル\Object_base</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectCube.cpp">
-      <Filter>ソース ファイル\Object_base</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectModel.cpp">
-      <Filter>ソース ファイル\Object_base</Filter>
-    </ClCompile>
-    <ClCompile Include="Part.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="PlayerFix.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Controller.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Controller_KeyboardAndMouse.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="ObjectBillboard.cpp">
-      <Filter>ソース ファイル\Object_base</Filter>
-    </ClCompile>
-    <ClCompile Include="SoldierGenerator.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Soldier</Filter>
-    </ClCompile>
-    <ClCompile Include="SoldierCommander.cpp">
-      <Filter>ソース ファイル\GameManager\MainGame\Object\Soldier</Filter>
-    </ClCompile>
-    <ClCompile Include="RelayPoint.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="castle.cpp">
+      <Filter>object\basepoint</Filter>
     </ClCompile>
     <ClCompile Include="Collider.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>collider</Filter>
+    </ClCompile>
+    <ClCompile Include="billboard.cpp">
+      <Filter>etcetra</Filter>
+    </ClCompile>
+    <ClCompile Include="collision.cpp">
+      <Filter>etcetra</Filter>
+    </ClCompile>
+    <ClCompile Include="Controller.cpp">
+      <Filter>framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Controller_KeyboardAndMouse.cpp">
+      <Filter>framework</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawLine.cpp">
+      <Filter>object\bullet</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawRange.cpp">
+      <Filter>object\bullet</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawShot.cpp">
+      <Filter>object\bullet</Filter>
+    </ClCompile>
+    <ClCompile Include="effect.cpp">
+      <Filter>effect</Filter>
+    </ClCompile>
+    <ClCompile Include="Effect3D.cpp">
+      <Filter>effect</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectBillboard.cpp">
+      <Filter>effect</Filter>
+    </ClCompile>
+    <ClCompile Include="EffectManager.cpp">
+      <Filter>effect</Filter>
+    </ClCompile>
+    <ClCompile Include="fade.cpp">
+      <Filter>framework</Filter>
+    </ClCompile>
+    <ClCompile Include="font.cpp">
+      <Filter>etcetra</Filter>
+    </ClCompile>
+    <ClCompile Include="field.cpp">
+      <Filter>object\field</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameBorder.cpp">
+      <Filter>object\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="GameManager.cpp">
+      <Filter>gamemanager</Filter>
+    </ClCompile>
+    <ClCompile Include="Hold.cpp">
+      <Filter>etcetra</Filter>
+    </ClCompile>
+    <ClCompile Include="Icon.cpp">
+      <Filter>etcetra</Filter>
+    </ClCompile>
+    <ClCompile Include="input.cpp">
+      <Filter>framework</Filter>
+    </ClCompile>
+    <ClCompile Include="LifeGauge.cpp">
+      <Filter>etcetra</Filter>
+    </ClCompile>
+    <ClCompile Include="LifeGauge_Soldier.cpp">
+      <Filter>etcetra</Filter>
+    </ClCompile>
+    <ClCompile Include="light.cpp">
+      <Filter>framework</Filter>
+    </ClCompile>
+    <ClCompile Include="MainGame.cpp">
+      <Filter>gamemanager</Filter>
+    </ClCompile>
+    <ClCompile Include="Object.cpp">
+      <Filter>object</Filter>
+    </ClCompile>
+    <ClCompile Include="Object2D.cpp">
+      <Filter>object</Filter>
+    </ClCompile>
+    <ClCompile Include="Object3D.cpp">
+      <Filter>object</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectBillboard.cpp">
+      <Filter>object</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectCube.cpp">
+      <Filter>object</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectModel.cpp">
+      <Filter>object</Filter>
+    </ClCompile>
+    <ClCompile Include="oxdebugfont_dx9.cpp">
+      <Filter>ox</Filter>
+    </ClCompile>
+    <ClCompile Include="Part.cpp">
+      <Filter>object\modelpart</Filter>
+    </ClCompile>
+    <ClCompile Include="player.cpp">
+      <Filter>object\unit</Filter>
+    </ClCompile>
+    <ClCompile Include="renderer.cpp">
+      <Filter>framework</Filter>
+    </ClCompile>
+    <ClCompile Include="scene.cpp">
+      <Filter>oldobject</Filter>
+    </ClCompile>
+    <ClCompile Include="scene2D.cpp">
+      <Filter>oldobject</Filter>
+    </ClCompile>
+    <ClCompile Include="scene3D.cpp">
+      <Filter>oldobject</Filter>
+    </ClCompile>
+    <ClCompile Include="sceneModel.cpp">
+      <Filter>oldobject</Filter>
+    </ClCompile>
+    <ClCompile Include="result.cpp">
+      <Filter>gamemanager</Filter>
+    </ClCompile>
+    <ClCompile Include="GameTitle.cpp">
+      <Filter>etcetra</Filter>
+    </ClCompile>
+    <ClCompile Include="Soldier.cpp">
+      <Filter>object\unit</Filter>
+    </ClCompile>
+    <ClCompile Include="RelayPoint.cpp">
+      <Filter>object\field</Filter>
+    </ClCompile>
+    <ClCompile Include="score.cpp">
+      <Filter>object\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="skybox.cpp">
+      <Filter>object\background</Filter>
+    </ClCompile>
+    <ClCompile Include="SkyDome.cpp">
+      <Filter>object\background</Filter>
+    </ClCompile>
+    <ClCompile Include="SoldierBullet.cpp">
+      <Filter>object\bullet</Filter>
+    </ClCompile>
+    <ClCompile Include="SoldierCommander.cpp">
+      <Filter>object\ai</Filter>
+    </ClCompile>
+    <ClCompile Include="SoldierGenerator.cpp">
+      <Filter>object\ai</Filter>
+    </ClCompile>
+    <ClCompile Include="sound.cpp">
+      <Filter>framework</Filter>
+    </ClCompile>
+    <ClCompile Include="StraightShot.cpp">
+      <Filter>object\bullet</Filter>
+    </ClCompile>
+    <ClCompile Include="TeamGauge.cpp">
+      <Filter>object\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="TeamGaugeManager.cpp">
+      <Filter>object\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="TeamLevel.cpp">
+      <Filter>object\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="timer.cpp">
+      <Filter>object\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="texture.cpp">
+      <Filter>framework</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureManager.cpp">
+      <Filter>framework</Filter>
+    </ClCompile>
+    <ClCompile Include="Title.cpp">
+      <Filter>gamemanager</Filter>
+    </ClCompile>
+    <ClCompile Include="TouchScreen.cpp">
+      <Filter>object\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="Wall.cpp">
+      <Filter>object\field</Filter>
+    </ClCompile>
+    <ClCompile Include="tower.cpp">
+      <Filter>object\basepoint</Filter>
     </ClCompile>
     <ClCompile Include="Unit.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>object\unit</Filter>
     </ClCompile>
-<<<<<<< Updated upstream
-=======
-    <ClCompile Include="BasePoint.cpp">
-      <Filter>ソース ファイル</Filter>
+    <ClCompile Include="camera.cpp">
+      <Filter>framework</Filter>
     </ClCompile>
->>>>>>> Stashed changes
+    <ClCompile Include="SoldierGauge.cpp">
+      <Filter>etcetra</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="main.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="billboard.h">
-      <Filter>ヘッダー ファイル\scene</Filter>
-    </ClInclude>
-    <ClInclude Include="effect.h">
-      <Filter>ヘッダー ファイル\scene</Filter>
-    </ClInclude>
-    <ClInclude Include="scene.h">
-      <Filter>ヘッダー ファイル\scene</Filter>
-    </ClInclude>
-    <ClInclude Include="scene2D.h">
-      <Filter>ヘッダー ファイル\scene</Filter>
-    </ClInclude>
-    <ClInclude Include="scene3D.h">
-      <Filter>ヘッダー ファイル\scene</Filter>
-    </ClInclude>
-    <ClInclude Include="sceneModel.h">
-      <Filter>ヘッダー ファイル\scene</Filter>
-    </ClInclude>
-    <ClInclude Include="oxdebugfont.h">
-      <Filter>ヘッダー ファイル\外部ツール</Filter>
-    </ClInclude>
-    <ClInclude Include="EffectManager.h">
-      <Filter>ヘッダー ファイル\EffectManager</Filter>
-    </ClInclude>
-    <ClInclude Include="Effect3D.h">
-      <Filter>ヘッダー ファイル\EffectManager</Filter>
-    </ClInclude>
-    <ClInclude Include="EffectBillboard.h">
-      <Filter>ヘッダー ファイル\EffectManager</Filter>
-    </ClInclude>
-    <ClInclude Include="SoldierBullet.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Soldier</Filter>
-    </ClInclude>
-    <ClInclude Include="field.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Field</Filter>
-    </ClInclude>
-    <ClInclude Include="castle.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Field\Castle</Filter>
-    </ClInclude>
-    <ClInclude Include="player.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Player</Filter>
-    </ClInclude>
-    <ClInclude Include="TeamLevel.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\UI\TeamData</Filter>
-    </ClInclude>
-    <ClInclude Include="TeamGaugeManager.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\UI\TeamData</Filter>
-    </ClInclude>
-    <ClInclude Include="TeamGauge.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\UI\TeamData</Filter>
-    </ClInclude>
-    <ClInclude Include="FrameBorder.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\UI\TeamData</Filter>
-    </ClInclude>
-    <ClInclude Include="timer.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\UI\Timer</Filter>
-    </ClInclude>
-    <ClInclude Include="score.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\UI\Score</Filter>
-    </ClInclude>
-    <ClInclude Include="StraightShot.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Player</Filter>
-    </ClInclude>
-    <ClInclude Include="GameManager.h">
-      <Filter>ヘッダー ファイル\GameManager</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureManager.h">
-      <Filter>ヘッダー ファイル\TextureManager</Filter>
-    </ClInclude>
-    <ClInclude Include="texture.h">
-      <Filter>ヘッダー ファイル\TextureManager</Filter>
-    </ClInclude>
-    <ClInclude Include="skybox.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Field</Filter>
-    </ClInclude>
-    <ClInclude Include="Soldier.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Soldier</Filter>
-    </ClInclude>
-    <ClInclude Include="DrawLine.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Player</Filter>
-    </ClInclude>
-    <ClInclude Include="DrawRange.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Player</Filter>
-    </ClInclude>
-    <ClInclude Include="DrawShot.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Player</Filter>
-    </ClInclude>
-    <ClInclude Include="tower.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Field\Tower</Filter>
-    </ClInclude>
-    <ClInclude Include="LifeGauge.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Field\Tower</Filter>
-    </ClInclude>
-    <ClInclude Include="Icon.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Field\Tower</Filter>
-    </ClInclude>
-    <ClInclude Include="Hold.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Field\Tower</Filter>
-    </ClInclude>
-    <ClInclude Include="Wall.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Field\Wall</Filter>
-    </ClInclude>
-    <ClInclude Include="UniqueArea.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Field\UniqueArea</Filter>
-    </ClInclude>
-    <ClInclude Include="MainGame.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame</Filter>
-    </ClInclude>
-    <ClInclude Include="result.h">
-      <Filter>ヘッダー ファイル\GameManager\Result</Filter>
-    </ClInclude>
-    <ClInclude Include="GameScene.h">
-      <Filter>ヘッダー ファイル\GameManager</Filter>
-    </ClInclude>
-    <ClInclude Include="TouchScreen.h">
-      <Filter>ヘッダー ファイル\GameManager\Title\Object\Text</Filter>
-    </ClInclude>
-    <ClInclude Include="GameTitle.h">
-      <Filter>ヘッダー ファイル\GameManager\Title\Object\Text</Filter>
-    </ClInclude>
-    <ClInclude Include="SkyDome.h">
-      <Filter>ヘッダー ファイル\GameManager\Title\Object\BackGround</Filter>
-    </ClInclude>
-    <ClInclude Include="Title.h">
-      <Filter>ヘッダー ファイル\GameManager\Title</Filter>
-    </ClInclude>
-    <ClInclude Include="Gauge.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\UI\Gauge</Filter>
-    </ClInclude>
-    <ClInclude Include="LifeGauge_Soldier.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\UI\Gauge</Filter>
-    </ClInclude>
-    <ClInclude Include="ModelData.h">
-      <Filter>ヘッダー ファイル\DataList\Model</Filter>
-    </ClInclude>
-    <ClInclude Include="list_LoadTexture_MainGame.h">
-      <Filter>ヘッダー ファイル\DataList\Texture</Filter>
-    </ClInclude>
-    <ClInclude Include="list_LoadTexture_Result.h">
-      <Filter>ヘッダー ファイル\DataList\Texture</Filter>
-    </ClInclude>
-    <ClInclude Include="list_LoadTexture_Title.h">
-      <Filter>ヘッダー ファイル\DataList\Texture</Filter>
-    </ClInclude>
-    <ClInclude Include="list_CharaParameters.h">
-      <Filter>ヘッダー ファイル\DataList\Parameter</Filter>
-    </ClInclude>
-    <ClInclude Include="font.h">
-      <Filter>ヘッダー ファイル\Framework\etc...</Filter>
-    </ClInclude>
-    <ClInclude Include="fade.h">
-      <Filter>ヘッダー ファイル\Framework\etc...</Filter>
-    </ClInclude>
-    <ClInclude Include="collision.h">
-      <Filter>ヘッダー ファイル\Framework\etc...</Filter>
-    </ClInclude>
-    <ClInclude Include="input.h">
-      <Filter>ヘッダー ファイル\Framework\Input</Filter>
-    </ClInclude>
-    <ClInclude Include="camera.h">
-      <Filter>ヘッダー ファイル\Framework\Camera</Filter>
-    </ClInclude>
-    <ClInclude Include="light.h">
-      <Filter>ヘッダー ファイル\Framework\Light</Filter>
-    </ClInclude>
-    <ClInclude Include="renderer.h">
-      <Filter>ヘッダー ファイル\Framework\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="sound.h">
-      <Filter>ヘッダー ファイル\Framework\Sound</Filter>
-    </ClInclude>
-    <ClInclude Include="EventButton.h">
-      <Filter>ヘッダー ファイル\DataList</Filter>
-    </ClInclude>
-    <ClInclude Include="Etc_Paramaters.h">
-      <Filter>ヘッダー ファイル\DataList\Parameter</Filter>
-    </ClInclude>
-    <ClInclude Include="Soldier_LifeGauge.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Soldier</Filter>
+    <ClInclude Include="BasePoint.h">
+      <Filter>object\basepoint</Filter>
     </ClInclude>
     <ClInclude Include="Bullet3D.h">
-      <Filter>ヘッダー ファイル\Object_base</Filter>
+      <Filter>object\bullet</Filter>
     </ClInclude>
     <ClInclude Include="BulletBillboard.h">
-      <Filter>ヘッダー ファイル\Object_base</Filter>
+      <Filter>object\bullet</Filter>
     </ClInclude>
-    <ClInclude Include="Object.h">
-      <Filter>ヘッダー ファイル\Object_base</Filter>
-    </ClInclude>
-    <ClInclude Include="Object2D.h">
-      <Filter>ヘッダー ファイル\Object_base</Filter>
-    </ClInclude>
-    <ClInclude Include="Object3D.h">
-      <Filter>ヘッダー ファイル\Object_base</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectCube.h">
-      <Filter>ヘッダー ファイル\Object_base</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectModel.h">
-      <Filter>ヘッダー ファイル\Object_base</Filter>
-    </ClInclude>
-    <ClInclude Include="Part.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="PlayerFix.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Controller.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Controller_KeyboardAndMouse.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="ObjectBillboard.h">
-      <Filter>ヘッダー ファイル\Object_base</Filter>
-    </ClInclude>
-    <ClInclude Include="SoldierGenerator.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Soldier</Filter>
-    </ClInclude>
-    <ClInclude Include="SoldierCommander.h">
-      <Filter>ヘッダー ファイル\GameManager\MainGame\Object\Soldier</Filter>
-    </ClInclude>
-    <ClInclude Include="RelayPoint.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="BasePoint.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Unit.h">
-      <Filter>ヘッダー ファイル</Filter>
+    <ClInclude Include="castle.h">
+      <Filter>object\basepoint</Filter>
     </ClInclude>
     <ClInclude Include="Collider.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>collider</Filter>
     </ClInclude>
+    <ClInclude Include="billboard.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="collision.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="Controller.h">
+      <Filter>framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Controller_KeyboardAndMouse.h">
+      <Filter>framework</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawLine.h">
+      <Filter>object\bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawRange.h">
+      <Filter>object\bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawShot.h">
+      <Filter>object\bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="Effect3D.h">
+      <Filter>effect</Filter>
+    </ClInclude>
+    <ClInclude Include="effect.h">
+      <Filter>effect</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectBillboard.h">
+      <Filter>effect</Filter>
+    </ClInclude>
+    <ClInclude Include="EffectManager.h">
+      <Filter>effect</Filter>
+    </ClInclude>
+    <ClInclude Include="Etc_Paramaters.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="EventButton.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="fade.h">
+      <Filter>framework</Filter>
+    </ClInclude>
+    <ClInclude Include="font.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="field.h">
+      <Filter>object\field</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameBorder.h">
+      <Filter>object\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="GameManager.h">
+      <Filter>gamemanager</Filter>
+    </ClInclude>
+    <ClInclude Include="GameScene.h">
+      <Filter>gamemanager</Filter>
+    </ClInclude>
+    <ClInclude Include="Hold.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="Icon.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="input.h">
+      <Filter>framework</Filter>
+    </ClInclude>
+    <ClInclude Include="LifeGauge.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="LifeGauge_Soldier.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="light.h">
+      <Filter>framework</Filter>
+    </ClInclude>
+    <ClInclude Include="list_CharaParameters.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="list_LoadTexture_MainGame.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="list_LoadTexture_Result.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="list_LoadTexture_Title.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="MainGame.h">
+      <Filter>gamemanager</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelData.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>object</Filter>
+    </ClInclude>
+    <ClInclude Include="Object2D.h">
+      <Filter>object</Filter>
+    </ClInclude>
+    <ClInclude Include="Object3D.h">
+      <Filter>object</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectBillboard.h">
+      <Filter>object</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectCube.h">
+      <Filter>object</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectModel.h">
+      <Filter>object</Filter>
+    </ClInclude>
+    <ClInclude Include="oxdebugfont.h">
+      <Filter>ox</Filter>
+    </ClInclude>
+    <ClInclude Include="Part.h">
+      <Filter>object\modelpart</Filter>
+    </ClInclude>
+    <ClInclude Include="player.h">
+      <Filter>object\unit</Filter>
+    </ClInclude>
+    <ClInclude Include="renderer.h">
+      <Filter>framework</Filter>
+    </ClInclude>
+    <ClInclude Include="scene.h">
+      <Filter>oldobject</Filter>
+    </ClInclude>
+    <ClInclude Include="scene2D.h">
+      <Filter>oldobject</Filter>
+    </ClInclude>
+    <ClInclude Include="scene3D.h">
+      <Filter>oldobject</Filter>
+    </ClInclude>
+    <ClInclude Include="sceneModel.h">
+      <Filter>oldobject</Filter>
+    </ClInclude>
+    <ClInclude Include="result.h">
+      <Filter>gamemanager</Filter>
+    </ClInclude>
+    <ClInclude Include="GameTitle.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+    <ClInclude Include="Soldier.h">
+      <Filter>object\unit</Filter>
+    </ClInclude>
+    <ClInclude Include="RelayPoint.h">
+      <Filter>object\field</Filter>
+    </ClInclude>
+    <ClInclude Include="score.h">
+      <Filter>object\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="SkyDome.h">
+      <Filter>object\background</Filter>
+    </ClInclude>
+    <ClInclude Include="skybox.h">
+      <Filter>object\background</Filter>
+    </ClInclude>
+    <ClInclude Include="SoldierBullet.h">
+      <Filter>object\bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="SoldierCommander.h">
+      <Filter>object\ai</Filter>
+    </ClInclude>
+    <ClInclude Include="SoldierGenerator.h">
+      <Filter>object\ai</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h" />
+    <ClInclude Include="sound.h">
+      <Filter>framework</Filter>
+    </ClInclude>
+    <ClInclude Include="StraightShot.h">
+      <Filter>object\bullet</Filter>
+    </ClInclude>
+    <ClInclude Include="TeamGauge.h">
+      <Filter>object\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="TeamGaugeManager.h">
+      <Filter>object\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="TeamLevel.h">
+      <Filter>object\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="timer.h">
+      <Filter>object\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="texture.h">
+      <Filter>framework</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureManager.h">
+      <Filter>framework</Filter>
+    </ClInclude>
+    <ClInclude Include="Title.h">
+      <Filter>gamemanager</Filter>
+    </ClInclude>
+    <ClInclude Include="TouchScreen.h">
+      <Filter>object\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="Wall.h">
+      <Filter>object\field</Filter>
+    </ClInclude>
+    <ClInclude Include="tower.h">
+      <Filter>object\basepoint</Filter>
+    </ClInclude>
+    <ClInclude Include="Unit.h">
+      <Filter>object\unit</Filter>
+    </ClInclude>
+    <ClInclude Include="camera.h">
+      <Filter>framework</Filter>
+    </ClInclude>
+    <ClInclude Include="SoldierGauge.h">
+      <Filter>etcetra</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="object">
+      <UniqueIdentifier>{78322e44-2115-4461-afba-c9cbe17073b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="object\unit">
+      <UniqueIdentifier>{796d1d79-8c81-4b1f-8434-e855519a3bc2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="object\basepoint">
+      <UniqueIdentifier>{7d890de0-a6e3-4bfe-9a0e-1e6501e224af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="object\bullet">
+      <UniqueIdentifier>{6e4eeb4a-89e6-4441-8a40-a2abe8099c29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="collider">
+      <UniqueIdentifier>{b622b0ac-abb7-4955-9764-8c8eaa215e37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="etcetra">
+      <UniqueIdentifier>{b0a16231-bc4d-4752-b9bf-f957a6093ae9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="framework">
+      <UniqueIdentifier>{c9507827-3433-4a8d-acff-6223d497cc74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="effect">
+      <UniqueIdentifier>{cd5cfc91-1a44-4396-b976-2d55e61e6392}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="object\field">
+      <UniqueIdentifier>{36c44ac0-a21a-4140-aa33-a4d219c05d38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gamemanager">
+      <UniqueIdentifier>{485c93f2-3812-4dee-9f2e-49a72a1a32ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ox">
+      <UniqueIdentifier>{ef6a8d28-c1d8-435a-b98f-5c73bf0fa1fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="object\modelpart">
+      <UniqueIdentifier>{ce53c264-1c18-4216-b3f9-f7dd86d59d52}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="object\background">
+      <UniqueIdentifier>{4bcc1f65-f852-40b0-a55b-219697ab5646}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="object\ui">
+      <UniqueIdentifier>{020a9e6c-37ed-450b-a84f-1e07508b8e77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="object\ai">
+      <UniqueIdentifier>{c6988c53-23e4-4df5-bf3a-478ef2b83ba4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oldobject">
+      <UniqueIdentifier>{218c3b90-85bd-48e3-a1aa-7b41a981483d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

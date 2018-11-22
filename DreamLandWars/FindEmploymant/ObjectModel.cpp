@@ -32,6 +32,10 @@ ObjectModel::ObjectModel() : Object(Object::TYPE::TYPE_MODEL)
 	isUpdateWorldMatrix_ = false;
 
 	isDraw_ = false;
+
+	centerVertex_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	minVertex_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	maxVertex_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 }
 
 ObjectModel::ObjectModel(const Object::TYPE& type) : Object(type)
@@ -80,10 +84,6 @@ ObjectModel* ObjectModel::Create(const D3DXVECTOR3& _position, const std::string
 
 void ObjectModel::Init(const D3DXVECTOR3& _position, const std::string& _fileName)
 {
-	LoadMeshModel_DX(_fileName.c_str());
-
-	LoadModelSizeFromX(_fileName.c_str());
-
 	SetPosition(_position);
 
 	SetRotate(D3DXVECTOR3(0, 0, 0));
@@ -93,6 +93,10 @@ void ObjectModel::Init(const D3DXVECTOR3& _position, const std::string& _fileNam
 	SetFront(D3DXVECTOR3(0, 0, 1));
 
 	SetColor(255, 255, 255, 255);
+
+	LoadMeshModel_DX(_fileName.c_str());
+
+	LoadModelSizeFromX(_fileName.c_str());
 
 	SetIsDraw(true);
 }
@@ -334,6 +338,21 @@ void ObjectModel::SetUpdateWorldMatrix(bool _isUpdate)
 	isUpdateWorldMatrix_ = _isUpdate;
 }
 
+D3DXVECTOR3 ObjectModel::GetCenterVertex()
+{
+	return centerVertex_;
+}
+
+D3DXVECTOR3 ObjectModel::GetMinVertex()
+{
+	return minVertex_;
+}
+
+D3DXVECTOR3 ObjectModel::GetMaxVertex()
+{
+	return maxVertex_;
+}
+
 void ObjectModel::UpdateVertexBuf()
 {
 	VERTEX_3D* vertexBuf;
@@ -447,6 +466,9 @@ void ObjectModel::LoadModelSizeFromX(const char* _fileName)
 	halfSize_ = (positionMax - positionMin) * 0.5f;
 	radius_   = sqrtf(halfSize_.x * halfSize_.x + halfSize_.y * halfSize_.y + halfSize_.z * halfSize_.z);
 
+	centerVertex_ = (positionMax - positionMin) * 0.5f;
+	minVertex_ = positionMin;
+	maxVertex_ = positionMax;
 }
 
 // モデルデータの読み込み（directXの便利関数使用）

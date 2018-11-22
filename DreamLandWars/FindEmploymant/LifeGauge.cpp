@@ -42,7 +42,7 @@ LifeGauge::~LifeGauge()
 //-----------------------------------------------------------------------------
 // 実体の生成
 //-----------------------------------------------------------------------------
-LifeGauge* LifeGauge::Create(ObjectModel* pObjModel, Camera* pCamera)
+LifeGauge* LifeGauge::Create(BasePoint* pObjModel, Camera* pCamera)
 {
 	// 実体の生成
 	LifeGauge* pLifeGauge = new LifeGauge;
@@ -58,7 +58,7 @@ LifeGauge* LifeGauge::Create(ObjectModel* pObjModel, Camera* pCamera)
 //-----------------------------------------------------------------------------
 // 初期化処理
 //-----------------------------------------------------------------------------
-void LifeGauge::Init(ObjectModel* pObjModel, Camera* pCamera)
+void LifeGauge::Init(BasePoint* pObjModel, Camera* pCamera)
 {
 	// データの初期化
 	{
@@ -71,7 +71,7 @@ void LifeGauge::Init(ObjectModel* pObjModel, Camera* pCamera)
 		MovePosition(D3DXVECTOR3(0, m_pParent->GetSize().y * 1.15f, 0));
 
 		// 初期体力の設定
-		m_initLife = pTower->GetLife();
+		m_initLife = pTower->GetMaxHp();
 
 		// ポリゴンの初期幅の設定
 		m_initWidth = GetSize().x;
@@ -127,7 +127,7 @@ void LifeGauge::MoveLife(float moveLife)
 {
 	Tower* pTower = (Tower*)m_pParent;
 
-	float life = pTower->GetLife();
+	float life = pTower->GetCurrentHp();
 
 	// ゲージ量が0以下で無処理
 	if (life <= 0) return;

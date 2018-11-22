@@ -6,6 +6,20 @@
 class RelayPoint
 {
 public:
+	enum Point
+	{
+		FRIENDCASTLECENTER,
+		FRIENDCASTLELEFT,
+		FRIENDCASTLERIGHT,
+		FRIENDLEFT,
+		FRIENDRIGHT,
+		ENEMYCASTLECENTER,
+		ENEMYCASTLELEFT,
+		ENEMYCASTLERIGHT,
+		ENEMYLEFT,
+		ENEMYRIGHT,
+	};
+
 	RelayPoint(const D3DXVECTOR3& _position);
 	~RelayPoint();
 
@@ -16,6 +30,8 @@ public:
 	void SetBackRelayPoint(RelayPoint* _backRelayPoint);
 
 	RelayPoint* GetNextRelayPoint(Object::GROUP _group);
+	
+	void SetPosition(const D3DXVECTOR3& _position);
 	D3DXVECTOR3 GetPosition();
 
 private:

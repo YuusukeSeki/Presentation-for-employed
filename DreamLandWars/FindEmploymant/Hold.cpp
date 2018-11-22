@@ -5,7 +5,7 @@
 //*****************************************************************************
 #include "Hold.h"
 #include "camera.h"
-#include "ObjectModel.h"
+#include "BasePoint.h"
 #include "tower.h"
 #include "castle.h"
 
@@ -42,7 +42,7 @@ Hold::~Hold()
 //-----------------------------------------------------------------------------
 // 実体の生成
 //-----------------------------------------------------------------------------
-Hold* Hold::Create(ObjectModel* pObjModel, Camera* pCamera)
+Hold* Hold::Create(BasePoint* pObjModel, Camera* pCamera)
 {
 	// 生成
 	Hold* pHold = new Hold;
@@ -57,7 +57,7 @@ Hold* Hold::Create(ObjectModel* pObjModel, Camera* pCamera)
 //-----------------------------------------------------------------------------
 // 初期化処理
 //-----------------------------------------------------------------------------
-void Hold::Init(ObjectModel* pObjModel, Camera* pCamera)
+void Hold::Init(BasePoint* pObjModel, Camera* pCamera)
 {
 	//----- データの設定 -----
 	//ObjectBillboard::Init(pObjModel->GetPosition() - pCamera->GetVecZ() * 190, D3DXVECTOR3(pObjModel->GetRadius(), pObjModel->GetRadius(), 0), pCamera);	// 継承データの初期化

@@ -8,16 +8,31 @@
 class Object
 {
 public:
+	union Color
+	{
+		unsigned int color;
+		unsigned char rgba[4];
+	};
+
+	//struct Color
+	//{
+	//	int r;
+	//	int g;
+	//	int b;
+	//	int a;
+	//};
+
 	enum TYPE
 	{ // 種類（描画順序込み）
+		TYPE_GENERATOR,
 		TYPE_COMMANDER,					// 指揮官（座標のみ）
+		TYPE_3D_FIELD,					// フィールド
 		TYPE_MODEL,						// ★モデル
 		TYPE_MODEL_PLAYER,				// プレイヤー
 		TYPE_MODEL_SOLDIER,				// 兵士
 		TYPE_MODEL_CASTLE,				// 城
 		TYPE_MODEL_TOWER,				// 塔
 		TYPE_MODEL_SKYDOME,				// スカイドーム
-		TYPE_3D_FIELD,					// フィールド
 		TYPE_3D_SKYBOX,					// スカイボックス
 		TYPE_3D,						// ★3Dポリゴン
 		TYPE_3D_CUBE,					// キューブ
@@ -33,11 +48,13 @@ public:
 		TYPE_3D_BILLBOARD,				// ビルボード
 		TYPE_3D_BULLET,					// バレット（3D）
 		TYPE_3D_BILLBOARD_BULLET,		// バレット（ビルボード）
+		TYPE_SOLDIERGAUGE,
 		TYPE_3D_BILLBOARD_EFFECT,		// エフェクト（ビルボード）
 		TYPE_3D_GAMETITLE,				// ゲームタイトル
 		TYPE_3D_TOUCHSCREEN,			// タッチスクリーン
 		TYPE_2D,						// ★2Dポリゴン
 		TYPE_2D_FRAMEBORDER,			// 枠線
+		COLLIDER,
 
 		TYPE_MAX,	// ※ 種類の最大数
 	};
@@ -131,6 +148,18 @@ public:
 		return isActive_;
 	}
 
+#ifdef _DEBUG
+	static void SetIsDrawCollider(const bool& _isDraw)
+	{
+		isDrawCollider_ = _isDraw;
+	}
+
+	static bool GetIsDrawCollider()
+	{
+		return isDrawCollider_;
+	}
+#endif
+
 private:
 	static Object* headObj_[Object::TYPE_MAX];
 	static Object* tailObj_[Object::TYPE_MAX];
@@ -141,6 +170,10 @@ private:
 	Object::TYPE type_;
 	Object::GROUP group_;
 	bool isActive_;
+
+#ifdef _DEBUG
+	static bool isDrawCollider_;
+#endif
 
 };
 

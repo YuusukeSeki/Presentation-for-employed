@@ -50,17 +50,15 @@ public:
 
 	void SetIsDraw(const bool& _isDraw);
 
-protected:
 	void SetWorldMatrix(const D3DXMATRIX& _worldMatrix);
+
 	void SetUpdateWorldMatrix(bool _isUpdate);
 
-private:
-	union Color
-	{
-		unsigned int color;
-		unsigned char rgba[4];
-	};
+	D3DXVECTOR3 GetCenterVertex();
+	D3DXVECTOR3 GetMinVertex();
+	D3DXVECTOR3 GetMaxVertex();
 
+private:
 	void UpdateVertexBuf();
 	virtual void UpdateWorldMatrix();
 	void LoadMeshModel_DX(const char* _fileName);
@@ -85,6 +83,8 @@ private:
 	bool isUpdateVertexBuf_;
 	bool isUpdateWorldMatrix_;
 	bool isDraw_;
+
+	D3DXVECTOR3 centerVertex_, minVertex_, maxVertex_;
 
 };
 

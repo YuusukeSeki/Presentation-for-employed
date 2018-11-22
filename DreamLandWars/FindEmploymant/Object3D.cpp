@@ -19,6 +19,8 @@ Object3D::Object3D() : Object(Object::TYPE::TYPE_3D)
 	isUpdateVertexBuf_ = false;
 	isUpdateWorldMatrix_ = false;
 	isDraw_ = false;
+
+	positionIsLeftTop_ = false;
 }
 
 Object3D::Object3D(const Object::TYPE& type) : Object(type)
@@ -36,6 +38,8 @@ Object3D::Object3D(const Object::TYPE& type) : Object(type)
 	isUpdateVertexBuf_ = false;
 	isUpdateWorldMatrix_ = false;
 	isDraw_ = false;
+
+	positionIsLeftTop_ = false;
 }
 
 Object3D::~Object3D()
@@ -43,15 +47,15 @@ Object3D::~Object3D()
 	Uninit();
 }
 
-Object3D* Object3D::Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size)
+Object3D* Object3D::Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, bool _positionIsLeftTop)
 {
 	Object3D* object = new Object3D(Object::TYPE::TYPE_3D);
-	object->Init(_position, _size);
+	object->Init(_position, _size, _positionIsLeftTop);
 
 	return object;
 }
 
-void Object3D::Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size)
+void Object3D::Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, bool _positionIsLeftTop)
 {
 	SetPosition(_position);
 
@@ -67,11 +71,17 @@ void Object3D::Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size)
 
 	SetUv_Size(D3DXVECTOR2(1, 1));
 
+	positionIsLeftTop_ = _positionIsLeftTop;
+
 	MakeVertexBuf();
 
 	UpdateWorldMatrix();
 
+	texture_ = nullptr;
+
 	isDraw_ = true;
+
+	SetActive(true);
 }
 
 void Object3D::Uninit()
@@ -343,10 +353,20 @@ void Object3D::MakeVertexBuf()
 	VERTEX_3D* vertexBuf;
 	vertexBuf_->Lock(0, 0, (void**)&vertexBuf, 0);
 
-	vertexBuf[0].pos = D3DXVECTOR3(-halfSize_.x,  halfSize_.y,  halfSize_.z);
-	vertexBuf[1].pos = D3DXVECTOR3( halfSize_.x,  halfSize_.y,  halfSize_.z);
-	vertexBuf[2].pos = D3DXVECTOR3(-halfSize_.x, -halfSize_.y, -halfSize_.z);
-	vertexBuf[3].pos = D3DXVECTOR3( halfSize_.x, -halfSize_.y, -halfSize_.z);
+	if (positionIsLeftTop_ == false)
+	{
+		vertexBuf[0].pos = D3DXVECTOR3(-halfSize_.x,  halfSize_.y,  halfSize_.z);
+		vertexBuf[1].pos = D3DXVECTOR3( halfSize_.x,  halfSize_.y,  halfSize_.z);
+		vertexBuf[2].pos = D3DXVECTOR3(-halfSize_.x, -halfSize_.y, -halfSize_.z);
+		vertexBuf[3].pos = D3DXVECTOR3( halfSize_.x, -halfSize_.y, -halfSize_.z);
+	}
+	else
+	{
+		vertexBuf[0].pos = D3DXVECTOR3(0              , 0              , 0);
+		vertexBuf[1].pos = D3DXVECTOR3(halfSize_.x * 2, 0              , 0);
+		vertexBuf[2].pos = D3DXVECTOR3(0              , halfSize_.y * 2, 0);
+		vertexBuf[3].pos = D3DXVECTOR3(halfSize_.x * 2, halfSize_.y * 2, 0);
+	}
 
 	vertexBuf[0].normal = D3DXVECTOR3(0, 0, -1);
 	vertexBuf[1].normal = D3DXVECTOR3(0, 0, -1);
@@ -371,10 +391,20 @@ void Object3D::UpdateVertexBuf()
 	VERTEX_3D* vertexBuf;
 	vertexBuf_->Lock(0, 0, (void**)&vertexBuf, 0);
 
-	vertexBuf[0].pos = D3DXVECTOR3(-halfSize_.x, halfSize_.y, halfSize_.z);
-	vertexBuf[1].pos = D3DXVECTOR3(halfSize_.x, halfSize_.y, halfSize_.z);
-	vertexBuf[2].pos = D3DXVECTOR3(-halfSize_.x, -halfSize_.y, -halfSize_.z);
-	vertexBuf[3].pos = D3DXVECTOR3(halfSize_.x, -halfSize_.y, -halfSize_.z);
+	if (positionIsLeftTop_ == false)
+	{
+		vertexBuf[0].pos = D3DXVECTOR3(-halfSize_.x,  halfSize_.y,  halfSize_.z);
+		vertexBuf[1].pos = D3DXVECTOR3( halfSize_.x,  halfSize_.y,  halfSize_.z);
+		vertexBuf[2].pos = D3DXVECTOR3(-halfSize_.x, -halfSize_.y, -halfSize_.z);
+		vertexBuf[3].pos = D3DXVECTOR3( halfSize_.x, -halfSize_.y, -halfSize_.z);
+	}
+	else
+	{
+		vertexBuf[0].pos = D3DXVECTOR3(0              , 0              , 0);
+		vertexBuf[1].pos = D3DXVECTOR3(halfSize_.x * 2, 0              , 0);
+		vertexBuf[2].pos = D3DXVECTOR3(0              , halfSize_.y * 2, 0);
+		vertexBuf[3].pos = D3DXVECTOR3(halfSize_.x * 2, halfSize_.y * 2, 0);
+	}
 
 	vertexBuf[0].normal = D3DXVECTOR3(0, 0, -1);
 	vertexBuf[1].normal = D3DXVECTOR3(0, 0, -1);

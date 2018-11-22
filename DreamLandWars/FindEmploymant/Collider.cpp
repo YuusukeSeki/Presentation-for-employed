@@ -5,18 +5,16 @@
 #include "renderer.h"
 #include "collision.h"
 
-Collider::Collider(Unit* _parentUnit)
+Collider::Collider(Unit* _parentUnit) : Object(TYPE::COLLIDER)
 {
-	position_ = D3DXVECTOR3(0, 0, 0);
 	radius_ = 0.0f;
 
 	parentUnit_ = _parentUnit;
 	previewParentUnitPosition_ = D3DXVECTOR3(0, 0, 0);
 
-	isActive_ = false;
-
 #ifdef _DEBUG
 	mesh_ = nullptr;
+	material_ = {};
 	worldMatrix_ = {};
 	isDraw_ = false;
 #endif
@@ -45,38 +43,31 @@ void Collider::Release()
 	}
 #endif
 
-	delete this;
+	Object::Release();
 }
 
 void Collider::Init()
 {
-	position_ = parentUnit_->GetPosition();
+	SetPosition(parentUnit_->GetPosition());
 	radius_ = parentUnit_->GetRadius();
 
 	previewParentUnitPosition_ = parentUnit_->GetPosition();
 
-	isActive_ = true;
-
 #ifdef _DEBUG
 	CreateSphere();
+	SetColor(1.0f, 1.0f, 1.0f, 0.6f);
 	UpdateWorldMatrix();
-	UpdateVertexBuffer();
 	isDraw_ = true;
 #endif
 }
 
 void Collider::Uninit()
 {
-
+	SetActive(false);
 }
 
 void Collider::Update()
 {
-	if (isActive_ == false)
-	{
-		return;
-	}
-
 	if (IsMovePositionParentUnit() == true)
 	{
 		ChaseParentUnit();
@@ -89,14 +80,27 @@ void Collider::Update()
 #endif
 }
 
-void Collider::SetPosition(const D3DXVECTOR3& _position)
+void Collider::Draw()
 {
-	position_ = _position;
-}
+#ifdef _DEBUG
+	if (isDraw_ == false)
+	{
+		return;
+	}
 
-D3DXVECTOR3 Collider::GetPosition()
-{
-	return position_;
+	LPDIRECT3DDEVICE9 device = Renderer::GetDevice();
+	D3DMATERIAL9 defaultMaterial;
+
+	device->SetTransform(D3DTS_WORLD, &worldMatrix_);
+
+	device->GetMaterial(&defaultMaterial);
+
+	device->SetMaterial(&material_);
+
+	mesh_->DrawSubset(0);
+
+	device->SetMaterial(&defaultMaterial);
+#endif
 }
 
 void Collider::SetRadius(const float& _radius)
@@ -118,18 +122,13 @@ void Collider::SetParentUnit(Unit* _parentUnit)
 	parentUnit_ = _parentUnit;
 	previewParentUnitPosition_ = parentUnit_->GetPosition();
 
-	position_ = parentUnit_->GetPosition();
+	SetPosition(parentUnit_->GetPosition());
 	radius_ = parentUnit_->GetRadius();
-}
-
-void Collider::SetActive(bool _isActive)
-{
-	isActive_ = _isActive;
 }
 
 bool Collider::Collision(Collider* _targetCollider)
 {
-	float distance = Distance3D(position_, _targetCollider->GetPosition());
+	float distance = Distance3D(GetPosition(), _targetCollider->GetPosition());
 	float length = (radius_ + _targetCollider->GetRadius()) * (radius_ + _targetCollider->GetRadius());
 
 	if (distance <= length)
@@ -142,30 +141,32 @@ bool Collider::Collision(Collider* _targetCollider)
 	}
 }
 
-#ifdef _DEBUG
-void Collider::Draw()
+bool Collider::Collision(const D3DXVECTOR3& _point)
 {
-	if (isDraw_ == false)
+	float distance = Distance3D(GetPosition(), _point);
+	float length = radius_ * radius_;
+
+	if (distance <= length)
 	{
-		return;
+		return true;
 	}
+	else
+	{
+		return false;
+	}
+}
 
-	LPDIRECT3DDEVICE9 device = Renderer::GetDevice();
-	D3DMATERIAL9 defaultMaterial;
-
-	device->SetTransform(D3DTS_WORLD, &worldMatrix_);
-
-	device->GetMaterial(&defaultMaterial);
-
-	mesh_->DrawSubset(0);
-
-	device->SetMaterial(&defaultMaterial);
+#ifdef _DEBUG
+void Collider::SetColor(const float& _r, const float& _g, const float& _b, const float& _a)
+{
+	material_.Diffuse = D3DXCOLOR(_r, _g, _b, _a);
 }
 
 void Collider::SetDraw(bool _isDraw)
 {
 	isDraw_ = _isDraw;
 }
+
 #endif
 
 bool Collider::IsMovePositionParentUnit()
@@ -183,27 +184,18 @@ bool Collider::IsMovePositionParentUnit()
 void Collider::ChaseParentUnit()
 {
 	D3DXVECTOR3 moveVector = parentUnit_->GetPosition() - previewParentUnitPosition_;
-	float distance = Distance3D(parentUnit_->GetPosition(), previewParentUnitPosition_);
-
-	D3DXVec3Normalize(&moveVector, &moveVector);
-	sqrtf(distance);
-
-	MovePosition(moveVector, distance);
-}
-
-void Collider::MovePosition(const D3DXVECTOR3& _moveVector, const float& _distance)
-{
-	position_ += _moveVector * _distance;
+	Object::MovePosition(moveVector);
 }
 
 #ifdef _DEBUG
 void Collider::UpdateWorldMatrix()
 {
 	D3DXMATRIX translateMatrix, rotateMatrix, scaleMatrix;
+	D3DXVECTOR3 position = GetPosition();
 
 	D3DXMatrixIdentity(&worldMatrix_);
 
-	D3DXMatrixTranslation(&translateMatrix, position_.x, position_.y, position_.z);
+	D3DXMatrixTranslation(&translateMatrix, position.x, position.y, position.z);
 
 	D3DXMatrixRotationYawPitchRoll(&rotateMatrix, 0, 0, 0);
 
@@ -216,21 +208,6 @@ void Collider::UpdateWorldMatrix()
 	D3DXMatrixMultiply(&worldMatrix_, &worldMatrix_, &translateMatrix);
 }
 
-void Collider::UpdateVertexBuffer()
-{
-	VERTEX_3D* vertexBuf;
-	int numVertex = (int)mesh_->GetNumVertices();
-
-	mesh_->LockVertexBuffer(0, (void**)&vertexBuf);
-
-	for (int i = 0; i < numVertex; i++)
-	{
-		vertexBuf[i].color = D3DCOLOR_RGBA(255, 255, 255, 128);
-	}
-
-	mesh_->UnlockVertexBuffer();
-}
-
 void Collider::CreateSphere()
 {
 	LPDIRECT3DDEVICE9 device = Renderer::GetDevice();
@@ -241,6 +218,6 @@ void Collider::CreateSphere()
 		mesh_ = nullptr;
 	}
 
-	D3DXCreateSphere(device, radius_, 32, 16, &mesh_, nullptr);
+	D3DXCreateSphere(device, radius_, 16, 8, &mesh_, nullptr);
 }
 #endif

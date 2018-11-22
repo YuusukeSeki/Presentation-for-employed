@@ -33,6 +33,7 @@ public:
 		ICON_CASTLE,			// アイコン：城
 		WALL_TEXNAME,			// 壁
 		TUTORIAL,
+		SOLDIERBULLET,
 
 		__LOADTEXTURE_MAX,  // ※ 読込最大数
 	};
@@ -61,6 +62,7 @@ public:
 			"data/texture/MainGame/castle_icon01.png",		// アイコン：城
 			"data/texture/MainGame/wall01.jpg",				// 壁
 			"data/texture/tutrorial03.png",					// 文字枠
+			"data/texture/MainGame/soldierBullet.png",		// 兵士弾
 
 		};
 

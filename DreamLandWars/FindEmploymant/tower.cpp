@@ -1,238 +1,166 @@
-//*****************************************************************************
-//
-//		塔
-//													Autohr : Yusuke Seki
-//*****************************************************************************
-// base
+// author : yusuke seki
+// data   : 20181116
 #include "tower.h"
-
-// fw
 #include "collision.h"
-
-// child
-#include "Hold.h"
-#include "LifeGauge.h"
-#include "Icon.h"
 #include "SoldierCommander.h"
-
-// etc...
-#include "player.h"
-#include "TeamGaugeManager.h"
-#include "TeamGauge.h"
-
-// resource
+#include "ObjectBillboard.h"
 #include "MainGame.h"
-#include "list_LoadTexture_MainGame.h"
-#include "Etc_Paramaters.h"
 
+const unsigned int Tower::kNumSoldier_First_ = 9;
+const unsigned int Tower::kNumSoldier_Subsequent_ = 5;
+const float Tower::kMaxHp_ = 100.0f;
 
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
-Tower::Tower() : ObjectModel(Object::TYPE::TYPE_MODEL_TOWER)
+Tower::Tower(const Object::TYPE& _type) : BasePoint(_type, kNumSoldier_First_, kNumSoldier_Subsequent_)
 {
-	// メンバ変数初期化
-	m_life      = 0;	// 体力
-	m_browRange = 0.f;	// 殴れる範囲
-
-	m_pHold      = nullptr;	// "HOLD"
-	m_pLifeGauge = nullptr;	// 体力ゲージ
-	m_pIcon      = nullptr;	// アイコン
-	
+	maxHp_ = 0.0f;
+	currentHp_ = 0.0f;
+	icon_ = nullptr;
+	hpGauge_ = nullptr;
 }
 
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
-Tower::Tower(Object::TYPE type) : ObjectModel(type)
-{
-	// メンバ変数初期化
-	m_life      = 0;	// 体力
-	m_browRange = 0.f;	// 殴れる範囲
-
-	m_pHold      = nullptr;	// "HOLD"
-	m_pLifeGauge = nullptr;	// 体力ゲージ
-	m_pIcon      = nullptr;	// アイコン
-	
-}
-
-
-//-----------------------------------------------------------------------------
-// デストラクタ
-//-----------------------------------------------------------------------------
 Tower::~Tower()
 {
 	Uninit();
-
 }
 
-
-//-----------------------------------------------------------------------------
-// 実体の生成
-//-----------------------------------------------------------------------------
-Tower* Tower::Create(D3DXVECTOR3& position, const char* FileName, Object::GROUP group)
+Tower* Tower::Create(const D3DXVECTOR3& _position, const Object::GROUP& _group, RelayPoint* _nextRelayPoint)
 {
-	Tower* pTower = new Tower(Object::TYPE::TYPE_MODEL_TOWER);
-	pTower->Init(position, FileName, group);
+	Tower* tower = new Tower(Object::TYPE::TYPE_MODEL_TOWER);
+	tower->Init(_position, _group, _nextRelayPoint);
 
-	return pTower;
+	return tower;
 }
 
-
-//-----------------------------------------------------------------------------
-// 初期化処理
-//-----------------------------------------------------------------------------
-void Tower::Init(D3DXVECTOR3& position, const char* FileName, Object::GROUP group)
+void Tower::Init(const D3DXVECTOR3& _position, const Object::GROUP& _group, RelayPoint* _nextRelayPoint)
 {
-	// データの設定
-	ObjectModel::Init(position, FileName);	// 継承データの初期化
-	m_life      = TOWER_MAX_LIFE;	// 体力
-	m_browRange = GetSize().x * 1.05f;		// 殴れる範囲
-	SetGroup(group);
-	
-	// 色の設定
-	if      (GetGroup() == Object::GROUP::GROUP_A) SetColor(0xff0000a0);	// 赤色
-	else if (GetGroup() == Object::GROUP::GROUP_B) SetColor(0x0000ffa0);	// 青色
+	BasePoint::Init(_position, _group, _nextRelayPoint);
 
-	m_cntFrame = 1500;	// 兵士生成用カウンター
+	AddPart("tower", "data/model/MainGame/tower05.x");
+	SetBrowedRange(GetHalfSize().x + 3.5f);
 
-	// get camera of this client
-	// ※下記は暫定処理
-	Camera* camera = MainGame::GetPlayer(0)->GetCamera();
+	maxHp_ = kMaxHp_;
+	currentHp_ = maxHp_;
 
-	// ポリゴンの生成
-	m_pLifeGauge = LifeGauge::Create(this, camera);	// 体力ゲージ
-	m_pHold      = Hold::Create(this, camera);		// "HOLD"
-	m_pIcon      = Icon::Create(m_pLifeGauge->GetPosition() + D3DXVECTOR3(0, m_pLifeGauge->GetSize().y * 1.f, 5),
-								D3DXVECTOR3(m_pLifeGauge->GetSize().x * 0.3f, m_pLifeGauge->GetSize().x * 0.3f, 0), camera, group);	// アイコン
-	
-	m_pIcon->SetTexture(MainGame::GetTexture(List_LoadTexture_MainGame::ICON_CASTLE)->GetTexture());
+	releaseTimer_ = 120;
 
-	
+	if (icon_ == nullptr)
+	{
+		D3DXVECTOR3 iconPosition, iconSize;
+		iconSize = D3DXVECTOR3(496, 406, 0) * 0.01f;
+		iconPosition = GetPosition();
+		iconPosition.y += GetSize().y + iconSize.y * 0.5f;
+
+		icon_ = ObjectBillboard::Create(iconPosition, iconSize, MainGame::GetCamera());
+		icon_->SetColor(GetColor().color);
+		icon_->SetTexture(MainGame::GetTexture(List_LoadTexture_MainGame::ICON_TOWER)->GetTexture());
+	}
 }
 
-
-//-----------------------------------------------------------------------------
-// 終了処理
-//-----------------------------------------------------------------------------
 void Tower::Uninit(void)
 {
-	// 継承データの終了処理
-	ObjectModel::Uninit();
-
+	BasePoint::Uninit();
 }
 
-
-//-----------------------------------------------------------------------------
-// 更新処理
-//-----------------------------------------------------------------------------
 void Tower::Update(void)
 {
-	m_cntFrame++;
-
-	if (m_cntFrame >= INTERVAL_CREATE_SOLDIER) {
-
-		Commander::SetCommander(GetPosition(), GetFront(), GetGroup());
-		m_cntFrame = 0;
-
-	}
-
-	// "HOLD"表示判定
+	if (IsBreak() == true)
 	{
-		Player* pPlayer = (Player*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_MODEL_PLAYER);
+		--releaseTimer_;
 
-		if (pPlayer == nullptr) return;
-
-		Player* pCurrent = pPlayer;
-		Player* pNext    = (Player*)pCurrent->GetNextPointer();
-
-		for (;;) {
-
-			if (pCurrent->GetGroup() != GetGroup()) {
-
-				float length = Distance3D(pCurrent->GetPosition(), GetPosition());
-
-				if (length <= (m_browRange) * (m_browRange)) m_pHold->SetDrawHold(true);
-				else                                                       m_pHold->SetDrawHold(false);
-
-			}
-
-			pCurrent = pNext;
-
-			if (pCurrent == nullptr) break;
-
-			pNext = (Player*)pCurrent->GetNextPointer();
-
+		if (releaseTimer_ == 0)
+		{
+			icon_->Release();
+			GetBrowedCollider()->Release();
+			GetObjectCollider()->Release();
+			ReleaseParts();
+			Release();
 		}
-
 	}
-
-
 }
 
-
-//-----------------------------------------------------------------------------
-// 描画処理
-//-----------------------------------------------------------------------------
 void Tower::Draw(void)
 {
-	// 描画処理は親元に丸投げ
-	ObjectModel::Draw();
-
+	BasePoint::Draw();
 }
 
-
-// 体力を減らす
-// true - 拠点が壊れた : false - 拠点が壊れてない
-bool Tower::BrowTower(float breakPower)
+void Tower::ReceiveDamage(const float& _damage, Unit* _unit)
 {
-	m_life -= breakPower;
-
-	if (m_life < 0)
+	if (IsBreak() == false)
 	{
-		breakPower = breakPower + m_life;
+		currentHp_ -= _damage;
+
+		if (IsBreak() == true)
+		{
+			SendIsBrakedSoldierGenerator();
+		}
 	}
+}
 
-	m_pLifeGauge->MoveLife(breakPower);
+float Tower::GetMaxHp()
+{
+	return maxHp_;
+}
 
-	TeamGaugeManager::GetTeamGauge_ENEMY()->MoveLife(-breakPower);
+float Tower::GetCurrentHp()
+{
+	return currentHp_;
+}
 
-	if (m_life <= 0)
+bool Tower::IsBreak()
+{
+	if (currentHp_ <= 0)
 	{
-		TeamGaugeManager::GetTeamGauge_ENEMY()->MoveLife(-50);
-
-		m_pHold      ->ReleaseThis();	// "HOLD"
-		m_pLifeGauge ->Release();		// 体力ゲージ
-		m_pIcon      ->Release();		// アイコン
-
-		Release();
-
 		return true;
 	}
-	return false;
-
+	else
+	{
+		return false;
+	}
 }
 
-// 座標の移動
-void Tower::MovePosition(D3DXVECTOR3& movePosition)
-{
-	ObjectModel::MovePosition(movePosition);
-
-	m_pHold->MovePosition(movePosition);
-	m_pLifeGauge->MovePosition(movePosition);
-	m_pIcon->MovePosition(movePosition);
-
-}
-
-// true なら塔を殴れる範囲内
-bool Tower::CollisionBrowRange(D3DXVECTOR3& position)
-{
-	if (Distance3D(GetPosition(), position) <= m_browRange * m_browRange)
-		return true;
-
-	return false;
-
-}
-
+//bool Tower::BrowTower(float breakPower)
+//{
+//	m_life -= breakPower;
+//
+//	if (m_life < 0)
+//	{
+//		breakPower = breakPower + m_life;
+//	}
+//
+//	m_pLifeGauge->MoveLife(breakPower);
+//
+//	TeamGaugeManager::GetTeamGauge_ENEMY()->MoveLife(-breakPower);
+//
+//	if (m_life <= 0)
+//	{
+//		TeamGaugeManager::GetTeamGauge_ENEMY()->MoveLife(-50);
+//
+//		m_pHold      ->ReleaseThis();	// "HOLD"
+//		m_pLifeGauge ->Release();		// 体力ゲージ
+//		m_pIcon      ->Release();		// アイコン
+//
+//		Release();
+//
+//		return true;
+//	}
+//	return false;
+//
+//}
+//
+//void Tower::MovePosition(D3DXVECTOR3& movePosition)
+//{
+//	BasePoint::MovePosition(movePosition);
+//
+//	m_pHold->MovePosition(movePosition);
+//	m_pLifeGauge->MovePosition(movePosition);
+//	m_pIcon->MovePosition(movePosition);
+//}
+//
+//bool Tower::CollisionBrowRange(D3DXVECTOR3& position)
+//{
+//	if (Distance3D(GetPosition(), position) <= m_browRange * m_browRange)
+//		return true;
+//
+//	return false;
+//}
+//

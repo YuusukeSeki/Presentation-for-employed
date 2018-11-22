@@ -10,6 +10,7 @@ class Tower;
 class Castle;
 class Collider;
 class SoldierCommander;
+class SoldierGauge;
 
 class Soldier : public Unit
 {
@@ -52,25 +53,21 @@ public:
 	void Run();
 	void ShotBullet();
 	void AssaultBasePoint();
-	void SelfDelete();
+	void Death();
 
 	void FormLine();
 
 	void SetDestination(const D3DXVECTOR3& _destinationPoint);
 	void SetEndFront(const D3DXVECTOR3& _endFront);
-	void SetTargetBasePoint(ObjectModel* _targetBasePoint);
+	void SetTargetBasePoint(BasePoint* _targetBasePoint);
 
-	void ReceiveDamage(const float& _damage, const D3DXVECTOR3& _bulletPosition);
+	//Behave GetBehave();
 
-	void SetPosition(const D3DXVECTOR3& _position);
-	void SetPosition(const D3DXVECTOR3& _position, const D3DXVECTOR3& _front);
-	void MovePosition(const D3DXVECTOR3& _moveVector, const float& _speed);
-	D3DXVECTOR3 GetPosition();
-
-	Behave GetBehave();
-
-	Collider* GetObjectCollider();
 	Collider* GetSearchCollider();
+
+	void ReceiveDamage(const float& _damage, Unit* _unit = nullptr);
+
+	void SetActive(const bool& _isActive);
 
 private:
 	static Soldier* FindNonActiveSoldier();
@@ -91,11 +88,11 @@ private:
 
 	void BreakBasePoint();
 
-	static const std::string kSoldierModelPath_;
 	static const float kBreakPower_;
 	static const float kAttackPower_;
 	static const float kMaxHp_;
-	static const float kSearchRange_;
+	static const float kSearchEnemyRange_;
+	static const float kSearchFriendRange_;
 
 	float speed_;
 	float currentHp_;
@@ -103,16 +100,19 @@ private:
 	float attackPower_;
 	float defencePower_;
 	float breakPower_;
-	float searchRange_;
+	float searchEnemyRange_;
+	float searchFriendRange_;
 
 	D3DXVECTOR3 destination_;
 	D3DXVECTOR3 frontAfterArriveDestination_;
-	ObjectModel* targetBasePoint_;
+	BasePoint* targetBasePoint_;
 
 	SoldierCommander* parentCommander_;
 
-	Collider* objectCollider_;
-	Collider* searchCollider_;
+	Collider* searchEnemyCollider_;
+	Collider* searchFriendCollider_;
+
+	SoldierGauge* hpGauge_;
 };
 
 

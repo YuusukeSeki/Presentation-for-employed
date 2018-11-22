@@ -12,13 +12,15 @@ public:
 	Object3D(const Object::TYPE& type);
 	virtual ~Object3D();
 
-	static Object3D* Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size);
-	virtual void Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size);
+	static Object3D* Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, bool _positionIsLeftTop = false);
+	virtual void Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, bool _positionIsLeftTop = false);
 	virtual void Uninit();
 	virtual void Update() {}
 	virtual void Draw();
 
 	D3DXMATRIX GetWorldMatrix();
+	D3DXMATRIX* GetWorldMatrixPointer() { return &worldMatrix_; }
+
 	void SetPosition(const D3DXVECTOR3& _position);
 	void MovePosition(const D3DXVECTOR3& _move);
 
@@ -55,16 +57,11 @@ public:
 	void SetIsDraw(const bool& _isDraw);
 	bool GetIsDraw();
 
-protected:
-	union Color
-	{
-		unsigned int color;
-		unsigned char rgba[4];
-	};
+	void SetUpdateWorldMatrix(const bool& _isUpdateWorldMatrix);
 
+protected:
 	void SetWorldMatrix(const D3DXMATRIX& _worldMatrix);
 	void SetUpdateVertexBuf(const bool& _isUpdateVertexBuf);
-	void SetUpdateWorldMatrix(const bool& _isUpdateWorldMatrix);
 	virtual void UpdateWorldMatrix();
 
 private:
@@ -86,6 +83,8 @@ private:
 	bool isUpdateVertexBuf_;
 	bool isUpdateWorldMatrix_;
 	bool isDraw_;
+
+	bool positionIsLeftTop_;
 
 };
 

@@ -4,10 +4,10 @@
 #define UNIT_H_
 
 #include "Object.h"
-#include "Part.h"
 #include <map>
 #include <string>
 class Part;
+class Collider;
 
 class Unit : public Object
 {
@@ -15,15 +15,21 @@ public:
 	Unit(const Object::TYPE& _type);
 	virtual ~Unit();
 
-	void Release();
+	virtual void Release();
+	void ReleaseParts();
 
-	void Init(const D3DXVECTOR3& _position);
-	void Uninit();
-	void Update();
-	void Draw();
+	virtual void Init(const D3DXVECTOR3& _position, const Object::GROUP& _group);
+	virtual void Uninit();
+	virtual void Update() = 0;
+	virtual void Draw();
+
+	D3DXMATRIX GetWorldMatrix() { return worldMatrix_; }
+	D3DXMATRIX* GetWorldMatrixPointer() { return &worldMatrix_; }
 
 	void SetPosition(const D3DXVECTOR3& _position);
-	virtual void MovePosition(const D3DXVECTOR3& _move);
+	void SetPosition(const D3DXVECTOR3& _position, const D3DXVECTOR3& _front);
+	void MovePosition(const D3DXVECTOR3& _move);
+	void MovePosition(const D3DXVECTOR3& _moveVector, const float& _speed);
 
 	void SetRotate(const D3DXVECTOR3& _rotate);
 	void MoveRotate(const D3DXVECTOR3& _move);
@@ -39,6 +45,7 @@ public:
 	void SetColor(const unsigned int& _rgba);
 	void SetColor(const unsigned char& _r, const unsigned char& _g, const unsigned char& _b, const unsigned char& _a);
 	void MoveColor(const int& _r, const int& _g, const int& _b, const int& _a);
+	Color GetColor();
 
 	void SetFront(const D3DXVECTOR3& _front);
 	D3DXVECTOR3 GetFront();
@@ -48,10 +55,14 @@ public:
 
 	void SetGroup(const Object::GROUP& _group);
 
-	void SetActive(const bool& _isActive);
+	virtual void SetActive(const bool& _isActive);
+
+	Collider* GetObjectCollider();
+
+	virtual void ReceiveDamage(const float& _damage, Unit* _unit = nullptr) = 0;
 
 protected:
-	void AddPart(const std::string& _key, const std::string& _fileName);
+	Part* AddPart(const std::string& _key, const std::string& _fileName);
 	void ErasePart(const std::string& _key);
 
 	void SetPartPosition(const std::string& _key, const D3DXVECTOR3& _position);
@@ -64,15 +75,11 @@ protected:
 
 	Part* GetPart(const std::string& _key);
 
+	std::map<std::string, Part*>* GetParts();
+
 	void ResetRadius();
 
 private:
-	union Color
-	{
-		unsigned int color;
-		unsigned char rgba[4];
-	};
-
 	void UpdateWorldMatrix();
 
 	std::map<std::string, Part*> objectParts_;
@@ -84,6 +91,8 @@ private:
 	float radius_;
 	Color color_;
 	D3DXVECTOR3 front_;
+
+	Collider* objectCollider_;
 
 	bool isUpdateWorldMatrix_;
 
