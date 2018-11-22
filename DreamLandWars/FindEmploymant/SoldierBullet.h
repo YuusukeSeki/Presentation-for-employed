@@ -1,52 +1,55 @@
-//*****************************************************************************
-//	
-//		兵士の弾
-//													Autohr : Yusuke Seki
-//*****************************************************************************
-#ifndef _SOLDIERBULLET_H_
-#define _SOLDIERBULLET_H_
+// author : yusuke seki
+// data   : 20181121
+#ifndef SOLDIERBULLET_H_
+#define SOLDIERBULLET_H_
 
-#include "main.h"
-#include "BulletBillboard.h"
-
+#include "Unit.h"
+class Soldier;
 class Camera;
-class ObjectModel;
+class ObjectBillboard;
 
-
-class SoldierBullet : public BulletBillboard
+class SoldierBullet : public Unit
 {
 public:
-	// コンストラクタ / デストラクタ
 	SoldierBullet();
 	virtual ~SoldierBullet();
 
-	// 基本的な関数
-	static SoldierBullet* CreateBuffer();
-	void Init(void);
-	void Uninit(void);
-	void Update(void);
-	void Draw(void);
+	static void CreateBuffer(const unsigned int& _numCreate);
+	static SoldierBullet* Create(Soldier* _parentSoldier, Unit* _target);
+	static SoldierBullet* DynamicCreate(Soldier* _parentSoldier, Unit* _target);	// 動的生成
+	void Init(Soldier* _parentSoldier, Unit* _target);
+	void Uninit();
+	void Update();
+	void Draw();
 
-	// 兵士弾の動的生成処理
-	// position : 生成位置
-	// pTarget  : ターゲット
-	static void SetBullet(D3DXVECTOR3& position, ObjectModel *pTarget, Camera *pCamera);
+	void SetActive(const bool& _isActive);
 
-
+	void ReceiveDamage(const float& _damage, Unit* _unit = nullptr)
+	{
+		// 無処理
+	}
+	
 private:
-	// 兵士弾の設定処理
-	void SetBullet_private(D3DXVECTOR3& position, ObjectModel *pTarget, Camera *pCamera);
+	static SoldierBullet* FindNonActiveSoldierBullet();
+	void CheckTargetBehave();
+	void CollisionTarget();
+	void ChangeVector();
+	void Move();
+	void UpdateTimer();
+	bool IsTargetBahave_Avoid();
+	void SetVectorToTarget();
+	bool IsCollisionTarget();
 
+	static const float kDamage_;
+	static const float kSpeed_;
+	static const unsigned int kEraseFrame_;	// 消えるまでのフレーム数
 
-	//----- データ -----
-	static const float bulletDamage_cast;	// 標的：キャストの場合の兵士弾のダメージ
-	static const float bulletDamage_soldier;	// 標的：兵士の場合の兵士弾のダメージ
+	Unit* target_;				// 標的
+	D3DXVECTOR3 vector_;		// 進行方向
+	bool isChase_;				// 追尾フラグ
+	unsigned int remaineFrame_;	// 残りフレーム数
 
-	ObjectModel *m_pTarget;	// ターゲットのポインタ
-	int m_cntEraseFrame;	// 消去までの時間
-	D3DXVECTOR3 m_front;	// 進む方向
-	bool m_bTracking;		// 追尾フラグ
-
+	ObjectBillboard* objectBillboard_;	// 画面表示用オブジェクト
 };
 
 

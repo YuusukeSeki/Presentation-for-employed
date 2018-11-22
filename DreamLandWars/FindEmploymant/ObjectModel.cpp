@@ -1,611 +1,395 @@
-//*****************************************************************************
-//
-//		モデル（リスト構造）
-//													Autohr : Yusuke Seki
-//*****************************************************************************
+// author : yusuke seki
+// data   : 20181110
 #include "ObjectModel.h"
 #include "renderer.h"
 
-
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
 ObjectModel::ObjectModel() : Object(Object::TYPE::TYPE_MODEL)
 {
-	// メンバ変数初期化
-	m_pMesh = nullptr;
-	m_pMeshMat = nullptr;
-	m_numMat = 0;
-	ZeroMemory(&m_WorldMatrix, sizeof(m_WorldMatrix));
-	m_halfSize = D3DXVECTOR3(0, 0, 0);
-	m_rotate = D3DXVECTOR3(0, 0, 0);
-	m_scale = D3DXVECTOR3(0, 0, 0);
-	m_radius = 0.f;
-	m_color.color = 0xffffffff;
-	m_front = D3DXVECTOR3(0, 0, 1);
-	m_pVtxBuff = nullptr;
-	m_pTexture = nullptr;
-	m_bUpdateVertexBuf = false;
-	m_bUpdateWorldMatrix = false;
-	m_bDraw = true;
+	mesh_ = nullptr;
 
+	material_ = nullptr;
+
+	numMaterial_ = 0;
+
+	texture_ = nullptr;
+
+	worldMatrix_ = {};
+
+	rotate_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+	scale_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+	halfSize_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+	radius_ = 0.0f;
+
+	color_.color = 0;
+
+	front_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+	isUpdateVertexBuf_ = false;
+
+	isUpdateWorldMatrix_ = false;
+
+	isDraw_ = false;
+
+	centerVertex_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	minVertex_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	maxVertex_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
 }
 
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
-ObjectModel::ObjectModel(Object::TYPE type) : Object(type)
+ObjectModel::ObjectModel(const Object::TYPE& type) : Object(type)
 {
-	// メンバ変数初期化
-	m_pMesh              = nullptr;
-	m_pMeshMat           = nullptr;
-	m_numMat             = 0;
-	ZeroMemory(&m_WorldMatrix, sizeof(m_WorldMatrix));
-	m_halfSize           = D3DXVECTOR3(0, 0, 0);
-	m_rotate             = D3DXVECTOR3(0, 0, 0);
-	m_scale              = D3DXVECTOR3(0, 0, 0);
-	m_radius             = 0.f;
-	m_color.color        = 0xffffffff;
-	m_front               = D3DXVECTOR3(0, 0, 1);
-	m_pVtxBuff           = nullptr;
-	m_pTexture           = nullptr;
-	m_bUpdateVertexBuf   = false;
-	m_bUpdateWorldMatrix = false;
-	m_bDraw              = true;
+	mesh_ = nullptr;
 
+	material_ = nullptr;
+
+	numMaterial_ = 0;
+
+	texture_ = nullptr;
+
+	worldMatrix_ = {};
+
+	rotate_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+	scale_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+	halfSize_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+	radius_ = 0.0f;
+
+	color_.color = 0;
+
+	front_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+	isUpdateVertexBuf_ = false;
+
+	isUpdateWorldMatrix_ = false;
+
+	isDraw_ = false;
 }
 
-
-//-----------------------------------------------------------------------------
-// デストラクタ
-//-----------------------------------------------------------------------------
 ObjectModel::~ObjectModel()
 {
 	Uninit();
-
 }
 
-
-//-----------------------------------------------------------------------------
-// 実体の生成
-//-----------------------------------------------------------------------------
-ObjectModel* ObjectModel::Create(D3DXVECTOR3& position, const char* FileName)
+ObjectModel* ObjectModel::Create(const D3DXVECTOR3& _position, const std::string& _fileName)
 {
-	ObjectModel* pObjectModel = new ObjectModel(Object::TYPE::TYPE_MODEL);
-	pObjectModel->Init(position, FileName);
+	ObjectModel* objectModel = new ObjectModel(Object::TYPE::TYPE_MODEL);
+	objectModel->Init(_position, _fileName);
 
-	return pObjectModel;
+	return objectModel;
 }
 
-
-//-----------------------------------------------------------------------------
-// 初期化処理
-//-----------------------------------------------------------------------------
-void ObjectModel::Init(D3DXVECTOR3& position, const char* FileName)
+void ObjectModel::Init(const D3DXVECTOR3& _position, const std::string& _fileName)
 {
-	// データの設定
-	Object::SetPosition(position);					// 座標
-	m_rotate             = D3DXVECTOR3(0, 0, 0);	// 回転率
-	m_scale              = D3DXVECTOR3(1, 1, 1);	// 拡縮率
-	m_front               = D3DXVECTOR3(0, 0, 1);	// 向いてる方向
-	m_pTexture           = nullptr;					// テクスチャ
-	m_bUpdateWorldMatrix = true;					// true でワールドマトリクスの更新をする
-	m_bDraw              = true;					// true で描画処理を行う
+	SetPosition(_position);
 
-	// ※※ 以下現在適当に設定せざるを得ない状態 ※※
-	m_color.color        = 0xffffffff;				// 色
-	m_pVtxBuff           = nullptr;					// 頂点バッファ
-	m_bUpdateVertexBuf   = false;					// true で頂点バッファの更新をする
+	SetRotate(D3DXVECTOR3(0, 0, 0));
 
+	SetScale(D3DXVECTOR3(1, 1, 1));
 
-	// モデルの読み込み
-	LoadMeshModel_DX(FileName);
+	SetFront(D3DXVECTOR3(0, 0, 1));
 
-	// 大きさの取得
-	LoadModelSizeFromX(FileName);
+	SetColor(255, 255, 255, 255);
 
+	LoadMeshModel_DX(_fileName.c_str());
+
+	LoadModelSizeFromX(_fileName.c_str());
+
+	SetIsDraw(true);
 }
 
-
-//-----------------------------------------------------------------------------
-// 終了処理
-//-----------------------------------------------------------------------------
 void ObjectModel::Uninit(void)
 {
-	// テクスチャの開放
-	for (int i = 0; i < (int)m_numMat; ++i) {
-		if (m_pTexture[i] != nullptr)
+	for (int i = 0; i < (int)numMaterial_; ++i)
+	{
+		if (texture_[i] != nullptr)
 		{
-			m_pTexture[i]->Release();
-			m_pTexture[i] = nullptr;
+			texture_[i]->Release();
+			texture_[i] = nullptr;
 		}
 	}
 
-	// メッシュの開放
-	if (m_pMeshMat != nullptr) {
-		delete[] m_pMeshMat;
-		m_pMeshMat = nullptr;
+	if (material_ != nullptr)
+	{
+		delete[] material_;
+		material_ = nullptr;
 	}
 
-	// メッシュインターフェース情報の開放
-	if (m_pMesh != nullptr) {
-		m_pMesh->Release();
-		m_pMesh = nullptr;
+	if (mesh_ != nullptr)
+	{
+		mesh_->Release();
+		mesh_ = nullptr;
 	}
 }
 
-
-//-----------------------------------------------------------------------------
-// 更新処理
-//-----------------------------------------------------------------------------
 void ObjectModel::Update(void)
 {
 }
 
-
-//-----------------------------------------------------------------------------
-// 描画処理
-//-----------------------------------------------------------------------------
 void ObjectModel::Draw(void)
 {
-	// false で描画処理を行わない
-	if (!m_bDraw) return;
-
-	// true で頂点バッファの更新処理をする
-	if (m_bUpdateVertexBuf) this->UpdateVertexBuf();
-
-	// true でワールドマトリクスの更新処理をする
-	if (m_bUpdateWorldMatrix) this->UpdateWorldMatrix();
-
-	// デバイスの取得
-	LPDIRECT3DDEVICE9 pDevice = Renderer::GetDevice();
-
-	// デバイスにワールド変換行列を設定
-	pDevice->SetTransform(D3DTS_WORLD, &m_WorldMatrix);
-
-	// 現在デバイスに設定されているマテリアル情報の取得
-	D3DMATERIAL9 matDef;
-	pDevice->GetMaterial(&matDef);
-
-	// マテリアル情報のポインタとしてバッファアドレスを取得
-	for (int i = 0; i<(int)m_numMat; i++)
+	if (isDraw_ == false)
 	{
-		// デバイスにマテリアルを設定
-		pDevice->SetMaterial(&m_pMeshMat[i]);
-
-		// テクスチャの貼り付け
-		pDevice->SetTexture(0, m_pTexture[i]);
-
-		// 描画
-		m_pMesh->DrawSubset(i);
+		return;
 	}
 
-	// マテリアル情報を初期状態へ戻す
-	pDevice->SetMaterial(&matDef);
+	LPDIRECT3DDEVICE9 device = Renderer::GetDevice();
+	D3DMATERIAL9 defaultMaterial;
+
+	if (isUpdateVertexBuf_ == true)
+	{
+		UpdateVertexBuf();
+
+		isUpdateVertexBuf_ = false;
+	}
+
+	if (isUpdateWorldMatrix_ == true)
+	{
+		UpdateWorldMatrix();
+
+		isUpdateWorldMatrix_ = false;
+	}
+
+	device->SetTransform(D3DTS_WORLD, &worldMatrix_);
+
+	device->GetMaterial(&defaultMaterial);
+
+	for (int i = 0; i<(int)numMaterial_; i++)
+	{
+		device->SetMaterial(&material_[i]);
+
+		device->SetTexture(0, texture_[i]);
+
+		mesh_->DrawSubset(i);
+	}
+
+	device->SetMaterial(&defaultMaterial);
 
 }
 
-
-
-//=============================================================================
-//	増減処理
-// 座標の移動
-void ObjectModel::MovePosition(D3DXVECTOR3& movePosition)
+D3DXMATRIX ObjectModel::GetWorldMatrix()
 {
-	// 座標の移動
-	Object::MovePosition(movePosition);
-
-	// ワールドマトリクスの更新フラグON
-	m_bUpdateWorldMatrix = true;
+	return worldMatrix_;
 }
 
-// 大きさの増減
-void ObjectModel::MoveSize(D3DXVECTOR3& moveSize)
+void ObjectModel::SetPosition(const D3DXVECTOR3& _position)
 {
-	// 大きさの増減
-	m_halfSize += moveSize * 0.5f;
-	m_radius    = sqrtf(m_halfSize.x * m_halfSize.x + m_halfSize.y * m_halfSize.y);	// 半径
+	Object::SetPosition(_position);
+
+	isUpdateWorldMatrix_ = true;
+}
+
+void ObjectModel::MovePosition(const D3DXVECTOR3& _move)
+{
+	Object::MovePosition(_move);
+
+	isUpdateWorldMatrix_ = true;
+}
+
+void ObjectModel::SetRotate(const D3DXVECTOR3& _rotate)
+{
+	float angle = D3DXVec3Dot(&rotate_, &_rotate);
+	float rotateDirect = _rotate.x * rotate_.z - _rotate.z * rotate_.x;
+
+	rotate_ = _rotate;
+
+	isUpdateWorldMatrix_ = true;
+}
+
+void ObjectModel::MoveRotate(const D3DXVECTOR3& _move)
+{
+	rotate_ += _move;
+
+	isUpdateWorldMatrix_ = true;
+}
+
+D3DXVECTOR3 ObjectModel::GetRotate()
+{
+	return rotate_;
+}
+
+void ObjectModel::SetScale(const D3DXVECTOR3& _scale)
+{
+	scale_ = _scale;
+
+	isUpdateWorldMatrix_ = true;
+}
+
+void ObjectModel::MoveScale(const D3DXVECTOR3& _move)
+{
+	scale_ += _move;
+
+	isUpdateWorldMatrix_ = true;
+}
+
+D3DXVECTOR3 ObjectModel::GetScale()
+{
+	return scale_;
+}
+
+D3DXVECTOR3 ObjectModel::GetSize()
+{
+	return halfSize_ * 2;
+}
+
+D3DXVECTOR3 ObjectModel::GetHalfSize()
+{
+	return halfSize_;
+}
+
+float ObjectModel::GetRadius()
+{
+	return radius_;
+}
+
+void ObjectModel::SetFront(const D3DXVECTOR3& _front)
+{
+	front_ = _front;
+}
+
+D3DXVECTOR3 ObjectModel::GetFront()
+{
+	return front_;
+}
+
+void ObjectModel::SetColor(const unsigned int& _rgba)
+{
+	color_.color = _rgba;
+
+	isUpdateVertexBuf_ = true;
+}
+
+void ObjectModel::SetColor(const unsigned char& _r, const unsigned char& _g, const unsigned char& _b, const unsigned char& _a)
+{
+	color_.rgba[3] = _r;
+	color_.rgba[2] = _g;
+	color_.rgba[1] = _b;
+	color_.rgba[0] = _a;
+
+	isUpdateVertexBuf_ = true;
+}
+
+void ObjectModel::MoveColor(const int& _r, const int& _g, const int& _b, const int& _a)
+{
+	color_.rgba[3] = color_.rgba[3] + _r > 255 ? 255 : color_.rgba[3] + _r;
+	color_.rgba[2] = color_.rgba[2] + _g > 255 ? 255 : color_.rgba[2] + _g;
+	color_.rgba[1] = color_.rgba[1] + _b > 255 ? 255 : color_.rgba[1] + _b;
+	color_.rgba[0] = color_.rgba[0] + _a > 255 ? 255 : color_.rgba[0] + _a;
+	color_.rgba[3] = color_.rgba[3] + _r <   0 ?   0 : color_.rgba[3] + _r;
+	color_.rgba[2] = color_.rgba[2] + _g <   0 ?   0 : color_.rgba[2] + _g;
+	color_.rgba[1] = color_.rgba[1] + _b <   0 ?   0 : color_.rgba[1] + _b;
+	color_.rgba[0] = color_.rgba[0] + _a <   0 ?   0 : color_.rgba[0] + _a;
+
+	isUpdateVertexBuf_ = true;
+}
+
+void ObjectModel::SetRotateToPosition(const D3DXVECTOR3& _position)
+{
+	D3DXVECTOR3 nextFront = _position - GetPosition();
+
+	//// 今回は2DゲームなのでY座標は０で統一
+	//targetPosition.y = 0.f;
+
+	D3DXVec3Normalize(&nextFront, &nextFront);
+
+	front_ = nextFront;
+
+	float angle = atan2f(front_.x, front_.z);
 	
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
-}
-
-// 回転率の増減
-void ObjectModel::MoveRotate(D3DXVECTOR3& moveRotate)
-{
-	// 回転率の増減
-	m_rotate += moveRotate;
-	
-	// ワールドマトリクスの更新フラグON
-	m_bUpdateWorldMatrix = true;
-}
-
-// 拡縮率の増減
-void ObjectModel::MoveScale(D3DXVECTOR3& moveScale)
-{
-	// 拡縮率の増減
-	m_scale += moveScale;
-
-	// ワールドマトリクスの更新フラグON
-	m_bUpdateWorldMatrix = true;
-}
-
-// 色の増減
-void ObjectModel::MoveColor(int r, int g, int b, int a)
-{
-	// 色の増減
-	m_color.rgba[3] = m_color.rgba[3] + r >= 255 ? 255 : m_color.rgba[3] + r;
-	m_color.rgba[2] = m_color.rgba[2] + g >= 255 ? 255 : m_color.rgba[2] + g;
-	m_color.rgba[1] = m_color.rgba[1] + b >= 255 ? 255 : m_color.rgba[1] + b;
-	m_color.rgba[0] = m_color.rgba[0] + a >= 255 ? 255 : m_color.rgba[0] + a;
-	m_color.rgba[3] = m_color.rgba[3] + r <=   0 ?   0 : m_color.rgba[3] + r;
-	m_color.rgba[2] = m_color.rgba[2] + g <=   0 ?   0 : m_color.rgba[2] + g;
-	m_color.rgba[1] = m_color.rgba[1] + b <=   0 ?   0 : m_color.rgba[1] + b;
-	m_color.rgba[0] = m_color.rgba[0] + a <=   0 ?   0 : m_color.rgba[0] + a;
-
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
-}
-
-
-
-//=============================================================================
-// 設定処理
-// 座標の設定
-void ObjectModel::SetPosition(D3DXVECTOR3& position)
-{
-	// 座標の移動
-	Object::SetPosition(position);
-
-	// ワールドマトリクスの更新フラグON
-	m_bUpdateWorldMatrix = true;
-}
-
-// 大きさの設定
-void ObjectModel::SetSize(D3DXVECTOR3& size)
-{
-	// 大きさの設定
-	m_halfSize = size * 0.5f;
-	m_radius   = sqrtf(m_halfSize.x * m_halfSize.x + m_halfSize.y * m_halfSize.y);	// 半径
-
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
-}
-
-// 回転率の設定
-void ObjectModel::SetRotate(D3DXVECTOR3& rotate)
-{
-	// 回転率の増減
-	m_rotate = rotate;
-
-	// ワールドマトリクスの更新フラグON
-	m_bUpdateWorldMatrix = true;
-}
-
-// 拡縮率の設定
-void ObjectModel::SetScale(D3DXVECTOR3& scale)
-{
-	// 拡縮率の設定
-	m_scale = scale;
-
-	// ワールドマトリクスの更新フラグON
-	m_bUpdateWorldMatrix = true;
-}
-
-// 色の設定
-void ObjectModel::SetColor(unsigned int rgba)
-{
-	// 色設定
-	m_color.color = rgba;
-
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
-}
-
-// 対象の方向を向くように設定する
-void ObjectModel::SetRotateToObj(D3DXVECTOR3& ObjectPostion)
-{
-	D3DXVECTOR3 targetPosition = ObjectPostion;
-
-	// 自分から対象へのベクトルを取る
-	targetPosition -= Object::GetPosition();
-
-	// 今回は2DゲームなのでY座標は０で統一
-	targetPosition.y = 0.f;
-
-	// 力が要らないので単位ベクトル化
-	D3DXVec3Normalize(&targetPosition, &targetPosition);
-
-	// 向きを設定
-	m_front = targetPosition;
-
-	// Y軸の傾きを算出して設定
-	float angle = atan2f(targetPosition.x, targetPosition.z);
 	SetRotate(D3DXVECTOR3(0, angle, 0));
-
 }
 
-
-
-//=============================================================================
-//	private関数
-// 頂点バッファの生成　※未完成
-void ObjectModel::MakeVertexBuf()
+D3DXVECTOR3 ObjectModel::GetRotateToPosition(const D3DXVECTOR3& _position)
 {
+	D3DXVECTOR3 nextFront = _position - GetPosition();
 
+	D3DXVec3Normalize(&nextFront, &nextFront);
+
+	float angle = atan2f(nextFront.x, nextFront.z);
+
+	return D3DXVECTOR3(0, angle, 0);
 }
 
-// 頂点バッファの更新　※未完成
+void ObjectModel::SetTexture(const LPDIRECT3DTEXTURE9& _texture)
+{
+	*texture_ = _texture;
+}
+
+LPDIRECT3DTEXTURE9 ObjectModel::GetTexture()
+{
+	return *texture_;
+}
+
+void ObjectModel::SetIsDraw(const bool& _isDraw)
+{
+	isDraw_ = _isDraw;
+}
+
+void ObjectModel::SetWorldMatrix(const D3DXMATRIX& _worldMatrix)
+{
+	worldMatrix_ = _worldMatrix;
+}
+
+void ObjectModel::SetUpdateWorldMatrix(bool _isUpdate)
+{
+	isUpdateWorldMatrix_ = _isUpdate;
+}
+
+D3DXVECTOR3 ObjectModel::GetCenterVertex()
+{
+	return centerVertex_;
+}
+
+D3DXVECTOR3 ObjectModel::GetMinVertex()
+{
+	return minVertex_;
+}
+
+D3DXVECTOR3 ObjectModel::GetMaxVertex()
+{
+	return maxVertex_;
+}
+
 void ObjectModel::UpdateVertexBuf()
 {
-	// 頂点数取得
-	int numVtx = (int)m_pMesh->GetNumVertices();
+	VERTEX_3D* vertexBuf;
+	int numVertex = (int)mesh_->GetNumVertices();
 
-	// VRAMの仮想アドレス取得
-	VERTEX_3D* pVtx;
-	m_pMesh->LockVertexBuffer(0, (void**)&pVtx);
+	mesh_->LockVertexBuffer(0, (void**)&vertexBuf);
 
-	// 頂点座標の設定
-
-
-	// 法線の設定
-
-
-	// 頂点色の設定
-	for (int i = 0; i < numVtx; i++) {
-		pVtx[i].color = D3DCOLOR_RGBA(m_color.rgba[3], m_color.rgba[2], m_color.rgba[1], m_color.rgba[0]);
+	for (int i = 0; i < numVertex; i++)
+	{
+		vertexBuf[i].color = D3DCOLOR_RGBA(color_.rgba[3], color_.rgba[2], color_.rgba[1], color_.rgba[0]);
 	}
 
-	// テクスチャUV値の設定
-
-
-	// VRAMの仮想アドレス解放
-	m_pMesh->UnlockVertexBuffer();
-
-	// 頂点バッファの更新フラグOFF
-	m_bUpdateVertexBuf = false;
-
+	mesh_->UnlockVertexBuffer();
 }
 
-// ワールドマトリクスの更新
 void ObjectModel::UpdateWorldMatrix()
 {
-	// 移動、回転、拡縮行列の計算
-	D3DXMATRIX mtxTranslate, mtxRotate, mtxScale;
-	D3DXVECTOR3 position = Object::GetPosition();
-	D3DXMatrixTranslation(&mtxTranslate, position.x, position.y, position.z);
-	D3DXMatrixRotationYawPitchRoll(&mtxRotate, m_rotate.y, m_rotate.x, m_rotate.z);
-	D3DXMatrixScaling(&mtxScale, m_scale.x, m_scale.y, m_scale.z);
+	D3DXMATRIX translateMatrix, rotateMatrix, scaleMatrix;
+	D3DXVECTOR3 position = GetPosition();
 
-	// ３行列の合成
-	D3DXMatrixIdentity(&m_WorldMatrix);
-	D3DXMatrixMultiply(&m_WorldMatrix, &m_WorldMatrix, &mtxScale);
-	D3DXMatrixMultiply(&m_WorldMatrix, &m_WorldMatrix, &mtxRotate);
-	D3DXMatrixMultiply(&m_WorldMatrix, &m_WorldMatrix, &mtxTranslate);
+	D3DXMatrixIdentity(&worldMatrix_);
 
-	// ワールドマトリクスの更新フラグOFF
-	m_bUpdateWorldMatrix = false;
+	D3DXMatrixTranslation(&translateMatrix, position.x, position.y, position.z);
 
-}
+	D3DXMatrixRotationYawPitchRoll(&rotateMatrix, rotate_.y, rotate_.x, rotate_.z);
 
-// モデルデータの読み込み　※未完成
-void ObjectModel::LoadModel(const char* FileName)
-{
-	//D3DXVECTOR3* positionArray;
-	//D3DXVECTOR2* texcoordArray;
-	//D3DXVECTOR3* normalArray;
-	//unsigned int positionNum = 0;
-	//unsigned int texcoordlNum = 0;
-	//unsigned int normalNum = 0;
-	//unsigned int vertexNum = 0;
-	//unsigned int indexNum = 0;
-	//unsigned int in = 0;
-	//unsigned int subsetNum = 0;
-	//char str[256];
-	//char* s;
-	//char c;
-	//FILE* file;
-	//file = fopen(modelPass, "rt");
+	D3DXMatrixScaling(&scaleMatrix, scale_.x, scale_.y, scale_.z);
 
-	//// ファイルが無ければ終了
-	//if (file == nullptr) {
-	//	_MSGERROR("Failed Load Model!!", modelPass);
-	//	return;
-	//}
+	D3DXMatrixMultiply(&worldMatrix_, &worldMatrix_, &scaleMatrix);
 
-	//// モデルの実体生成
-	//m_pModel = new MODEL;
+	D3DXMatrixMultiply(&worldMatrix_, &worldMatrix_, &rotateMatrix);
 
-
-	//// 要素数カウント
-	//while (true) {
-	//	fscanf(file, "%s", str);
-
-	//	// 行がなければ要素数のカウントを終了する
-	//	if (feof(file) != 0) break;
-
-	//	// 頂点座標データ？
-	//	if (strcmp(str, "v") == 0) positionNum++;
-	//	// 法線データ？
-	//	else if (strcmp(str, "vn") == 0) normalNum++;
-	//	// SV値データ？
-	//	else if (strcmp(str, "vt") == 0) texcoordlNum++;
-	//	// 描画サブセットデータ？
-	//	else if (strcmp(str, "usemtl") == 0) subsetNum++;
-	//	// 頂点指定データ？
-	//	else if (strcmp(str, "f") == 0) {
-	//		in = 0;
-
-	//		do {
-	//			fscanf(file, "%s", str);
-
-	//			// 頂点数増加
-	//			vertexNum++;
-	//			in++;
-
-	//			// 一文字取得
-	//			c = fgetc(file);
-
-	//		} while (c != '\n' && c != '\r'); // 改行でループ終了
-
-	//										  // 四角は三角に分割
-	//		if (in == 4) in = 6;
-
-	//		// インデックス数増加
-	//		indexNum += in;
-
-	//	}
-	//}
-
-	//// メモリ確保
-	//positionArray = new VECTOR3D[positionNum];
-	//normalArray = new VECTOR3D[normalNum];
-	//texcoordArray = new VECTOR2D[texcoordlNum];
-	//m_pModel->VertexArray = new VERTEX_3D[vertexNum];
-	//m_pModel->IndexArray = new unsigned int[indexNum];
-	//m_pModel->IndexNum = indexNum;
-	//m_pModel->Subset = new SUBSET[subsetNum];
-	//m_pModel->SubsetNum = subsetNum;
-
-	//// 要素読込
-	//VECTOR3D* position = positionArray;
-	//VECTOR3D* normal = normalArray;
-	//VECTOR2D* texcoord = texcoordArray;
-	//unsigned int vc = 0;
-	//unsigned int ic = 0;
-	//unsigned int sc = 0;
-	//fseek(file, 0, SEEK_SET);
-	//while (true) {
-	//	// 一行取得
-	//	fscanf(file, "%s", str);
-
-	//	// 終了
-	//	if (feof(file) != 0) break;
-
-	//	// 
-	//	if (strcmp(str, "mtllib") == 0) {
-	//		// マテリアルファイル
-	//		fscanf(file, "%s", str);
-
-	//		char path[256];
-	//		strcpy(path, "data/model/");
-	//		strcat(path, str);
-
-	//		LoadMaterial(path);
-	//	}
-	//	// 
-	//	else if (strcmp(str, "o") == 0) {
-	//		// オブジェクト名
-	//		fscanf(file, "%s", str);
-	//	}
-	//	// 座標データの入った頂点配列を形成
-	//	else if (strcmp(str, "v") == 0) {
-	//		// 頂点座標
-	//		fscanf(file, "%f", &position->x);
-	//		fscanf(file, "%f", &position->y);
-	//		fscanf(file, "%f", &position->z);
-	//		position->x *= SCALE_MODEL;
-	//		position->y *= SCALE_MODEL;
-	//		position->z *= SCALE_MODEL;
-	//		position++;
-
-	//	}
-	//	// 法線データ
-	//	else if (strcmp(str, "vn") == 0) {
-	//		// 法線
-	//		fscanf(file, "%f", &normal->x);
-	//		fscanf(file, "%f", &normal->y);
-	//		fscanf(file, "%f", &normal->z);
-	//		normal++;
-
-	//	}
-	//	// テクスチャデータ
-	//	else if (strcmp(str, "vt") == 0) {
-	//		// SV値
-	//		fscanf(file, "%f", &texcoord->x);
-	//		fscanf(file, "%f", &texcoord->y);
-	//		texcoord++;
-
-	//	}
-	//	// 
-	//	else if (strcmp(str, "usemtl") == 0) {
-	//		// マテリアル
-	//		fscanf(file, "%s", str);
-
-	//		if (sc != 0) m_pModel->Subset[sc - 1].IndexNum = ic - m_pModel->Subset[sc - 1].StartIndex;
-	//		m_pModel->Subset[sc].StartIndex = ic;
-
-	//		for (unsigned int i = 0; i < m_MaterialNum; i++) {
-	//			if (strcmp(str, m_pMaterialArray[i].Name) == 0) {
-	//				m_pModel->Subset[sc].Material.Material = m_pMaterialArray[i].Material;
-	//				strcpy(m_pModel->Subset[sc].Material.Name, m_pMaterialArray[i].Name);
-
-	//				break;
-	//			}
-	//		}
-
-	//		sc++;
-
-	//	}
-	//	// 頂点番号が入ったインデックス配列の形成
-	//	else if (strcmp(str, "f") == 0) {
-	//		// 面
-	//		in = 0;
-
-	//		do {
-	//			fscanf(file, "%s", str);
-
-	//			s = strtok(str, "/");
-	//			m_pModel->VertexArray[vc].Position = positionArray[atoi(s) - 1];
-
-	//			if (s[strlen(s) + 1] != '/')
-	//			{
-	//				s = strtok(NULL, "/");
-	//				m_pModel->VertexArray[vc].TexturePos = texcoordArray[atoi(s) - 1];
-	//			}
-
-	//			s = strtok(NULL, "/");
-	//			m_pModel->VertexArray[vc].Normal = normalArray[atoi(s) - 1];
-
-	//			m_pModel->IndexArray[ic] = vc;
-	//			ic++;
-	//			vc++;
-
-	//			in++;
-	//			c = fgetc(file);
-
-	//		} while (c != '\n' && c != '\r');
-
-	//		// 四角は三角に分割
-	//		if (in == 4) {
-	//			m_pModel->IndexArray[ic] = vc - 4;
-	//			ic++;
-	//			m_pModel->IndexArray[ic] = vc - 2;
-	//			ic++;
-
-	//		}
-	//	}
-	//}
-
-	//if (sc != 0) m_pModel->Subset[sc - 1].IndexNum = ic - m_pModel->Subset[sc - 1].StartIndex;
-
-	//if (m_pMaterialArray) {
-	//	delete[] m_pMaterialArray;
-	//	m_pMaterialArray = NULL;
-	//}
-
-	//m_MaterialNum = 0;
-
+	D3DXMatrixMultiply(&worldMatrix_, &worldMatrix_, &translateMatrix);
 }
 
 // Xファイルからモデルデータのサイズを読み込む
-void ObjectModel::LoadModelSizeFromX(const char* FileName)
+void ObjectModel::LoadModelSizeFromX(const char* _fileName)
 {
 	// 変数の定義
 	unsigned int positionNum = 0;
@@ -617,11 +401,11 @@ void ObjectModel::LoadModelSizeFromX(const char* FileName)
 	char* s;
 
 	// ファイルを開く
-	file = fopen(FileName, "rt");
+	file = fopen(_fileName, "rt");
 
 	// ファイルが無ければ終了
 	if (file == nullptr) {
-		_MSGERROR("Failed Load Model Size From X File!!", FileName);
+		_MSGERROR("Failed Load Model Size From X File!!", _fileName);
 		return;
 	}
 
@@ -677,63 +461,61 @@ void ObjectModel::LoadModelSizeFromX(const char* FileName)
 		}
 	}
 
-	// ファイルを閉じる
 	fclose(file);
 
-	// 大きさを取得
-	m_halfSize = (positionMax - positionMin) * 0.5f;																// 半分の大きさ
-	//m_radius   = sqrtf(m_halfSize.x * m_halfSize.x + m_halfSize.z * m_halfSize.z);									// 半径
-	m_radius   = sqrtf(m_halfSize.x * m_halfSize.x + m_halfSize.y * m_halfSize.y + m_halfSize.z * m_halfSize.z);	// 半径
-	//m_radius = m_halfSize.x;
+	halfSize_ = (positionMax - positionMin) * 0.5f;
+	radius_   = sqrtf(halfSize_.x * halfSize_.x + halfSize_.y * halfSize_.y + halfSize_.z * halfSize_.z);
 
-}
-
-// マテリアル情報の読み込み　※未完成
-void ObjectModel::LoadMaterial()
-{
-
+	centerVertex_ = (positionMax - positionMin) * 0.5f;
+	minVertex_ = positionMin;
+	maxVertex_ = positionMax;
 }
 
 // モデルデータの読み込み（directXの便利関数使用）
-void ObjectModel::LoadMeshModel_DX(const char* modelPass)
+void ObjectModel::LoadMeshModel_DX(const char* _fileName)
 {
-	// デバイスの取得
-	LPDIRECT3DDEVICE9 pDevice = Renderer::GetDevice();
+	LPDIRECT3DDEVICE9 device = Renderer::GetDevice();
+	LPD3DXBUFFER materialBuf = nullptr;
+	HRESULT hr;
 
-	// Xファイルの読み込み
-	LPD3DXBUFFER pBufMat = nullptr;	// マテリアル情報
-	if (FAILED(D3DXLoadMeshFromXA(modelPass, D3DXMESH_MANAGED, pDevice, nullptr, &pBufMat, nullptr, &m_numMat, &m_pMesh))){
-		_MSGERROR("Failed XFile Open!!", "modelPass");
+	hr = D3DXLoadMeshFromXA(_fileName, D3DXMESH_MANAGED, device, nullptr, &materialBuf, nullptr, &numMaterial_, &mesh_);
+
+	if (FAILED(hr))
+	{
+		_MSGERROR("Failed XFile Open!!", _fileName);
 	}
 
-	// Xファイルに法線がない場合は、法線を書き込む
-	if (!(m_pMesh->GetFVF() & D3DFVF_NORMAL)){
-		ID3DXMesh* pTempMesh = nullptr;
-		m_pMesh->CloneMeshFVF(m_pMesh->GetOptions(), m_pMesh->GetFVF() | D3DFVF_NORMAL, pDevice, &pTempMesh);
-		D3DXComputeNormals(pTempMesh, nullptr);
-		m_pMesh->Release();
-		m_pMesh = pTempMesh;
+	if (!(mesh_->GetFVF() & D3DFVF_NORMAL))
+	{
+		ID3DXMesh* tempMesh = nullptr;
+		mesh_->CloneMeshFVF(mesh_->GetOptions(), mesh_->GetFVF() | D3DFVF_NORMAL, device, &tempMesh);
+		D3DXComputeNormals(tempMesh, nullptr);
+		mesh_->Release();
+		mesh_ = tempMesh;
 	}
 
-	// マテリアル情報の取得
-	D3DXMATERIAL* pMat = (D3DXMATERIAL*)pBufMat->GetBufferPointer();
-	m_pMeshMat = new D3DMATERIAL9[m_numMat];
-	m_pTexture = new LPDIRECT3DTEXTURE9[m_numMat];
+	D3DXMATERIAL* material = (D3DXMATERIAL*)materialBuf->GetBufferPointer();
+	material_ = new D3DMATERIAL9[numMaterial_];
+	texture_ = new LPDIRECT3DTEXTURE9[numMaterial_];
 
-	// マテリアル情報とテクスチャ情報の保存
-	for (int i = 0; i<(int)m_numMat; i++){
-		m_pMeshMat[i] = pMat[i].MatD3D;
-		m_pTexture[i] = nullptr;
+	for (int i = 0; i<(int)numMaterial_; i++)
+	{
+		material_[i] = material[i].MatD3D;
+		texture_[i] = nullptr;
 
-		if (pMat[i].pTextureFilename == nullptr) continue;
+		if (material[i].pTextureFilename != nullptr)
+		{
+			hr = D3DXCreateTextureFromFile(device, material[i].pTextureFilename, &texture_[i]);
 
-		if (FAILED(D3DXCreateTextureFromFile(pDevice, pMat[i].pTextureFilename, &m_pTexture[i]))){
-			_MSGERROR("Failed Load Texture!!", "pMat[i].pTextureFilename");
+			if (FAILED(hr))
+			{
+				_MSGERROR("Failed Load Texture!!", material[i].pTextureFilename);
+			}
 		}
 	}
 
-	// メモリの解放
-	if (pBufMat != nullptr) pBufMat->Release();
-
+	if (materialBuf != nullptr)
+	{
+		materialBuf->Release();
+	}
 }
-

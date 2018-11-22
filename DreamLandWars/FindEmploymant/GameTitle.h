@@ -7,10 +7,10 @@
 #define _GAMETITLE_H_
 
 #include "main.h"
-#include "Object3D_Quaternion.h"
+#include "Object3D.h"
 
 
-class GameTitle : public Object3D_Quaternion
+class GameTitle : public Object3D
 {
 public:
 	//----- コンストラクタ / デストラクタ -----

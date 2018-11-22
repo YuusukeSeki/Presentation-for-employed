@@ -198,7 +198,7 @@ float VectorLength(D3DXVECTOR3& vec)
 //-----------------------------------------------------------------------------
 // 2“_ŠÔ‚Ì‹——£ŒvŽZ
 //-----------------------------------------------------------------------------
-float Distance3D(D3DXVECTOR3& p1, D3DXVECTOR3& p2)
+float Distance3D(const D3DXVECTOR3& p1, const D3DXVECTOR3& p2)
 {
 	D3DXVECTOR3 sub = D3DXVECTOR3(p1.x - p2.x, p1.y - p2.y, p1.z - p2.z);
 

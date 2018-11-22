@@ -169,7 +169,7 @@ void Camera::MovePosEye_X(float moveX)
 	vecZ = m_posAt - m_posEye;
 
 	// X軸を求める
-	D3DXVec3Cross(&vecX, &vecZ, &m_vecUp);
+	D3DXVec3Cross(&vecX, &m_vecUp, &vecZ);
 
 	// 上下には移動しない
 	vecX.y = 0.f;
@@ -178,7 +178,6 @@ void Camera::MovePosEye_X(float moveX)
 	D3DXVec3Normalize(&vecX, &vecX);
 
 	// 移動値の算出
-	moveX *= -1;
 	move = vecX * moveX;
 
 	// 視点と注視点の移動
@@ -187,6 +186,11 @@ void Camera::MovePosEye_X(float moveX)
 
 }
 
+void Camera::MovePosEye_Y(float moveY)
+{
+	m_posEye.y += moveY;
+	m_posAt.y += moveY;
+}
 
 // 回転
 void Camera::MoveRotEye(float move)

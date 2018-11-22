@@ -4,99 +4,102 @@
 //												Autohr : Yusuke Seki
 //*****************************************************************************
 #include "Wall.h"
+#include "player.h"
 
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
-Wall::Wall() :ObjectCube(Object::TYPE::TYPE_3D_WALL)
+Wall::Wall() : ObjectModel(Object::TYPE::TYPE_3D_WALL)
 {
-	// メンバ変数初期化
 
 }
 
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
-Wall::Wall(Object::TYPE type) :ObjectCube(type)
-{
-	// メンバ変数初期化
-
-}
-
-
-//-----------------------------------------------------------------------------
-// デストラクタ
-//-----------------------------------------------------------------------------
 Wall::~Wall()
 {
-	// 終了処理
 	Uninit();
-
 }
 
-
-//-----------------------------------------------------------------------------
-// 実体の生成
-//-----------------------------------------------------------------------------
-Wall* Wall::Create(D3DXVECTOR3& pos, D3DXVECTOR3& size)
+Wall* Wall::Create(const D3DXVECTOR3& _position, const std::string& _fileName, const Collide& _collide)
 {
-	// 生成
-	Wall* pWall = new Wall(Object::TYPE::TYPE_3D_WALL);
+	Wall* wall = new Wall();
 
-	// 初期化
-	pWall->Init(pos, size);
+	wall->Init(_position, _fileName, _collide);
 
-	return pWall;
+	return wall;
 }
 
-
-//-----------------------------------------------------------------------------
-// 初期化処理
-//-----------------------------------------------------------------------------
-void Wall::Init(D3DXVECTOR3& position, D3DXVECTOR3& size)
+void Wall::Init(const D3DXVECTOR3& _position, const std::string& _fileName, const Collide& _collide)
 {
-	// 継承データを初期化
-	ObjectCube::Init(position, size);
+	ObjectModel::Init(_position, _fileName);
 
-	// 固有データの初期化
-
+	collde_ = _collide;
 }
 
-
-//-----------------------------------------------------------------------------
-// 終了処理
-//-----------------------------------------------------------------------------
 void Wall::Uninit(void)
 {
-	// 継承データの終了処理
-	ObjectCube::Uninit();
-
-	// 固有データの終了処理
-
+	ObjectModel::Uninit();
 }
 
-
-//-----------------------------------------------------------------------------
-// 更新処理
-//-----------------------------------------------------------------------------
 void Wall::Update(void)
 {
-	// 継承データの更新処理は無し
-
-	// 固有データの更新処理
 
 }
 
-
-//-----------------------------------------------------------------------------
-// 描画処理
-//-----------------------------------------------------------------------------
 void Wall::Draw(void)
 {
-	// 描画処理は親クラスに丸投げ
-	ObjectCube::Draw();
-
+	ObjectModel::Draw();
 }
 
+D3DXVECTOR3 Wall::GetCollidedPosition(Player& _player)
+{
+	D3DXVECTOR3 collidedPosition(_player.GetPosition());
+
+	if (IsCollided(_player) == true)
+	{
+		switch (collde_)
+		{
+		case Collide::FRONT:
+			collidedPosition.z = GetPosition().z - GetHalfSize().z - _player.GetHalfSize().z;
+			break;
+
+		case Collide::BACK:
+			collidedPosition.z = GetPosition().z + GetHalfSize().z + _player.GetHalfSize().z;
+			break;
+
+		case Collide::LEFT:
+			collidedPosition.x = GetPosition().x + GetHalfSize().x + _player.GetHalfSize().x;
+			break;
+
+		case Collide::RIGHT:
+			collidedPosition.x = GetPosition().x - GetHalfSize().x - _player.GetHalfSize().x;
+			break;
+		}
+	}
+
+	return collidedPosition;
+}
+
+bool Wall::IsCollided(Player& _player)
+{
+	D3DXVECTOR3 colliderPosition = _player.GetObjectCollider()->GetPosition();
+
+	switch (collde_)
+	{
+		case Collide::FRONT:
+			return _player.GetObjectCollider()->GetPosition().z - _player.GetObjectCollider()->GetRadius()
+				< GetPosition().z + GetHalfSize().z ? true : false;
+
+		case Collide::BACK:
+			return _player.GetObjectCollider()->GetPosition().z + _player.GetObjectCollider()->GetRadius()
+				> GetPosition().z - GetHalfSize().z ? true : false;
+
+		case Collide::LEFT:
+			return _player.GetObjectCollider()->GetPosition().x + _player.GetObjectCollider()->GetRadius()
+				> GetPosition().x - GetHalfSize().z ? true : false;
+
+		case Collide::RIGHT:
+			return _player.GetObjectCollider()->GetPosition().x - _player.GetObjectCollider()->GetRadius()
+				< GetPosition().x + GetHalfSize().z ? true : false;
+
+		default:
+			_MSGERROR("error", "Wall::IsCollided");
+			return false;
+	}
+}

@@ -1,102 +1,116 @@
-//*****************************************************************************
-//	
-//		バレット（3D）
-//													Autohr : Yusuke Seki
-//*****************************************************************************
+// author : yusuke seki
+// data   : 20181111
 #include "Bullet3D.h"
 #include "renderer.h"
 #include "player.h"
 #include "collision.h"
 
-
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
-Bullet3D::Bullet3D(Object::TYPE type) : Object3D(type)
+Bullet3D::Bullet3D() : Object3D(Object::TYPE::TYPE_3D_BULLET)
 {
-	// データのクリア
-	m_vecZ       = D3DXVECTOR3(0,0,0);
-	m_move       = 0.f;
-	m_accelerate = 0.f;
-	m_bInstance  = false;
-	
+	front_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	initSpped_ = 0.0f;
+	accelerate_ = 0.0f;
+	inirtia_ = 0.0f;
+	maxSpeed_ = 0.0f;
+	isInstance_ = false;
 }
 
+Bullet3D::Bullet3D(const Object::TYPE& type) : Object3D(type)
+{
+	front_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	initSpped_ = 0.0f;
+	accelerate_ = 0.0f;
+	inirtia_ = 0.0f;
+	maxSpeed_ = 0.0f;
+	isInstance_ = false;
+}
 
-//-----------------------------------------------------------------------------
-// デストラクタ
-//-----------------------------------------------------------------------------
 Bullet3D::~Bullet3D()
 {
 	Uninit();
 }
 
-
-//-----------------------------------------------------------------------------
-// 実体の生成
-//-----------------------------------------------------------------------------
-Bullet3D* Bullet3D::Create(D3DXVECTOR3& position, D3DXVECTOR3& size)
+Bullet3D* Bullet3D::Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size)
 {
-	// 実体を生成
-	Bullet3D* pBullet = new Bullet3D(Object::TYPE::TYPE_3D_BULLET);
+	Bullet3D* bullet = new Bullet3D(Object::TYPE::TYPE_3D_BULLET);
+	bullet->Init(_position, _size);
 
-	// 初期化
-	pBullet->Init(position, size);
-
-	return pBullet;
+	return bullet;
 }
 
-
-//-----------------------------------------------------------------------------
-// 初期化処理
-//-----------------------------------------------------------------------------
-void Bullet3D::Init(D3DXVECTOR3& position, D3DXVECTOR3& size)
+void Bullet3D::Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size)
 {
-	// データの初期化
-	Object3D::Init(position, size);			// 継承データの初期化
-	m_vecZ       = D3DXVECTOR3(0, 0, 0);	// 向いてる方向
-	m_move       = 0.f;						// 初速度
-	m_accelerate = 0.f;						// 加速度
-	m_bInstance  = false;					// 使用中フラグOFF
+	Object3D::Init(_position, _size);
 
+	front_ = D3DXVECTOR3(0.0f, 0.0f, 1.0f);
+	initSpped_ = 0.0f;
+	accelerate_ = 0.0f;
+	inirtia_ = 0.0f;
+	maxSpeed_ = 0.0f;
+	isInstance_ = true;
 }
 
-
-//-----------------------------------------------------------------------------
-// 終了処理
-//-----------------------------------------------------------------------------
-void Bullet3D::Uninit(void)
+void Bullet3D::Uninit()
 {
 	Object3D::Uninit();
 }
 
-
-//-----------------------------------------------------------------------------
-// 描画処理
-//-----------------------------------------------------------------------------
-void Bullet3D::Draw(void)
+void Bullet3D::Draw()
 {
-	// 未使用で処理無し
-	if (!m_bInstance) return;
+	if (isInstance_ == false)
+	{
+		return;
+	}
 
-	// 描画処理
 	Object3D::Draw();
-
 }
 
-
-//=============================================================================
-//	設定処理
-// 向いてる方向の設定
-void Bullet3D::SetVecZ(D3DXVECTOR3& vecZ)
+void Bullet3D::SetFront(const D3DXVECTOR3& _front)
 {
-	// 向いてる方向の設定
-	m_vecZ = vecZ;
-	//Object3D::SetRotate(m_vecZ);
-
-
-	// ワールドマトリクスの更新フラグON
-	//Object3D::SetUpdateWorldMatrix(true);
+	front_ = _front;
 }
 
+D3DXVECTOR3& Bullet3D::GetFront()
+{
+	return front_;
+}
+
+void Bullet3D::SetMaxSpeed(const float& _maxSpeed)
+{
+	maxSpeed_ = _maxSpeed;
+}
+
+float Bullet3D::GetMaxSpeed()
+{
+	return maxSpeed_;
+}
+
+void Bullet3D::SetInitSpeed(const float& _initSpeed)
+{
+	initSpped_ = _initSpeed;
+}
+
+float Bullet3D::GetInitSpeed()
+{
+	return initSpped_;
+}
+
+void Bullet3D::SetAccelerate(const float& _accelerate)
+{
+	accelerate_ = _accelerate;
+}
+
+float Bullet3D::GetAccelerate()
+{
+	return accelerate_;
+}
+
+void Bullet3D::SetIsInstance(const bool& _isInstanse)
+{
+	isInstance_ = _isInstanse;
+}
+
+bool Bullet3D::GetIsInstance()
+{
+	return isInstance_;
+}

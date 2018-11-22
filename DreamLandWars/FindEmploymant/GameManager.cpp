@@ -18,9 +18,11 @@
 
 //----- 静的メンバ変数初期化 -----
 GameScene* GameManager::m_pGameScene = nullptr;
-Input*	   GameManager::m_pInput     = nullptr;
-Fade*	   GameManager::m_pFade      = nullptr;
-int        GameManager::_drawDebugInfo = 1;
+Input* GameManager::m_pInput = nullptr;
+Fade* GameManager::m_pFade = nullptr;
+int GameManager::_drawDebugInfo = 1;
+HINSTANCE GameManager::instanceHandle_ = nullptr;
+HWND GameManager::windowHandle_ = nullptr;
 
 
 //-----------------------------------------------------------------------------
@@ -71,6 +73,8 @@ HRESULT GameManager::Init(HINSTANCE hInstance, HWND hWnd, BOOL bWindow, GameScen
 	// フェードの生成
 	m_pFade = Fade::Create();
 
+	instanceHandle_ = hInstance;
+	windowHandle_ = hWnd;
 
 	// 正常終了
 	return S_OK;

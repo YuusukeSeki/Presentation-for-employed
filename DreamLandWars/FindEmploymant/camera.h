@@ -17,6 +17,7 @@ public:
 	~Camera();
 
 	// 基本的な関数
+	//static Camera* Create(const D3DXVECTOR3& posEye, const D3DXVECTOR3& posAt, const D3DXVECTOR3& vecUp, const float& fNear, const float& fFar);
 	static Camera* Create(D3DXVECTOR3 posEye, D3DXVECTOR3 posAt, D3DXVECTOR3 vecUp, float fNear, float fFar);
 	void Release(void);
 	void Init(D3DXVECTOR3 posEye, D3DXVECTOR3 posAt, D3DXVECTOR3 vecUp, float fNear, float fFar);
@@ -26,6 +27,7 @@ public:
 	// 増減
 	void MovePosEye_Z(float moveZ);  // 移動（前後）
 	void MovePosEye_X(float moveX);  // 移動（左右）
+	void MovePosEye_Y(float moveY);  // 移動（上下）
 	void MoveRotEye  (float move);	 // 回転
 	void MoveTurnEye (float move);	 // 旋回
 

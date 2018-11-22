@@ -1,157 +1,68 @@
-//*****************************************************************************
-//
-//		城
-//													Autohr : Yusuke Seki
-//*****************************************************************************
+// author : yusuke seki
+// data   : 20181116
 #include "castle.h"
+#include "collision.h"
+#include "SoldierGenerator.h"
+#include "SoldierCommander.h"
+#include "Part.h"
 
-#include "MainGame.h"	// 自身の座標設定のため
-#include "field.h"		// 自身の座標設定のため
-#include "Wall.h"		// 自身の座標設定のため
+const unsigned int Castle::kNumSoldier_First_ = 9;
+const unsigned int Castle::kNumSoldier_Subsequent_ = 9;
 
-#include "Hold.h"		// 殴れる範囲を可視化するため
-#include "player.h"		// 殴れる範囲を可視化するため
-
-#include "collision.h"	// 3D当たり判定用の便利関数
-
-#include "Commander.h"	// 兵士生成のため
-
-#include "TeamGaugeManager.h"	// チームゲージに影響を与えるため
-#include "TeamGauge.h"			// チームゲージに影響を与えるため
-
-#include "Etc_Paramaters.h"
-
-
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
-Castle::Castle() : ObjectModel(Object::TYPE::TYPE_MODEL_CASTLE)
+Castle::Castle(const Object::TYPE& _type) : BasePoint(_type, kNumSoldier_First_, kNumSoldier_Subsequent_)
 {
-	// メンバ変数初期化
-	m_browRange = 0.f;	// 殴れる範囲
-	m_pHold = nullptr;	// 殴れる範囲のGUI
-	m_frameCounter = 0;	// 兵士生成用フレームカウンター
-	vector_LEFT  = D3DXVECTOR3(0, 0, 0);	// 兵士生成時の初期目標座標
-	vector_RIGHT = D3DXVECTOR3(0, 0, 0);	// 兵士生成時の初期目標座標
-
+	leftSoldierGenerator_ = nullptr;
+	rightSoldierGenerator_ = nullptr;
 }
 
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
-Castle::Castle(Object::TYPE type) : ObjectModel(type)
-{
-	// メンバ変数初期化
-	m_browRange = 0.f;	// 殴れる範囲
-	m_pHold = nullptr;	// 殴れる範囲のGUI
-	m_frameCounter = 0;	// 兵士生成用フレームカウンター
-	vector_LEFT = D3DXVECTOR3(0, 0, 0);	// 兵士生成時の初期目標座標
-	vector_RIGHT = D3DXVECTOR3(0, 0, 0);	// 兵士生成時の初期目標座標
-
-}
-
-
-//-----------------------------------------------------------------------------
-// デストラクタ
-//-----------------------------------------------------------------------------
 Castle::~Castle()
 {
 	Uninit();
-
 }
 
-
-//-----------------------------------------------------------------------------
-// 実体の生成
-//-----------------------------------------------------------------------------
-Castle* Castle::Create(const char* FileName, Object::GROUP group)
+Castle* Castle::Create(const D3DXVECTOR3& _position, const Object::GROUP& _group
+	, RelayPoint* _leftRelayPoint, RelayPoint* _rightRelayPoint)
 {
-	Castle* pCastle = new Castle(Object::TYPE::TYPE_MODEL_CASTLE);
-	pCastle->Init(FileName, group);
+	Castle* castle = new Castle(Object::TYPE::TYPE_MODEL_CASTLE);
+	castle->Init(_position, _group, _leftRelayPoint, _rightRelayPoint);
 
-	return pCastle;
+	return castle;
 }
 
-
-//-----------------------------------------------------------------------------
-// 初期化処理
-//-----------------------------------------------------------------------------
-void Castle::Init(const char* FileName, Object::GROUP group)
+void Castle::Init(const D3DXVECTOR3& _position, const Object::GROUP& _group
+	, RelayPoint* _leftRelayPoint, RelayPoint* _rightRelayPoint)
 {
-	// 継承データの初期化
-	ObjectModel::Init(D3DXVECTOR3(0, 0, 0), FileName);
+	BasePoint::Init(_position, _group, _leftRelayPoint);
 
-	// グループの設定
-	SetGroup(group);
+	AddPart("castle", "data/model/MainGame/castle03.x");
 
-	// グループ判定でデータを修正
-	// ※　修正対象：座標、色、向き、兵士の初期目標座標
+	SetBrowedRange(GetHalfSize().z + 3.5f);
+
+	if (rightSoldierGenerator_ == nullptr)
 	{
-		Field* pField = MainGame::GetField();
-		Wall* pWall = MainGame::GetWall(3);
-		D3DXVECTOR3 length(0, 0, pField->GetPosition().z + pField->GetHalfSize().z - pWall->GetHalfSize().z * 2 - GetHalfSize().z);
-		D3DXVECTOR3 setPos(pField->GetPosition().x, 0, 0);
-		vector_LEFT  = D3DXVECTOR3(-1, 0, 1);
-		vector_RIGHT = D3DXVECTOR3(1, 0, 1);
-
-		// Side Your Team
-		if (GetGroup() == Object::GROUP_A) {
-			SetPosition(setPos - length);
-			SetColor(0xff0000a0);
-			SetFront(D3DXVECTOR3(0, 0, 1));
-
-		}
-
-		// Side Enemy
-		else if(GetGroup() == Object::GROUP_B) {
-			SetPosition(setPos + length);
-			SetColor(0x0000ffa0);
-			SetRotate(D3DXVECTOR3(0, D3DXToRadian(180), 0));
-			SetFront(D3DXVECTOR3(0, 0, -1));
-			vector_LEFT  *= -1;
-			vector_RIGHT *= -1;
-
-		}
-		// Error Command
-		else {
-			_MSGERROR("Castle cannot be 'GROUP_NONE'!!", "Error!!");
-			Release();
-
-			return;
-		}
-
+		rightSoldierGenerator_ = SoldierGenerator::Create(this
+			, kNumFrame_CreateSoldierLine_First_, kNumSoldier_First_
+			, kNumFrame_CreateSoldierLine_Subsequent_, kNumSoldier_Subsequent_);
+	}
+	else
+	{
+		rightSoldierGenerator_->Init(this);
 	}
 
-	// 殴れる範囲の設定
-	m_browRange = GetSize().x * 1.05f;
-
-	// 殴れる範囲のGUI生成
-	m_pHold = Hold::Create(this, MainGame::GetCamera(0));
-
-	// 兵士生成用カウンターの初期値設定
-	m_frameCounter = 1500;
+	rightSoldierGenerator_->SetNextRelayPoint(_rightRelayPoint);
+	rightSoldierGenerator_->SetIsUpdateTimer(true);
 
 }
 
-
-//-----------------------------------------------------------------------------
-// 終了処理
-//-----------------------------------------------------------------------------
 void Castle::Uninit(void)
 {
-	// 継承データの終了処理
-	ObjectModel::Uninit();
-
+	BasePoint::Uninit();
 }
 
-
-//-----------------------------------------------------------------------------
-// 更新処理
-//-----------------------------------------------------------------------------
 void Castle::Update(void)
 {
+	BasePoint::Update();
+
 	//// 兵士生成用フレームカウンターを回す
 	//m_frameCounter++;
 
@@ -177,79 +88,79 @@ void Castle::Update(void)
 
 	//}
 
-	// 殴れる範囲の可視化判定
-	{
-		// プレイヤーリストの先頭データを取得
-		Player* pCurrent = (Player*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_MODEL_PLAYER);
+	//// 殴れる範囲の可視化判定
+	//{
+	//	// プレイヤーリストの先頭データを取得
+	//	Player* pCurrent = (Player*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_MODEL_PLAYER);
 
-		// Error Command
-		if (pCurrent == nullptr)
-			return;
+	//	// Error Command
+	//	if (pCurrent == nullptr)
+	//		return;
 
-		// 敵キャストと自身との距離が規定値以内で、殴れる状態を可視化する
-		for (;;) {
+	//	// 敵キャストと自身との距離が規定値以内で、殴れる状態を可視化する
+	//	for (;;) {
 
-			// 敵キャストかどうかを判定
-			if (pCurrent->GetGroup() != GetGroup()) {
+	//		// 敵キャストかどうかを判定
+	//		if (pCurrent->GetGroup() != GetGroup()) {
 
-				// 距離が規定値以内なら殴れる状態であることを可視化する
-				if (Distance3D(pCurrent->GetPosition(), GetPosition()) <= m_browRange * m_browRange) {
-					m_pHold->SetDrawHold(true);
-				}
+	//			// 距離が規定値以内なら殴れる状態であることを可視化する
+	//			if (Distance3D(pCurrent->GetPosition(), GetPosition()) <= m_browRange * m_browRange) {
+	//				m_pHold->SetDrawHold(true);
+	//			}
 
-				// 範囲外なら非表示
-				else {
-					m_pHold->SetDrawHold(false);
-				}
+	//			// 範囲外なら非表示
+	//			else {
+	//				m_pHold->SetDrawHold(false);
+	//			}
 
-			}
+	//		}
 
-			// 次のキャストへ
-			pCurrent = (Player*)pCurrent->GetNextPointer();
+	//		// 次のキャストへ
+	//		pCurrent = (Player*)pCurrent->GetNextPointer();
 
-			// 次のキャストがいなければ判定終了
-			if (pCurrent == nullptr) {
-				break;
-			}
+	//		// 次のキャストがいなければ判定終了
+	//		if (pCurrent == nullptr) {
+	//			break;
+	//		}
 
-		}
+	//	}
 
-	}
+	//}
 
 
 }
 
-
-//-----------------------------------------------------------------------------
-// 描画処理
-//-----------------------------------------------------------------------------
 void Castle::Draw(void)
 {
-	// 描画処理は親元に丸投げ
-	ObjectModel::Draw();
-
+	BasePoint::Draw();
 }
 
-
-// ダメージを与える
-// breakPower : 与えるダメージ
-void Castle::BrowCastle(float breakPower)
+void Castle::ReceiveDamage(const float& _damage, Unit* _unit)
 {
-	TeamGaugeManager::GetTeamGauge_ENEMY()->MoveLife(-breakPower * CASTLE_RETOUCH_BREAKPOWER);
-
+	// チームゲージと紐づけて減らす
 }
 
-// 殴れる範囲との当たり判定
-// position : 対象キャストの位置
-// 【返り値】	true  : 殴れる
-//				false : 殴れない
-bool Castle::CollisionBrowRange(D3DXVECTOR3& position)
-{
-	if (Distance3D(GetPosition(), position) <= m_browRange * m_browRange)
-		return true;
+//void Castle::BrowCastle(float breakPower)
+//{
+//	TeamGaugeManager::GetTeamGauge_ENEMY()->MoveLife(-breakPower * CASTLE_RETOUCH_BREAKPOWER);
+//}
+//
+//// 殴れる範囲との当たり判定
+//// position : 対象キャストの位置
+//// 【返り値】	true  : 殴れる
+////				false : 殴れない
+//bool Castle::CollisionBrowRange(D3DXVECTOR3& position)
+//{
+//	if (Distance3D(GetPosition(), position) <= m_browRange * m_browRange)
+//		return true;
+//
+//	return false;
+//
+//}
+//
+//
 
+bool Castle::IsBreak()
+{
 	return false;
-
 }
-
-

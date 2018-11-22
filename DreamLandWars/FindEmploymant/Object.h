@@ -1,30 +1,38 @@
-//*****************************************************************************
-//	
-//		オブジェクト基底クラス（リスト構造）
-//													Author : Yusuke Seki
-//*****************************************************************************
-#ifndef _OBJECT_LIST_H_
-#define _OBJECT_LIST_H_
+// author : yusuke seki
+// data   : 20181110
+#ifndef OBJECT_H_
+#define OBJECT_H_
 
 #include "main.h"
-
-#define _WLW		// ワンダー用のフレームワークに変更（コメントアウトで無し）
-
-
 
 class Object
 {
 public:
-	//----- 列挙型の定義 -----
-	enum TYPE { // 種類（描画順序込み）
+	union Color
+	{
+		unsigned int color;
+		unsigned char rgba[4];
+	};
+
+	//struct Color
+	//{
+	//	int r;
+	//	int g;
+	//	int b;
+	//	int a;
+	//};
+
+	enum TYPE
+	{ // 種類（描画順序込み）
+		TYPE_GENERATOR,
 		TYPE_COMMANDER,					// 指揮官（座標のみ）
+		TYPE_3D_FIELD,					// フィールド
 		TYPE_MODEL,						// ★モデル
 		TYPE_MODEL_PLAYER,				// プレイヤー
 		TYPE_MODEL_SOLDIER,				// 兵士
 		TYPE_MODEL_CASTLE,				// 城
 		TYPE_MODEL_TOWER,				// 塔
 		TYPE_MODEL_SKYDOME,				// スカイドーム
-		TYPE_3D_FIELD,					// フィールド
 		TYPE_3D_SKYBOX,					// スカイボックス
 		TYPE_3D,						// ★3Dポリゴン
 		TYPE_3D_CUBE,					// キューブ
@@ -40,86 +48,133 @@ public:
 		TYPE_3D_BILLBOARD,				// ビルボード
 		TYPE_3D_BULLET,					// バレット（3D）
 		TYPE_3D_BILLBOARD_BULLET,		// バレット（ビルボード）
+		TYPE_SOLDIERGAUGE,
 		TYPE_3D_BILLBOARD_EFFECT,		// エフェクト（ビルボード）
 		TYPE_3D_GAMETITLE,				// ゲームタイトル
 		TYPE_3D_TOUCHSCREEN,			// タッチスクリーン
 		TYPE_2D,						// ★2Dポリゴン
 		TYPE_2D_FRAMEBORDER,			// 枠線
+		COLLIDER,
 
 		TYPE_MAX,	// ※ 種類の最大数
 	};
 
-
-public:
-	//----- コンストラクタ / デストラクタ -----
-	Object(){}
-	Object(Object::TYPE type);
-	virtual ~Object(){}
-
-	
-	//----- 基本的な関数 -----
-	virtual void Init(void) {}
-	virtual void Uninit(void) = 0;
-	virtual void Update(void) = 0;
-	virtual void Draw(void) = 0;
-	        void Release(void);
-	static  void UpdateAll();
-	static  void DrawAll();
-	static  void ReleaseAll();
-
-
-	//----- 増減処理 -----
-	virtual void MovePosition(D3DXVECTOR3& movePosition) { m_position += movePosition; }	// 座標を移動する
-
-
-	//----- 設定処理 -----
-	virtual void SetPosition(D3DXVECTOR3& position) { m_position = position; }	// 座標を設定する
-	        void SetNextPointer(Object* pNext)		{ m_pNext = pNext; }		// 次のポインターを設定する
-	        void SetPrevPointer(Object* pPrev)		{ m_pPrev = pPrev; }		// 前のポインターを設定する
-
-
-	//----- データを返す処理 -----
-	static Object*      GetLDATA_HEAD(Object::TYPE type) { return m_pHEAD[type]; }	// 実体を返す
-	       Object*      GetNextPointer()                 { return m_pNext; }		// 自分の次のポインタを返す
-	       Object*      GetPrevPointer()                 { return m_pPrev; }		// 自分の前のポインタを返す
-	       D3DXVECTOR3& GetPosition()                    { return m_position; }		// 座標を返す
-		   Object::TYPE GetType()						 { return m_type; }			// 種類を返す
-
-private:
-	//----- データ -----
-	D3DXVECTOR3 m_position;		// 座標
-	Object::TYPE m_type;		// 種類
-
-	//----- 管理用データ -----
-	static Object* m_pHEAD[Object::TYPE_MAX];	// リストデータの先頭
-	static Object* m_pTAIL[Object::TYPE_MAX];	// リストデータの最後
-	       Object* m_pNext;						// 次のオブジェクト
-	       Object* m_pPrev;						// 前のオブジェクト
-
-
-#ifdef _WLW
-public:
-	//----- 列挙型の定義 -----
-	enum GROUP { // 陣営
+	enum GROUP
+	{ // 陣営
 		GROUP_NONE, // 無所属
 		GROUP_A,	// A
 		GROUP_B,	// B
 	};
 
-	//----- 設定処理 -----
-	void SetGroup(Object::GROUP group) { m_group = group; }	// WLW陣営設定
+public:
+	Object();
+	Object(Object::TYPE type);
+	virtual ~Object() {}
 
-	//----- データを返す処理 -----
-	Object::GROUP GetGroup() { return m_group; }	// 所属陣営を返す
+	// part of manager
+	static  void UpdateAll();
+	static  void DrawAll();
+	static  void ReleaseAll();
+	static Object* GetLDATA_HEAD(Object::TYPE type)
+	{
+		return headObj_[type];
+	}
 
+	// part of manager
+	void SetNextPointer(Object* _nextObj)
+	{
+		nextObj_ = _nextObj;
+	}
+
+	void SetPrevPointer(Object* _prevObj)
+	{
+		prevObj_ = _prevObj;
+	}
+
+	Object* GetNextPointer()
+	{
+		return nextObj_;
+	}
+
+	Object* GetPrevPointer()
+	{
+		return prevObj_;
+	}
+
+	// part of one object
+	virtual void Init(void) {}
+	virtual void Uninit(void) = 0;
+	virtual void Update(void) = 0;
+	virtual void Draw(void) = 0;
+	virtual void Release(void);
+
+	virtual void SetPosition(const D3DXVECTOR3& position)
+	{
+		position_ = position;
+	}
+
+	virtual void MovePosition(const D3DXVECTOR3& movePosition)
+	{
+		position_ += movePosition;
+	}
+
+	D3DXVECTOR3& GetPosition()
+	{
+		return position_;
+	}
+
+	Object::TYPE GetType()
+	{
+		return type_;
+	}
+
+	virtual void SetGroup(const Object::GROUP& group)
+	{
+		group_ = group;
+	}
+
+	Object::GROUP GetGroup()
+	{
+		return group_;
+	}
+
+	virtual void SetActive(const bool& _isActive)
+	{
+		isActive_ = _isActive;
+	}
+
+	bool GetActive()
+	{
+		return isActive_;
+	}
+
+#ifdef _DEBUG
+	static void SetIsDrawCollider(const bool& _isDraw)
+	{
+		isDrawCollider_ = _isDraw;
+	}
+
+	static bool GetIsDrawCollider()
+	{
+		return isDrawCollider_;
+	}
+#endif
 
 private:
-	//----- データ -----
-	Object::GROUP m_group;	// 陣営
+	static Object* headObj_[Object::TYPE_MAX];
+	static Object* tailObj_[Object::TYPE_MAX];
+	Object* nextObj_;
+	Object* prevObj_;
 
+	D3DXVECTOR3 position_;
+	Object::TYPE type_;
+	Object::GROUP group_;
+	bool isActive_;
+
+#ifdef _DEBUG
+	static bool isDrawCollider_;
 #endif
 
 };
 
 #endif
-

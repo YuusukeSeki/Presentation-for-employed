@@ -1,391 +1,357 @@
-//*****************************************************************************
-//
-//		2Dポリゴン（リスト構造）
-//												Autohr : Yusuke Seki
-//*****************************************************************************
+// author : yusuke seki
+// data   : 20181111
 #include "Object2D.h"
 #include "renderer.h"
 #include "texture.h"
 
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
 Object2D::Object2D() :Object(Object::TYPE::TYPE_2D)
 {
-	// メンバ変数初期化
-	m_halfSize = D3DXVECTOR3(0, 0, 0);
-	m_color.color = 0xffffffff;
-	m_UV_StartPoint = D3DXVECTOR2(0, 0);
-	m_UV_Size = D3DXVECTOR2(0, 0);
-	m_radius = 0;
-	m_angle = 0;
-	m_rotate = 0;
-	m_pVtxBuff = nullptr;
-	m_pTexture = nullptr;
-	m_bUpdateVertexBuf = false;
-	m_bDraw = true;
+	halfSize_ = D3DXVECTOR3(0, 0, 0);
+	color_.color = 0x00000000;
+	uvStartPoint_ = D3DXVECTOR2(0, 0);
+	uvSize_ = D3DXVECTOR2(0, 0);
+	radius_ = 0;
+	angle_ = 0;
+	rotate_ = 0;
+	vertexBuf_ = nullptr;
+	texture_ = nullptr;
+	isUpdateVertexBuf_ = false;
+	isDraw_ = true;
+	positionIsLeftTop_ = false;
 }
 
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
-Object2D::Object2D(Object::TYPE type) :Object(type)
+Object2D::Object2D(const Object::TYPE& type) :Object(type)
 {
-	// メンバ変数初期化
-	m_halfSize         = D3DXVECTOR3(0, 0, 0);
-	m_color.color      = 0xffffffff;
-	m_UV_StartPoint    = D3DXVECTOR2(0, 0);
-	m_UV_Size          = D3DXVECTOR2(0, 0);
-	m_radius           = 0;
-	m_angle            = 0;
-	m_rotate           = 0;
-	m_pVtxBuff         = nullptr;
-	m_pTexture         = nullptr;
-	m_bUpdateVertexBuf = false;
-	m_bDraw            = true;
+	halfSize_ = D3DXVECTOR3(0, 0, 0);
+	color_.color = 0x00000000;
+	uvStartPoint_ = D3DXVECTOR2(0, 0);
+	uvSize_ = D3DXVECTOR2(0, 0);
+	radius_ = 0;
+	angle_ = 0;
+	rotate_ = 0;
+	vertexBuf_ = nullptr;
+	texture_ = nullptr;
+	isUpdateVertexBuf_ = false;
+	isDraw_ = true;
 }
 
-
-//-----------------------------------------------------------------------------
-// デストラクタ
-//-----------------------------------------------------------------------------
 Object2D::~Object2D()
 {
-	// 終了処理
 	Uninit();
-
 }
 
-
-//-----------------------------------------------------------------------------
-// 実体の生成
-//-----------------------------------------------------------------------------
-Object2D* Object2D::Create(D3DXVECTOR3& pos, D3DXVECTOR3& size)
+Object2D* Object2D::Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& size, bool _positionIsLeftTop)
 {
-	// 生成
-	Object2D* pObject2D = new Object2D(Object::TYPE::TYPE_2D);
+	Object2D* object = new Object2D(Object::TYPE::TYPE_2D);
+	object->Init(_position, size, _positionIsLeftTop);
 
-	// 初期化
-	pObject2D->Init(pos, size);
-
-	return pObject2D;
+	return object;
 }
 
-
-//-----------------------------------------------------------------------------
-// 初期化処理
-//-----------------------------------------------------------------------------
-void Object2D::Init(D3DXVECTOR3& position, D3DXVECTOR3& size)
+void Object2D::Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, bool _positionIsLeftTop)
 {
-	// デバイスの取得
 	LPDIRECT3DDEVICE9 pDevice = Renderer::GetDevice();
 
-	// データを設定
-	Object::SetPosition(position);															// 座標
-	m_halfSize         = size * 0.5f;														// 半分の大きさ
-	m_radius           = sqrtf(m_halfSize.x * m_halfSize.x + m_halfSize.y * m_halfSize.y);	// 半径
-	m_angle            = atan2f(size.y, size.x);											// atan
-	m_rotate           = 0;																	// 回転率
-	m_color.color      = 0xffffffff;														// 色
-	m_UV_StartPoint    = D3DXVECTOR2(0, 0);													// UV開始点
-	m_UV_Size          = D3DXVECTOR2(1, 1);													// UV大きさ
-	m_bUpdateVertexBuf = false;																// true で頂点バッファの更新処理をする
-	m_bDraw            = true;																// true で描画処理を行う
+	SetPosition(_position);
 
-	// 頂点バッファの生成
-	this->MakeVertexBuf();
+	SetSize(_size);
 
+	SetRotate(0.0f);
+
+	SetColor(0xffffffff);
+
+	SetUv_StartPoint(D3DXVECTOR2(0, 0));
+
+	SetUv_Size(D3DXVECTOR2(1, 1));
+
+	positionIsLeftTop_ = _positionIsLeftTop;
+
+	MakeVertexBuf();
+
+	isDraw_ = true;
 }
 
-
-//-----------------------------------------------------------------------------
-// 終了処理
-//-----------------------------------------------------------------------------
 void Object2D::Uninit(void)
 {
-	// 頂点バッファの破棄
-	if (m_pVtxBuff != nullptr) {
-		m_pVtxBuff->Release();
-		m_pVtxBuff = nullptr;
+	if (vertexBuf_ != nullptr)
+	{
+		vertexBuf_->Release();
+		vertexBuf_ = nullptr;
 	}
-
 }
 
-
-//-----------------------------------------------------------------------------
-// 描画処理
-//-----------------------------------------------------------------------------
 void Object2D::Draw(void)
 {
-	// false で描画処理を行わない
-	if (!m_bDraw) return;
+	if (!isDraw_)
+	{
+		return;
+	}
 
-	// true で頂点バッファの更新処理を行う
-	if (m_bUpdateVertexBuf) this->UpdateVertexBuf();
+	if (isUpdateVertexBuf_)
+	{
+		UpdateVertexBuf();
 
-	// デバイスの取得
-	LPDIRECT3DDEVICE9 pDevice = Renderer::GetDevice();
+		isUpdateVertexBuf_ = false;
+	}
 
-	// 頂点バッファをデータストリームに設定
-	pDevice->SetStreamSource(0, m_pVtxBuff, 0, sizeof(VERTEX_2D));
+	LPDIRECT3DDEVICE9 device = Renderer::GetDevice();
 
-	// 頂点フォーマットの設定
-	pDevice->SetFVF(FVF_VERTEX_2D);
+	device->SetStreamSource(0, vertexBuf_, 0, sizeof(VERTEX_2D));
 
-	// テクスチャの設定
-	pDevice->SetTexture(0, m_pTexture);
+	device->SetFVF(FVF_VERTEX_2D);
 
-	// ポリゴンの描画
-	pDevice->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
+	device->SetTexture(0, texture_);
+
+	device->DrawPrimitive(D3DPT_TRIANGLESTRIP, 0, 2);
 }
 
-
-
-//=============================================================================
-//	増減処理
-// 座標の移動
-void Object2D::MovePosition(D3DXVECTOR3& movePosition)
+void Object2D::SetPosition(const D3DXVECTOR3& _position)
 {
-	// 座標の移動
-	Object::MovePosition(movePosition);
+	Object::SetPosition(_position);
 
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
+	isUpdateVertexBuf_ = true;
 }
 
-// 大きさの増減
-void Object2D::MoveSize(D3DXVECTOR3& moveSize)
+void Object2D::MovePosition(const D3DXVECTOR3& _move)
 {
-	// 大きさの増減
-	m_halfSize += moveSize * 0.5f;
-	m_radius    = sqrtf(m_halfSize.x * m_halfSize.x + m_halfSize.y * m_halfSize.y);	// 半径
-	m_angle     = atan2f(m_halfSize.y, m_halfSize.x);								// atan
+	Object::MovePosition(_move);
+
+	isUpdateVertexBuf_ = true;
+}
+
+void Object2D::SetSize(const D3DXVECTOR3& _size)
+{
+	halfSize_ = _size * 0.5f;
+	radius_ = sqrtf(halfSize_.x * halfSize_.x + halfSize_.y * halfSize_.y);
+	angle_ = atan2f(halfSize_.y, halfSize_.x);
+
+	isUpdateVertexBuf_ = true;
+}
+
+void Object2D::MoveSize(const D3DXVECTOR3& _move)
+{
+	halfSize_ += _move * 0.5f;
+	radius_ = sqrtf(halfSize_.x * halfSize_.x + halfSize_.y * halfSize_.y);
+	angle_ = atan2f(halfSize_.y, halfSize_.x);
+
+	isUpdateVertexBuf_ = true;
+}
+
+D3DXVECTOR3 Object2D::GetSize()
+{
+	D3DXVECTOR3 size = halfSize_ * 2;
+	return size;
+}
+
+D3DXVECTOR3 Object2D::GetHalfSize()
+{
+	return halfSize_;
+}
+
+float Object2D::GetRadius()
+{
+	return radius_;
+}
+
+void Object2D::SetRotate(const float& _rotate)
+{
+	rotate_ = _rotate;
+
+	isUpdateVertexBuf_ = true;
+}
+
+void Object2D::MoveRotate(const float& _move)
+{
+	rotate_ += _move;
 	
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
+	isUpdateVertexBuf_ = true;
 }
 
-// 回転率の増減
-void Object2D::MoveRotate(float moveRotate)
+float Object2D::GetRotate()
 {
-	// 回転率の増減
-	m_rotate += moveRotate;
-	
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
+	return rotate_;
 }
 
-// 色の増減
-void Object2D::MoveColor(int r, int g, int b, int a)
+void Object2D::SetColor(const unsigned int& _rgba)
 {
-	// 色の増減
-	m_color.rgba[3] = m_color.rgba[3] + r >= 255 ? 255 : m_color.rgba[3] + r;
-	m_color.rgba[2] = m_color.rgba[2] + g >= 255 ? 255 : m_color.rgba[2] + g;
-	m_color.rgba[1] = m_color.rgba[1] + b >= 255 ? 255 : m_color.rgba[1] + b;
-	m_color.rgba[0] = m_color.rgba[0] + a >= 255 ? 255 : m_color.rgba[0] + a;
-	m_color.rgba[3] = m_color.rgba[3] + r <=   0 ?   0 : m_color.rgba[3] + r;
-	m_color.rgba[2] = m_color.rgba[2] + g <=   0 ?   0 : m_color.rgba[2] + g;
-	m_color.rgba[1] = m_color.rgba[1] + b <=   0 ?   0 : m_color.rgba[1] + b;
-	m_color.rgba[0] = m_color.rgba[0] + a <=   0 ?   0 : m_color.rgba[0] + a;
+	color_.color = _rgba;
 
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
+	isUpdateVertexBuf_ = true;
 }
 
-// UV開始点の増減
-void Object2D::MoveUV_StartPoint(D3DXVECTOR2& moveUV_StartPoint)
+void Object2D::SetColor(const unsigned char& _r, const unsigned char& _g, const unsigned char& _b, const unsigned char& _a)
 {
-	// UV開始点の増減
-	m_UV_StartPoint += moveUV_StartPoint;
+	color_.rgba[3] = _r;
+	color_.rgba[2] = _g;
+	color_.rgba[1] = _b;
+	color_.rgba[0] = _a;
 
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
+	isUpdateVertexBuf_ = true;
 }
 
-// UV大きさの増減
-void Object2D::MoveUV_Size(D3DXVECTOR2& moveUV_Size)
+void Object2D::MoveColor(const int& _r, const int& _g, const int& _b, const int& _a)
 {
-	// UV開始点の増減
-	m_UV_Size += moveUV_Size;
+	color_.rgba[3] = color_.rgba[3] + _r >= 255 ? 255 : color_.rgba[3] + _r;
+	color_.rgba[2] = color_.rgba[2] + _g >= 255 ? 255 : color_.rgba[2] + _g;
+	color_.rgba[1] = color_.rgba[1] + _b >= 255 ? 255 : color_.rgba[1] + _b;
+	color_.rgba[0] = color_.rgba[0] + _a >= 255 ? 255 : color_.rgba[0] + _a;
+	color_.rgba[3] = color_.rgba[3] + _r <=   0 ?   0 : color_.rgba[3] + _r;
+	color_.rgba[2] = color_.rgba[2] + _g <=   0 ?   0 : color_.rgba[2] + _g;
+	color_.rgba[1] = color_.rgba[1] + _b <=   0 ?   0 : color_.rgba[1] + _b;
+	color_.rgba[0] = color_.rgba[0] + _a <=   0 ?   0 : color_.rgba[0] + _a;
 
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
+	isUpdateVertexBuf_ = true;
 }
 
-
-
-//=============================================================================
-// 設定処理
-// 座標の設定
-void Object2D::SetPosition(D3DXVECTOR3& position)
+void Object2D::SetUv_StartPoint(const D3DXVECTOR2& _Uv_StartPoint)
 {
-	// 座標の移動
-	Object::SetPosition(position);
+	uvStartPoint_ = _Uv_StartPoint;
 
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
+	isUpdateVertexBuf_ = true;
 }
 
-// 大きさの設定
-void Object2D::SetSize(D3DXVECTOR3& size)
+void Object2D::MoveUv_StartPoint(const D3DXVECTOR2& _move)
 {
-	// 大きさの設定
-	m_halfSize = size * 0.5f;
-	m_radius   = sqrtf(m_halfSize.x * m_halfSize.x + m_halfSize.y * m_halfSize.y);	// 半径
-	m_angle    = atan2f(m_halfSize.y, m_halfSize.x);								// atan
+	uvStartPoint_ += _move;
 
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
+	isUpdateVertexBuf_ = true;
 }
 
-// 回転率の設定
-void Object2D::SetRotate(float rotate)
+D3DXVECTOR2 Object2D::GetUv_StartPoint()
 {
-	// 回転率の増減
-	m_rotate = rotate;
-
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
+	return uvStartPoint_;
 }
 
-// 色の設定
-void Object2D::SetColor(unsigned int rgba)
+void Object2D::SetUv_Size(const D3DXVECTOR2& _Uv_Size)
 {
-	// 色設定
-	m_color.color = rgba;
+	uvSize_ = _Uv_Size;
 
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
+	isUpdateVertexBuf_ = true;
 }
 
-// UV開始点の設定
-void Object2D::SetUV_StartPoint(D3DXVECTOR2& UV_StartPoint)
+void Object2D::MoveUv_Size(const D3DXVECTOR2& _move)
 {
-	// UV開始点の設定
-	m_UV_StartPoint = UV_StartPoint;
+	uvSize_ += _move;
 
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
+	isUpdateVertexBuf_ = true;
 }
 
-// UVの大きさの設定
-void Object2D::SetUV_Size(D3DXVECTOR2& UV_Size)
+D3DXVECTOR2 Object2D::GetUv_Size()
 {
-	// UVの大きさの設定
-	m_UV_Size = UV_Size;
-
-	// 頂点バッファの更新フラグON
-	m_bUpdateVertexBuf = true;
-
+	return uvSize_;
 }
 
+void Object2D::SetTexture(const LPDIRECT3DTEXTURE9& _texture)
+{
+	texture_ = _texture;
+}
 
-//=============================================================================
-//	private関数
-// 頂点バッファの生成
+LPDIRECT3DTEXTURE9 Object2D::GetTexture()
+{
+	return texture_;
+}
+
+void Object2D::SetDraw(const bool& _isDraw)
+{
+	isDraw_ = _isDraw;
+}
+
 void Object2D::MakeVertexBuf()
 {
-	// デバイスの取得
-	LPDIRECT3DDEVICE9 pDevice = Renderer::GetDevice();
+	LPDIRECT3DDEVICE9 device = Renderer::GetDevice();
+	VERTEX_2D* vertexBuf;
+	D3DXVECTOR3 position = GetPosition();
 
-	// 頂点バッファを生成
-	if (m_pVtxBuff == nullptr) {
-		// 頂点生成に失敗した？
-		if (FAILED(pDevice->CreateVertexBuffer(sizeof(VERTEX_2D) * 4, D3DUSAGE_WRITEONLY, FVF_VERTEX_2D, D3DPOOL_MANAGED, &m_pVtxBuff, NULL))) {
-			// エラーメッセージの表示
-			_MSGERROR("Failed Create Vertex Buffer!!", "void Object2D::MakeVertexBuf()");
+	if (vertexBuf_ == nullptr)
+	{
+		HRESULT hr = device->CreateVertexBuffer(sizeof(VERTEX_2D) * 4, D3DUSAGE_WRITEONLY, FVF_VERTEX_2D, D3DPOOL_MANAGED, &vertexBuf_, NULL);
 
-			// このオブジェクトを破棄する
-			this->Release();
+		if (FAILED(hr))
+		{
+			_MSGERROR("頂点バッファの生成に失敗しました", "Object2D::MakeVertexBuf");
+
+			Release();
 
 			return;
 		}
 	}
 
-	// VRAMの仮想アドレス取得
-	VERTEX_2D* pVtx;
-	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
+	vertexBuf_->Lock(0, 0, (void**)&vertexBuf, 0);
 
-	// 頂点座標の設定
-	D3DXVECTOR3 position = Object::GetPosition();
-	pVtx[0].pos = D3DXVECTOR3(position.x - m_halfSize.x, position.y - m_halfSize.y, 0.0f);
-	pVtx[1].pos = D3DXVECTOR3(position.x + m_halfSize.x, position.y - m_halfSize.y, 0.0f);
-	pVtx[2].pos = D3DXVECTOR3(position.x - m_halfSize.x, position.y + m_halfSize.y, 0.0f);
-	pVtx[3].pos = D3DXVECTOR3(position.x + m_halfSize.x, position.y + m_halfSize.y, 0.0f);
+	if (positionIsLeftTop_ == false)
+	{
+		vertexBuf[0].pos = D3DXVECTOR3(position.x - halfSize_.x, position.y - halfSize_.y, 0.0f);
+		vertexBuf[1].pos = D3DXVECTOR3(position.x + halfSize_.x, position.y - halfSize_.y, 0.0f);
+		vertexBuf[2].pos = D3DXVECTOR3(position.x - halfSize_.x, position.y + halfSize_.y, 0.0f);
+		vertexBuf[3].pos = D3DXVECTOR3(position.x + halfSize_.x, position.y + halfSize_.y, 0.0f);
+	}
+	else
+	{
+		vertexBuf[0].pos = D3DXVECTOR3(position.x                  , position.y                  , 0.0f);
+		vertexBuf[1].pos = D3DXVECTOR3(position.x + halfSize_.x * 2, position.y                  , 0.0f);
+		vertexBuf[2].pos = D3DXVECTOR3(position.x                  , position.y + halfSize_.y * 2, 0.0f);
+		vertexBuf[3].pos = D3DXVECTOR3(position.x + halfSize_.x * 2, position.y + halfSize_.y * 2, 0.0f);
+	}
 
-	// 
-	pVtx[0].rhw = 1.0f;
-	pVtx[1].rhw = 1.0f;
-	pVtx[2].rhw = 1.0f;
-	pVtx[3].rhw = 1.0f;
+	vertexBuf[0].rhw = 1.0f;
+	vertexBuf[1].rhw = 1.0f;
+	vertexBuf[2].rhw = 1.0f;
+	vertexBuf[3].rhw = 1.0f;
 
-	// 頂点色の設定
-	pVtx[0].color = D3DCOLOR_RGBA(m_color.rgba[3], m_color.rgba[2], m_color.rgba[1], m_color.rgba[0]);
-	pVtx[1].color = D3DCOLOR_RGBA(m_color.rgba[3], m_color.rgba[2], m_color.rgba[1], m_color.rgba[0]);
-	pVtx[2].color = D3DCOLOR_RGBA(m_color.rgba[3], m_color.rgba[2], m_color.rgba[1], m_color.rgba[0]);
-	pVtx[3].color = D3DCOLOR_RGBA(m_color.rgba[3], m_color.rgba[2], m_color.rgba[1], m_color.rgba[0]);
+	vertexBuf[0].color = D3DCOLOR_RGBA(color_.rgba[3], color_.rgba[2], color_.rgba[1], color_.rgba[0]);
+	vertexBuf[1].color = D3DCOLOR_RGBA(color_.rgba[3], color_.rgba[2], color_.rgba[1], color_.rgba[0]);
+	vertexBuf[2].color = D3DCOLOR_RGBA(color_.rgba[3], color_.rgba[2], color_.rgba[1], color_.rgba[0]);
+	vertexBuf[3].color = D3DCOLOR_RGBA(color_.rgba[3], color_.rgba[2], color_.rgba[1], color_.rgba[0]);
 
-	// テクスチャUV値の設定
-	pVtx[0].tex = D3DXVECTOR2(m_UV_StartPoint.x              , m_UV_StartPoint.y              );
-	pVtx[1].tex = D3DXVECTOR2(m_UV_StartPoint.x + m_UV_Size.x, m_UV_StartPoint.y              );
-	pVtx[2].tex = D3DXVECTOR2(m_UV_StartPoint.x              , m_UV_StartPoint.y + m_UV_Size.y);
-	pVtx[3].tex = D3DXVECTOR2(m_UV_StartPoint.x + m_UV_Size.x, m_UV_StartPoint.y + m_UV_Size.y);
+	vertexBuf[0].tex = D3DXVECTOR2(uvStartPoint_.x             , uvStartPoint_.y              );
+	vertexBuf[1].tex = D3DXVECTOR2(uvStartPoint_.x + uvSize_.x, uvStartPoint_.y              );
+	vertexBuf[2].tex = D3DXVECTOR2(uvStartPoint_.x             , uvStartPoint_.y + uvSize_.y);
+	vertexBuf[3].tex = D3DXVECTOR2(uvStartPoint_.x + uvSize_.x, uvStartPoint_.y + uvSize_.y);
 
-	// VRAMの仮想アドレス解放
-	m_pVtxBuff->Unlock();
+	vertexBuf_->Unlock();
 }
 
-// 頂点バッファの更新
 void Object2D::UpdateVertexBuf()
 {
-	// 変数の定義
-	D3DXVECTOR3 position = Object::GetPosition();
-	VERTEX_2D* pVtx;
+	D3DXVECTOR3 position = GetPosition();
+	VERTEX_2D* vertexBuf;
 
-	// VRAMの仮想アドレス取得
-	m_pVtxBuff->Lock(0, 0, (void**)&pVtx, 0);
+	vertexBuf_->Lock(0, 0, (void**)&vertexBuf, 0);
 
-	// 頂点座標の設定
-	pVtx[0].pos = D3DXVECTOR3( position.x + cosf(m_rotate + m_angle + D3DX_PI) * m_radius
-							 , position.y + sinf(m_rotate + m_angle + D3DX_PI) * m_radius, 0.0f);
-	pVtx[1].pos = D3DXVECTOR3( position.x + cosf(m_rotate - m_angle          ) * m_radius
-							 , position.y + sinf(m_rotate - m_angle          ) * m_radius, 0.0f);
-	pVtx[2].pos = D3DXVECTOR3( position.x + cosf(m_rotate - m_angle + D3DX_PI) * m_radius
-							 , position.y + sinf(m_rotate - m_angle + D3DX_PI) * m_radius, 0.0f);
-	pVtx[3].pos = D3DXVECTOR3( position.x + cosf(m_rotate + m_angle          ) * m_radius
-							 , position.y + sinf(m_rotate + m_angle          ) * m_radius, 0.0f);
+	if (positionIsLeftTop_ == false)
+	{
+		vertexBuf[0].pos = D3DXVECTOR3( position.x + cosf(rotate_ + angle_ + D3DX_PI) * radius_
+									  , position.y + sinf(rotate_ + angle_ + D3DX_PI) * radius_, 0.0f);
+		vertexBuf[1].pos = D3DXVECTOR3( position.x + cosf(rotate_ - angle_          ) * radius_
+									  , position.y + sinf(rotate_ - angle_          ) * radius_, 0.0f);
+		vertexBuf[2].pos = D3DXVECTOR3( position.x + cosf(rotate_ - angle_ + D3DX_PI) * radius_
+									  , position.y + sinf(rotate_ - angle_ + D3DX_PI) * radius_, 0.0f);
+		vertexBuf[3].pos = D3DXVECTOR3( position.x + cosf(rotate_ + angle_          ) * radius_
+									  , position.y + sinf(rotate_ + angle_          ) * radius_, 0.0f);
+	}
+	else
+	{
+		position += halfSize_;
 
-	// 頂点色の設定
-	pVtx[0].color = D3DCOLOR_RGBA(m_color.rgba[3], m_color.rgba[2], m_color.rgba[1], m_color.rgba[0]);
-	pVtx[1].color = D3DCOLOR_RGBA(m_color.rgba[3], m_color.rgba[2], m_color.rgba[1], m_color.rgba[0]);
-	pVtx[2].color = D3DCOLOR_RGBA(m_color.rgba[3], m_color.rgba[2], m_color.rgba[1], m_color.rgba[0]);
-	pVtx[3].color = D3DCOLOR_RGBA(m_color.rgba[3], m_color.rgba[2], m_color.rgba[1], m_color.rgba[0]);
+		vertexBuf[0].pos = D3DXVECTOR3( position.x + cosf(rotate_ + angle_ + D3DX_PI) * radius_
+									  , position.y + sinf(rotate_ + angle_ + D3DX_PI) * radius_, 0.0f);
+		vertexBuf[1].pos = D3DXVECTOR3( position.x + cosf(rotate_ - angle_          ) * radius_
+									  , position.y + sinf(rotate_ - angle_          ) * radius_, 0.0f);
+		vertexBuf[2].pos = D3DXVECTOR3( position.x + cosf(rotate_ - angle_ + D3DX_PI) * radius_
+									  , position.y + sinf(rotate_ - angle_ + D3DX_PI) * radius_, 0.0f);
+		vertexBuf[3].pos = D3DXVECTOR3( position.x + cosf(rotate_ + angle_          ) * radius_
+									  , position.y + sinf(rotate_ + angle_          ) * radius_, 0.0f);
+	}
 
-	// テクスチャUV値の設定
-	pVtx[0].tex = D3DXVECTOR2(m_UV_StartPoint.x              , m_UV_StartPoint.y              );
-	pVtx[1].tex = D3DXVECTOR2(m_UV_StartPoint.x + m_UV_Size.x, m_UV_StartPoint.y              );
-	pVtx[2].tex = D3DXVECTOR2(m_UV_StartPoint.x              , m_UV_StartPoint.y + m_UV_Size.y);
-	pVtx[3].tex = D3DXVECTOR2(m_UV_StartPoint.x + m_UV_Size.x, m_UV_StartPoint.y + m_UV_Size.y);
+	vertexBuf[0].color = D3DCOLOR_RGBA(color_.rgba[3], color_.rgba[2], color_.rgba[1], color_.rgba[0]);
+	vertexBuf[1].color = D3DCOLOR_RGBA(color_.rgba[3], color_.rgba[2], color_.rgba[1], color_.rgba[0]);
+	vertexBuf[2].color = D3DCOLOR_RGBA(color_.rgba[3], color_.rgba[2], color_.rgba[1], color_.rgba[0]);
+	vertexBuf[3].color = D3DCOLOR_RGBA(color_.rgba[3], color_.rgba[2], color_.rgba[1], color_.rgba[0]);
 
-	// VRAMの仮想アドレス解放
-	m_pVtxBuff->Unlock();
+	vertexBuf[0].tex = D3DXVECTOR2(uvStartPoint_.x              , uvStartPoint_.y              );
+	vertexBuf[1].tex = D3DXVECTOR2(uvStartPoint_.x + uvSize_.x, uvStartPoint_.y              );
+	vertexBuf[2].tex = D3DXVECTOR2(uvStartPoint_.x              , uvStartPoint_.y + uvSize_.y);
+	vertexBuf[3].tex = D3DXVECTOR2(uvStartPoint_.x + uvSize_.x, uvStartPoint_.y + uvSize_.y);
 
-
-	// 頂点バッファの更新フラグOFF
-	m_bUpdateVertexBuf = false;
-
+	vertexBuf_->Unlock();
 }
-

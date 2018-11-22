@@ -1,51 +1,32 @@
-//*****************************************************************************
-//	
-//		バレット（ビルボード）
-//													Autohr : Yusuke Seki
-//*****************************************************************************
-#ifndef _BULLETBILLBOARD_H_
-#define _BULLETBILLBOARD_H_
+// author : yusuke seki
+// data   : 20181111
+#ifndef BULLETBILLBOARD_H_
+#define BULLETBILLBOARD_H_
 
-#include "main.h"
 #include "Bullet3D.h"
-
-class Camera;
-
+#include "camera.h"
 
 class BulletBillboard : public Bullet3D
 {
 public:
-	// コンストラクタ / デストラクタ
 	BulletBillboard();
-	BulletBillboard(Object::TYPE type);
+	BulletBillboard(const Object::TYPE& type);
 	virtual ~BulletBillboard();
 
-	// 基本的な関数
-	static BulletBillboard* Create(D3DXVECTOR3& position, D3DXVECTOR3& size, Camera* pCamera);
-	virtual void Init(D3DXVECTOR3& position, D3DXVECTOR3& size, Camera* pCamera);
+	static BulletBillboard* Create(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, Camera* _camera);
+	virtual void Init(const D3DXVECTOR3& _position, const D3DXVECTOR3& _size, Camera* _camera);
 	virtual void Uninit(void);
 	virtual void Update(void) {}
 	virtual void Draw(void);
 	
-
-	// カメラの設定
-	void SetCamera(Camera& pCamera) { m_pCamera = &pCamera; }
-
-
-	// 持っているカメラのポインタを返す
-	Camera* GetCamera() { return m_pCamera; }	
-
+	void SetCamera(Camera* _camera);
+	Camera* GetCamera();
 
 private:
-	// ワールドマトリクスの更新
 	void UpdateWorldMatrix();
 
-
-	//----- データ -----
-	Camera* m_pCamera;	// カメラ
+	Camera* camera_;
 
 };
 
-
 #endif
-

@@ -41,7 +41,7 @@
 ////-----------------------------------------------------------------------------
 //// À‘Ì‚Ì¶¬
 ////-----------------------------------------------------------------------------
-//LifeGauge* LifeGauge::Create(ObjectModel* pObjModel, Camera* pCamera)
+//LifeGauge* LifeGauge::Create(BasePoint* pObjModel, Camera* pCamera)
 //{
 //	// À‘Ì‚Ì¶¬
 //	LifeGauge* pLifeGauge = new LifeGauge;
@@ -57,7 +57,7 @@
 ////-----------------------------------------------------------------------------
 //// ‰Šú‰»ˆ—
 ////-----------------------------------------------------------------------------
-//void LifeGauge::Init(ObjectModel* pObjModel, Camera* pCamera)
+//void LifeGauge::Init(BasePoint* pObjModel, Camera* pCamera)
 //{
 //	// ƒf[ƒ^‚Ì‰Šú‰»
 //	{

@@ -19,12 +19,6 @@ class Fade;
 //----- クラスの定義 -----
 class GameManager
 {
-private:
-	static GameScene* m_pGameScene; // 現在のシーン
-	static Input*	  m_pInput;
-	static Fade*      m_pFade;
-	static int _drawDebugInfo;	// デバッグ情報の描画切り替えスイッチ
-
 public:
 	GameManager() {}
 	~GameManager() {}
@@ -34,8 +28,17 @@ public:
 	static void	   Draw();
 	static Input*  GetInput() { return m_pInput; }
 	static Fade*   GetFade() { return m_pFade; }
+	static HINSTANCE GetInstanceHandle() { return instanceHandle_; }
+	static HWND GetWindowHandle() { return windowHandle_; }
 
+private:
+	static GameScene* m_pGameScene; // 現在のシーン
+	static Input* m_pInput;
+	static Fade* m_pFade;
+	static int _drawDebugInfo;	// デバッグ情報の描画切り替えスイッチ
 
+	static HINSTANCE instanceHandle_;
+	static HWND windowHandle_;
 };
 
 

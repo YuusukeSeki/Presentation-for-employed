@@ -1,491 +1,650 @@
-//*****************************************************************************
-//
-//		兵士
-//												Autohr : Yusuke Seki
-//*****************************************************************************
-// base
+// author : yusuke seki
+// data   : 20181114
 #include "Soldier.h"
-#include "Commander.h"
-
-// fw
-#include "collision.h"
-
-// Object
+#include "SoldierCommander.h"
 #include "player.h"
+#include "BasePoint.h"
 #include "tower.h"
 #include "castle.h"
+#include "Collider.h"
 #include "SoldierBullet.h"
-
-// resource
 #include "MainGame.h"
+#include "collision.h"
+#include "SoldierGauge.h"
 
+const float Soldier::kBreakPower_ = 10.0f;
+const float Soldier::kAttackPower_ = 50.0f;
+const float Soldier::kMaxHp_ = 100.0f;;
+const float Soldier::kSearchEnemyRange_ = 4.0f;
+const float Soldier::kSearchFriendRange_ = 4.0f;
 
-// Initialize ID
-int Soldier::m_cntID = 0;
-
-
-
-// コンストラクタ
-Soldier::Soldier() : ObjectModel(Object::TYPE::TYPE_MODEL_SOLDIER)
+Soldier::Soldier() : Unit(TYPE_MODEL_SOLDIER)
 {
-	// データのクリア
-	m_bInstance = false;
+	speed_ = 0.0f;
+	currentHp_ = 0.0f;
+	maxHp_ = 0.0f;
+	attackPower_ = 0.0f;
+	defencePower_ = 0.0f;
+	breakPower_ = kBreakPower_;
+	searchEnemyRange_ = 0.0f;
+	searchFriendRange_ = 0.0f;
+	parentCommander_ = nullptr;
 
+	destination_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	frontAfterArriveDestination_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+
+	targetBasePoint_ = nullptr;
+
+	searchEnemyCollider_ = nullptr;
+	searchFriendCollider_ = nullptr;
+
+	Part* body = AddPart("body", "data/model/MainGame/soldier_body.x");
+
+	Part* head = AddPart("head", "data/model/MainGame/soldier_head.x");
+	head->SetParent(body);
+
+	Part* arm_left = AddPart("arm_left", "data/model/MainGame/soldier_arm_left.x");
+	arm_left->SetParent(body);
+
+	Part* arm_right = AddPart("arm_right", "data/model/MainGame/soldier_arm_right.x");
+	arm_right->SetParent(body);
+
+	Part* leg_left = AddPart("leg_left", "data/model/MainGame/soldier_leg_left.x");
+	leg_left->SetParent(body);
+
+	Part* leg_right = AddPart("leg_right", "data/model/MainGame/soldier_leg_right.x");
+	leg_right->SetParent(body);
+
+	body->MovePosition(D3DXVECTOR3(0, 1, 0) * leg_right->GetSize().y);
+
+	hpGauge_ = nullptr;
 }
 
-// デストラクタ
 Soldier::~Soldier()
 {
 	Uninit();
-
 }
 
-// 生成
-Soldier* Soldier::Create(D3DXVECTOR3& position, const char* modelPass)
+void Soldier::CreateBuffer(const unsigned int& _numCreate)
 {
-	Soldier* pSoldier = new Soldier;
-	pSoldier->Init(position, modelPass);
-
-	return pSoldier;
-
-}
-
-// 初期化
-void Soldier::Init(D3DXVECTOR3& position, const char* modelPass)
-{
-	// データの初期化
-	ObjectModel::Init(position, modelPass);
-	m_searchRange = 45;
-	m_breakPower = 10;
-
-	m_ID = m_cntID;
-
-	m_bInstance = false;
-
-	m_cntID++;
-
-}
-
-// 終了
-void Soldier::Uninit(void)
-{
-	ObjectModel::Uninit();
-
-	m_cntID = 0;
-}
-
-// 更新
-void Soldier::Update(void)
-{
-	if (!m_bInstance) return;
-
-	// 敵の塔に向かって突撃する
-	if (m_pAssaultBasePoint != nullptr)
+	for (unsigned int i = 0; i < _numCreate; ++i)
 	{
-		// 塔に当たったら死ぬ
-		if (CollisionBasePoint())
-		{
-			BreakBasePoint();
-		}
+		Soldier* buf = new Soldier();
+		buf->SetActive(false);
+	}
+}
+
+Soldier* Soldier::Create(SoldierCommander* _soldierCommander)
+{
+	Soldier* soldier = new Soldier();
+	soldier->Init(_soldierCommander);
+
+	return soldier;
+}
+
+Soldier* Soldier::DynamicCreate(SoldierCommander* _soldierCommander)
+{
+	Soldier* soldier = FindNonActiveSoldier();
+
+	if (soldier == nullptr)
+	{
+		soldier = Create(_soldierCommander);
+	}
+	else
+	{
+		soldier->Init(_soldierCommander);
 	}
 
-	// 感知範囲に敵の拠点を発見したら指揮官に報告する
-	else if ((m_pAssaultBasePoint = SearchTower()) != nullptr || (m_pAssaultBasePoint = SearchCastle()) != nullptr)
-		m_pParent->ReceiveReport_SearchBasePoint(m_pAssaultBasePoint);
-
-	// 感知範囲に敵を発見したら指揮官に報告する
-	else if (SearchEnemy())
-		m_pParent->ReceiveReport_SearchEnemy();
-
+	return soldier;
 }
 
-// 描画
-void Soldier::Draw(void)
+void Soldier::Init(SoldierCommander* _soldierCommander)
 {
-	if (!m_bInstance) return;
+	parentCommander_ = _soldierCommander;
 
-	ObjectModel::Draw();
+	Unit::Init(parentCommander_->GetPosition(), parentCommander_->GetGroup());
 
-}
+	SetFront(parentCommander_->GetFront());
+	speed_ = parentCommander_->GetSpeed();
 
-// 走る
-void Soldier::Run(D3DXVECTOR3& vecZ, float velocity)
-{
-	SetRotateToObj((D3DXVECTOR3(vecZ * velocity) + GetPosition()));
-	MovePosition(vecZ * velocity);
-
-}
-
-// 攻撃される
-void Soldier::Attack(float damage, D3DXVECTOR3& vector, float accelerate, Player* pPlayer)
-{
-	// ダメージを受ける
-	if (Damage(damage)) {
-		// 死んだ
-
-		// プレイヤーの撃破数上昇
-		pPlayer->PlusScore_CrushSoldier();
-
-	}
-	else {
-		// 生きてる
-
-		// 飛ばされる
-		MovePosition(vector * accelerate);
-	}
-	
-}
-
-// ダメージを受ける
-// damage：与えるダメージ数
-// 返り値： true  死んだよ
-//			false 生きてるよ
-bool Soldier::Damage(float damage)
-{
-	m_life -= damage;
-
-	if (m_life <= 0) {
-		m_pParent->ReceiveReport_Death(this);
-
-		m_bInstance = false;
-		return true;
-	}
-
-	return false;
-}
-
-// 目標拠点を設定する
-void Soldier::SetTargetBasePoint(ObjectModel* pTarget)
-{
-	m_pAssaultBasePoint = pTarget;
-}
-
-// 敵に攻撃をする
-void Soldier::ShotBullet()
-{
-	ObjectModel* pTarget = SearchNearEnemy();
-
-	if (pTarget == nullptr)
-		return;
-
-	SetRotateToObj(D3DXVECTOR3(pTarget->GetPosition()));
-	SoldierBullet::SetBullet(GetPosition(), pTarget, MainGame::GetCamera(0));
-	
-}
-
-// 兵士の動的生成処理
-Soldier* Soldier::SetSoldier(D3DXVECTOR3& position, D3DXVECTOR3& front, const char* modelPass, Object::GROUP group, Commander* pCommnader)
-{
-	// 実体持ちを探す
-	Soldier* pSoldier = (Soldier*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_MODEL_SOLDIER);
-
-	// １つも作られていなかったら生成する
-	if (pSoldier == nullptr) {
-		// 生成処理
-		pSoldier = Soldier::Create(position, modelPass);
-		pSoldier->SetSoldier_private(position, front, group, pCommnader);
-
-		return pSoldier;
-	}
-
-	// 作られていたら未使用領域を探す
-	Soldier* pCurrent = (Soldier*)pSoldier;
-	Soldier* pNext = (Soldier*)pSoldier->GetNextPointer();
-	for (;;) {
-		// 未使用なら兵士を初期化して終了
-		if (!pCurrent->GetInstance()) {
-			pCurrent->SetSoldier_private(position, front, group, pCommnader);
-			return pCurrent;
-		}
-
-		// 未使用領域が見つからなければ、新しく生成する
-		if (pNext == nullptr) {
-			// 生成処理
-			pNext = Soldier::Create(position, modelPass);
-			pNext->SetSoldier_private(position, front, group, pCommnader);
-
-			return pNext;
-		}
-
-		// ポインタをずらす
-		pCurrent = pNext;
-		pNext = (Soldier*)pCurrent->GetNextPointer();
-
-	}
-
-}
-
-// この兵士を殺す
-void Soldier::KillMe()
-{
-	Damage(m_maxLife);
-}
-
-
-//=============================================================================
-//	private 関数
-// 兵士の設定処理
-void Soldier::SetSoldier_private(D3DXVECTOR3& position, D3DXVECTOR3& front, Object::GROUP group, Commander* pCommnader)
-{
-	// 位置
-	SetPosition(position);
-
-	// 向き
-	SetFront(front);
-
-	// 所属グループ
-	SetGroup(group);
-
-	// 直属の指揮官
-	m_pParent = pCommnader;
-
-	// 色、向き
-	if (group == Object::GROUP_A) {
-		SetColor(0xff0000ff);
+	if (GetGroup() == Object::GROUP_A)
+	{
+		SetColor(255, 0, 0, 255);
 		SetRotate(D3DXVECTOR3(0, 0, 0));
 	}
-	else if (group == Object::GROUP_B) {
-		SetColor(0x0000ffff);
+	else if (GetGroup() == Object::GROUP_B)
+	{
+		SetColor(0, 0, 255, 255);
 		SetRotate(D3DXVECTOR3(0, D3DXToRadian(180), 0));
 	}
 
-	// 体力の最大値
-	m_maxLife = 100;
+	GetObjectCollider()->SetRadius(GetHalfSize().x);
 
-	// 現在の体力
-	m_life    = m_maxLife;
+	maxHp_ = kMaxHp_;
+	currentHp_ = kMaxHp_;
+	attackPower_ = kAttackPower_;
+	defencePower_ = 0.0f;
+	searchEnemyRange_ = kSearchEnemyRange_;
+	searchFriendRange_ = kSearchFriendRange_;
 
-	// 発見した拠点
-	m_pAssaultBasePoint = nullptr;
+	destination_ = D3DXVECTOR3(0.0f, 0.0f, 0.0f);
+	frontAfterArriveDestination_ = parentCommander_->GetFront();
+	targetBasePoint_ = nullptr;
 
-	// 使用フラグON
-	m_bInstance = true;
-	
-}
-
-// 索敵
-// 返り値： true  発見
-//			false いないよ
-bool Soldier::SearchEnemy()
-{
-	if (SearchEnemy_Soldier() || SearchEnemy_Cast()) return true;
-
-	return false;
-}
-
-// 索敵（兵士）
-// 返り値： true  発見
-//			false いないよ
-bool Soldier::SearchEnemy_Soldier()
-{
-	Soldier* pSoldier = (Soldier*)Object::GetLDATA_HEAD(TYPE_MODEL_SOLDIER);
-
-	if (pSoldier == nullptr) return false;
-
-	Soldier* pCurrent = pSoldier;
-	Soldier* pNext = (Soldier*)pSoldier->GetNextPointer();
-
-	for (;;) {
-
-		if (pCurrent->GetGroup() != GetGroup() && pCurrent->GetInstance())
-			if (Collision_SphereToSphere(GetPosition(), m_searchRange, pCurrent->GetPosition(), pCurrent->GetRadius())) return true;
-
-		pCurrent = pNext;
-
-		if (pCurrent == nullptr) return false;
-
-		pNext = (Soldier*)pCurrent->GetNextPointer();
-
+	if (searchEnemyCollider_ == nullptr)
+	{
+		searchEnemyCollider_ = Collider::Create(this);
 	}
-
-}
-
-// 索敵（キャスト）
-// 返り値： true  発見
-//			false いないよ
-bool Soldier::SearchEnemy_Cast()
-{
-	Player* pPlayer = (Player*)Object::GetLDATA_HEAD(TYPE_MODEL_PLAYER);
-
-	if (pPlayer == nullptr) return false;
-
-	Player* pCurrent = pPlayer;
-	Player* pNext = (Player*)pPlayer->GetNextPointer();
-
-	for (;;) {
-
-		if(pCurrent->GetGroup() != GetGroup())
-			if (Collision_SphereToSphere(GetPosition(), m_searchRange, pCurrent->GetPosition(), pCurrent->GetRadius())) return true;
-
-		pCurrent = pNext;
-
-		if (pCurrent == nullptr) return false;
-
-		pNext = (Player*)pCurrent->GetNextPointer();
-
-	}
-
-}
-
-// 索敵（塔）
-// 返り値： true  発見
-//			false いないよ
-Tower* Soldier::SearchTower()
-{
-	Tower* pTower = (Tower*)Object::GetLDATA_HEAD(TYPE_MODEL_TOWER);
-
-	if (pTower == nullptr)
-		return nullptr;
-
-	Tower* pCurrent = pTower;
-	Tower* pNext = (Tower*)pTower->GetNextPointer();
-
-	for (;;) {
-
-		if (pCurrent->GetGroup() != GetGroup())
-			if (Collision_SphereToSphere(GetPosition(), m_searchRange, pCurrent->GetPosition(), pCurrent->GetRadius()))
-				return pCurrent;
-
-		pCurrent = pNext;
-
-		if (pCurrent == nullptr)
-			return nullptr;
-
-		pNext = (Tower*)pCurrent->GetNextPointer();
-
-	}
-
-}
-
-// 索敵（城）
-// 返り値： true  発見
-//			false いないよ
-Castle* Soldier::SearchCastle()
-{
-	Castle* pCastle = (Castle*)Object::GetLDATA_HEAD(TYPE_MODEL_CASTLE);
-
-	if (pCastle == nullptr)
-		return nullptr;
-
-	Castle* pCurrent = pCastle;
-	Castle* pNext = (Castle*)pCastle->GetNextPointer();
-
-	for (;;) {
-
-		if (pCurrent->GetGroup() != GetGroup())
-			if (Collision_SphereToSphere(GetPosition(), m_searchRange, pCurrent->GetPosition(), pCurrent->GetRadius()))
-				return pCurrent;
-
-		pCurrent = pNext;
-
-		if (pCurrent == nullptr)
-			return nullptr;
-
-		pNext = (Castle*)pCurrent->GetNextPointer();
-
-	}
-
-}
-
-// 一番近い敵を探す
-// 返り値：	一番近い敵のポインタ
-ObjectModel* Soldier::SearchNearEnemy()
-{
-	Soldier *pCurrentA = (Soldier*)Object::GetLDATA_HEAD(Object::TYPE_MODEL_SOLDIER);
-
-	if (pCurrentA == nullptr)
-		return nullptr;
-
-	Soldier *pNextA = (Soldier*)pCurrentA->GetNextPointer();
-	Soldier *pTargetA = nullptr;
-
-	float minA, minB;
-	minA = minB = 99999999.f;
-
-	// 一番近い兵士を探す
-	for (;;) {
-		if (pCurrentA->GetGroup() != GetGroup() && pCurrentA->GetInstance()) {
-			float buf = Distance3D(GetPosition(), pCurrentA->GetPosition());
-
-			if (buf < minA) {
-				minA = buf;
-				pTargetA = pCurrentA;
-			}
-		}
-
-		pCurrentA = pNextA;
-
-		if (pCurrentA == nullptr)
-			break;
-
-		pNextA = (Soldier*)pCurrentA->GetNextPointer();
-
-	}
-
-	
-	Player *pCurrentB = (Player*)Object::GetLDATA_HEAD(Object::TYPE_MODEL_PLAYER);
-
-	if (pCurrentB == nullptr)
-		return nullptr;
-
-	Player *pNextB = (Player*)pCurrentB->GetNextPointer();
-	Player *pTargetB = nullptr;
-
-	// 兵士よりも近いキャストを探す
-	for (;;) {
-		if (pCurrentB->GetGroup() != GetGroup()) {
-			float buf = Distance3D(GetPosition(), pCurrentB->GetPosition());
-
-			if (buf < minB) {
-				minB = buf;
-				pTargetB = pCurrentB;
-			}
-		}
-
-		pCurrentB = pNextB;
-
-		if (pCurrentB == nullptr)
-			break;
-
-		pNextB = (Player*)pCurrentB->GetNextPointer();
-
-	}
-
-	if (minA < minB)
-		return (ObjectModel*)pTargetA;
 	else
-		return (ObjectModel*)pTargetB;
+	{
+		searchEnemyCollider_->SetParentUnit(this);
+	}
+	searchEnemyCollider_->SetRadius(searchEnemyRange_);
+
+	if (searchFriendCollider_ == nullptr)
+	{
+		searchFriendCollider_ = Collider::Create(this);
+	}
+	else
+	{
+		searchFriendCollider_->SetParentUnit(this);
+	}
+	searchFriendCollider_->SetRadius(searchFriendRange_);
+	searchFriendCollider_->MovePosition(GetFront() * (searchFriendRange_ * 0.5f + GetHalfSize().z * 0.5f));
+
+#ifdef _DEBUG
+	searchEnemyCollider_->SetColor(1.0f, 0.3f, 0.3f, 0.5f);
+	searchFriendCollider_->SetColor(0.3f, 0.3f, 1.0f, 0.5f);
+	//searchEnemyCollider_->SetDraw(false);
+	searchFriendCollider_->SetDraw(false);
+#endif
+
+	// hp gauge
+	D3DXVECTOR3 gaugePosition = GetPosition();
+	gaugePosition.y += GetSize().y * 1.2f;
+
+	D3DXVECTOR3 gaugeSize(GetSize().x, GetSize().x * 0.25f, 0);
+
+	hpGauge_ = SoldierGauge::DynamicCreate(gaugePosition, gaugeSize, MainGame::GetCamera(), this);
+	hpGauge_->SetMaxHpPointer(&maxHp_);
+	hpGauge_->SetCurrentHpPointer(&currentHp_);
+
+	SetActive(true);
+}
+
+void Soldier::Uninit(void)
+{
+	Unit::Uninit();
+}
+
+void Soldier::Update(void)
+{
+	if (targetBasePoint_ == nullptr)
+	{
+		BasePoint* basePoint = SearchEnemyBasePoint();
+
+		if (basePoint != nullptr)
+		{
+			parentCommander_->ReceiveReport(Report::FIND_ENEMY_BASEPOINT, this, basePoint);
+		}
+		else if (IsSearchEnemyUnit() == true)
+		{
+			parentCommander_->ReceiveReport(Report::FIND_ENEMY_UNIT, this);
+		}
+		else if (IsSearchFriendSoldier() == true)
+		{
+			parentCommander_->ReceiveReport(Report::FIND_FRIEND_UNIT, this);
+		}
+	}
 
 }
 
-// 拠点との当たり判定
-bool Soldier::CollisionBasePoint()
+void Soldier::Draw(void)
 {
-	if (Collision_SphereToSphere(GetPosition(), 0.00001f, m_pAssaultBasePoint->GetPosition(), m_pAssaultBasePoint->GetRadius() - m_pAssaultBasePoint->GetRadius() * 0.3f))
+	Unit::Draw();
+}
+
+void Soldier::Stop()
+{
+	// 無処理
+}
+
+void Soldier::Run()
+{
+	SetFront(parentCommander_->GetFront());
+
+	MovePosition(GetFront(), speed_);
+	SetRotateToPosition(GetPosition() + GetFront() * speed_);
+}
+
+void Soldier::FormLine()
+{
+	float distance = Distance3D(destination_, GetPosition());
+
+	if (distance < speed_ * speed_)
+	{
+		SetPosition(destination_);
+
+		SetRotateToPosition(GetPosition() + frontAfterArriveDestination_ * speed_);
+	}
+	else
+	{
+		D3DXVECTOR3 moveVector = destination_ - GetPosition();
+		D3DXVec3Normalize(&moveVector, &moveVector);
+
+		SetRotateToPosition(GetPosition() + moveVector * speed_);
+		MovePosition(moveVector, speed_);
+	}
+}
+
+void Soldier::ShotBullet()
+{
+	Unit* nearEnemy = FindNearEnemy();
+
+	if (nearEnemy != nullptr)
+	{
+		Camera* camera = MainGame::GetCamera();
+
+		SetRotateToPosition(nearEnemy->GetPosition());
+
+		SoldierBullet::DynamicCreate(this, nearEnemy);
+	}
+}
+
+void Soldier::AssaultBasePoint()
+{
+	D3DXVECTOR3 vector = targetBasePoint_->GetPosition() - GetPosition();
+	D3DXVec3Normalize(&vector, &vector);
+
+	MovePosition(vector * speed_);
+
+	if (CollidedBasePoint() == true)
+	{
+		BreakBasePoint();
+		Death();
+	}
+}
+
+void Soldier::Death()
+{
+	parentCommander_->ReceiveReport(Report::DEATH, this);
+
+	SetActive(false);
+}
+
+void Soldier::SetDestination(const D3DXVECTOR3& _destinationPoint)
+{
+	destination_ = _destinationPoint;
+}
+
+void Soldier::SetEndFront(const D3DXVECTOR3& _endFront)
+{
+	frontAfterArriveDestination_ = _endFront;
+}
+
+void Soldier::SetTargetBasePoint(BasePoint* _targetBasePoint)
+{
+	targetBasePoint_ = _targetBasePoint;
+}
+
+Collider* Soldier::GetSearchCollider()
+{
+	return searchEnemyCollider_;
+}
+
+void Soldier::ReceiveDamage(const float& _damage, Unit* _unit)
+{
+	if (_unit != nullptr)
+	{
+		//// 吹き飛ばし処理
+		//float speed = 5.0f;
+		//D3DXVECTOR3 moveVector = GetPosition() - _unit->GetPosition();
+		//D3DXVec3Normalize(&moveVector, &moveVector);
+
+		//MovePosition(moveVector, speed);
+	}
+
+	currentHp_ -= _damage;
+
+	if (currentHp_ <= 0.0f)
+	{
+		Death();
+	}
+}
+
+void Soldier::SetActive(const bool& _isActive)
+{
+	if (searchEnemyCollider_ != nullptr)
+	{
+		searchEnemyCollider_->SetActive(_isActive);
+	}
+
+	if (searchFriendCollider_ != nullptr)
+	{
+		searchFriendCollider_->SetActive(_isActive);
+	}
+
+	if (hpGauge_ != nullptr)
+	{
+		hpGauge_->SetActive(_isActive);
+	}
+
+	Unit::SetActive(_isActive);
+}
+
+Soldier* Soldier::FindNonActiveSoldier()
+{
+	Soldier* soldier = (Soldier*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_MODEL_SOLDIER);
+
+	if (soldier != nullptr)
+	{
+		for (;;)
+		{
+			if (soldier->GetActive() == false)
+			{
+				break;
+			}
+
+			soldier = (Soldier*)soldier->GetNextPointer();
+
+			if (soldier == nullptr)
+			{
+				break;
+			}
+		}
+	}
+
+	return soldier;
+}
+
+Unit* Soldier::FindNearEnemy()
+{
+	Soldier* nearSoldier = FindNearEnemySoldier();
+	Player* nearPlayer = FindNearEnemyPlayer();
+
+	if (nearSoldier != nullptr && nearPlayer != nullptr)
+	{
+		float distance = Distance3D(GetPosition(), nearSoldier->GetPosition());
+
+		if (distance < Distance3D(GetPosition(), nearPlayer->GetPosition()))
+		{
+			return (Unit*)nearSoldier;
+		}
+		else
+		{
+			return (Unit*)nearPlayer;
+		}
+	}
+	else if (nearSoldier != nullptr && nearPlayer == nullptr)
+	{
+		return nearSoldier;
+	}
+	else if (nearSoldier == nullptr && nearPlayer != nullptr)
+	{
+		return nearPlayer;
+	}
+	else
+	{
+		return nullptr;
+	}
+}
+
+Soldier* Soldier::FindNearEnemySoldier()
+{
+	Soldier* soldier = (Soldier*)Object::GetLDATA_HEAD(Object::TYPE_MODEL_SOLDIER);
+
+	if (soldier != nullptr)
+	{
+		Soldier* nearEnemySoldier = nullptr;
+		float minDistance = 0.0f;
+
+		for (;;)
+		{
+			if (soldier->GetActive() == true && soldier->GetGroup() != GetGroup())
+			{
+				float distance = Distance3D(GetPosition(), soldier->GetPosition());
+
+				if (distance < minDistance || nearEnemySoldier == nullptr)
+				{
+					minDistance = distance;
+					nearEnemySoldier = soldier;
+				}
+			}
+
+			soldier = (Soldier*)soldier->GetNextPointer();
+
+			if (soldier == nullptr)
+			{
+				break;
+			}
+		}
+
+		return nearEnemySoldier;
+
+	}
+
+	return nullptr;
+}
+
+Player* Soldier::FindNearEnemyPlayer()
+{
+	Player* player = (Player*)Object::GetLDATA_HEAD(Object::TYPE_MODEL_PLAYER);
+
+	if (player == nullptr)
+	{
+		return nullptr;
+	}
+	else
+	{
+		Player* nearEnemyPlayer = nullptr;
+		float minDistance = 0.0f;
+
+		for (;;)
+		{
+			if (player->GetGroup() != GetGroup())
+			{
+				float distance = Distance3D(GetPosition(), player->GetPosition());
+
+				if (distance < minDistance || nearEnemyPlayer == nullptr)
+				{
+					minDistance = distance;
+					nearEnemyPlayer = player;
+				}
+			}
+
+			player = (Player*)player->GetNextPointer();
+
+			if (player == nullptr)
+			{
+				break;
+			}
+		}
+
+		return nearEnemyPlayer;
+	}
+}
+
+BasePoint* Soldier::SearchEnemyBasePoint()
+{
+	Tower* tower = SearchEnemyTower();
+
+	if (tower != nullptr)
+	{
+		return tower;
+	}
+
+	Castle* castle = SearchEnemyCastle();
+
+	if (castle != nullptr)
+	{
+		return castle;
+	}
+
+	return nullptr;
+}
+
+Tower* Soldier::SearchEnemyTower()
+{
+	Tower* tower = (Tower*)Object::GetLDATA_HEAD(TYPE_MODEL_TOWER);
+
+	if (tower != nullptr)
+	{
+		for (;;) {
+
+			if (tower->GetGroup() != GetGroup() && tower->IsBreak() == false)
+			{
+				if (searchEnemyCollider_->Collision(tower->GetObjectCollider()) == true)
+				{
+					return tower;
+				}
+			}
+
+			tower = (Tower*)tower->GetNextPointer();
+
+			if (tower == nullptr)
+			{
+				return nullptr;
+			}
+		}
+	}
+
+	return nullptr;
+
+}
+
+Castle* Soldier::SearchEnemyCastle()
+{
+	Castle* castle = (Castle*)Object::GetLDATA_HEAD(TYPE_MODEL_CASTLE);
+
+	if (castle != nullptr)
+	{
+		for (;;) {
+
+			if (castle->GetGroup() != GetGroup())
+			{
+				if (Collision_SphereToSphere(GetPosition(), searchEnemyRange_, castle->GetPosition(), castle->GetRadius()))
+				{
+					return castle;
+				}
+			}
+
+			castle = (Castle*)castle->GetNextPointer();
+
+			if (castle == nullptr)
+			{
+				return nullptr;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+bool Soldier::IsSearchEnemyUnit()
+{
+	if (IsSearchEnemySoldier() == true || IsSearchEnemyPlayer() == true)
+	{
 		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+bool Soldier::IsSearchEnemySoldier()
+{
+	Soldier* soldier = (Soldier*)Object::GetLDATA_HEAD(TYPE_MODEL_SOLDIER);
+
+	if (soldier != nullptr)
+	{
+		for (;;)
+		{
+			if (soldier->GetActive() == true && soldier->GetGroup() != GetGroup())
+			{
+				if (searchEnemyCollider_->Collision(soldier->GetObjectCollider()) == true)
+				{
+					return true;
+				}
+			}
+
+			soldier = (Soldier*)soldier->GetNextPointer();
+
+			if (soldier == nullptr)
+			{
+				break;
+			}
+		}
+	}
 
 	return false;
 }
 
-// 拠点を殴る
+bool Soldier::IsSearchEnemyPlayer()
+{
+	Player* player = (Player*)Object::GetLDATA_HEAD(TYPE_MODEL_PLAYER);
+
+	if (player != nullptr)
+	{
+		for (;;)
+		{
+			if (player->GetGroup() != GetGroup())
+			{
+				if (searchEnemyCollider_->Collision(player->GetObjectCollider()) == true)
+				{
+					return true;
+				}
+			}
+
+			player = (Player*)player->GetNextPointer();
+
+			if (player == nullptr)
+			{
+				break;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool Soldier::IsSearchFriendSoldier()
+{
+	SoldierCommander* soldierCommander = (SoldierCommander*)Object::GetLDATA_HEAD(TYPE_COMMANDER);
+
+	if (soldierCommander != nullptr)
+	{
+		for (;;)
+		{
+			if (soldierCommander->GetActive() == true && soldierCommander->GetGroup() == GetGroup() && soldierCommander != parentCommander_)
+			{
+				if (soldierCommander->GetTargetRelayPoint() == parentCommander_->GetTargetRelayPoint())
+				{
+					if (searchFriendCollider_->Collision(soldierCommander->GetPosition()) == true)
+					{
+						return true;
+					}
+				}
+			}
+
+			soldierCommander = (SoldierCommander*)soldierCommander->GetNextPointer();
+
+			if (soldierCommander == nullptr)
+			{
+				break;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool Soldier::CollidedBasePoint()
+{
+	return targetBasePoint_->GetObjectCollider()->Collision(GetPosition());
+}
+
 void Soldier::BreakBasePoint()
 {
-	if (m_pAssaultBasePoint->GetType() == Object::TYPE::TYPE_MODEL_CASTLE)
-	{
-		//dynamic_cast<Castle*>(m_pAssaultBasePoint)->
-	}
-	else
-	{
-		// 壊れたら指揮官に報告する
-		if (dynamic_cast<Tower*>(m_pAssaultBasePoint)->BrowTower(m_breakPower))
-		{
-			m_pParent->ReceiveReport_BreakBasePoint();
-			return;
-		}
-	}
-
-	// Death
-	Damage(m_maxLife);
-
+	targetBasePoint_->ReceiveDamage(breakPower_, this);
 }
-

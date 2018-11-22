@@ -31,11 +31,12 @@ public:
 
 	// Œü‚«‚Ìİ’è
 	// vecDirection : İ’è‚µ‚½‚¢Œü‚«
-	void SetVectorDirection(D3DXVECTOR3& vecDirection);
+	void SetVectorDirection(const D3DXVECTOR3& _vecDirection);
 
 
 
 private:
+	DWORD index_;
 	D3DLIGHT9	m_light;
 	D3DXVECTOR3	m_vecDir;	// Œõ‚ÌŒü‚«
 

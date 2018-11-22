@@ -1,192 +1,217 @@
-//*****************************************************************************
-//	
-//		兵士の弾
-//													Autohr : Yusuke Seki
-//*****************************************************************************
-// base
+// author : yusuke seki
+// data   : 20181121
 #include "SoldierBullet.h"
-
-// fw
-#include "camera.h"
-#include "collision.h"
-
-// object
-#include "ObjectModel.h"
 #include "player.h"
 #include "Soldier.h"
+#include "collision.h"
+#include "ObjectBillboard.h"
+#include "MainGame.h"
+#include "camera.h"
 
-const float SoldierBullet::bulletDamage_cast = 5.f;		// 標的：キャストの場合の兵士弾のダメージ
-const float SoldierBullet::bulletDamage_soldier = 50.f;	// 標的：兵士の場合の兵士弾のダメージ
+const float SoldierBullet::kDamage_ = 50.f;
+const float SoldierBullet::kSpeed_ = 0.15f;
+const unsigned int SoldierBullet::kEraseFrame_ = 240;
 
-
-// コンストラクタ
-SoldierBullet::SoldierBullet() : BulletBillboard(Object::TYPE::TYPE_3D_SOLDIERBULLET)
+SoldierBullet::SoldierBullet() : Unit(Object::TYPE::TYPE_3D_SOLDIERBULLET)
 {
-	m_pTarget = nullptr;
+	target_ = nullptr;
+	vector_ = D3DXVECTOR3(0,0,0);
+	isChase_ = false;
+	remaineFrame_ = 0;
+	objectBillboard_ = nullptr;
 }
 
-// デストラクタ
 SoldierBullet::~SoldierBullet()
 {
 	Uninit();
 }
 
-// 生成処理
-SoldierBullet* SoldierBullet::CreateBuffer()
+void SoldierBullet::CreateBuffer(const unsigned int& _numCreate)
 {
-	SoldierBullet *pSoldierBullet = new SoldierBullet;
-	pSoldierBullet->Init();
-
-	return pSoldierBullet;
+	for (unsigned int i = 0; i < _numCreate; ++i)
+	{
+		SoldierBullet* buf = new SoldierBullet();
+		buf->SetActive(false);
+	}
 }
 
-// 初期化処理
-void SoldierBullet::Init()
+SoldierBullet* SoldierBullet::Create(Soldier* _parentSoldier, Unit* _target)
 {
-	BulletBillboard::Init(D3DXVECTOR3(0, 0, 0), D3DXVECTOR3(6, 6, 0), nullptr);
-	m_pTarget = nullptr;
+	SoldierBullet* soldierBullet = new SoldierBullet();
+	soldierBullet->Init(_parentSoldier, _target);
+
+	return soldierBullet;
 }
 
-// 終了処理
+SoldierBullet* SoldierBullet::DynamicCreate(Soldier* _parentSoldier, Unit* _target)
+{
+	SoldierBullet* soldierBullet = FindNonActiveSoldierBullet();
+
+	if (soldierBullet == nullptr)
+	{
+		soldierBullet = Create(_parentSoldier, _target);
+	}
+	else
+	{
+		soldierBullet->Init(_parentSoldier, _target);
+	}
+
+	return soldierBullet;
+}
+
+void SoldierBullet::Init(Soldier* _parentSoldier, Unit* _target)
+{
+	D3DXVECTOR3 drawObjectSize(0.5f, 0.5f, 0);
+	D3DXVECTOR3 drawObjectPosition(0, _parentSoldier->GetHalfSize().y, 0);
+
+	Unit::Init(_parentSoldier->GetPosition(), _parentSoldier->GetGroup());
+
+	target_ = _target;
+
+	vector_ = target_->GetPosition() - GetPosition();
+	D3DXVec3Normalize(&vector_, &vector_);
+
+	isChase_ = true;
+
+	remaineFrame_ = kEraseFrame_;
+
+	objectBillboard_ = ObjectBillboard::DynamicCreate(drawObjectPosition, drawObjectSize, MainGame::GetCamera());
+	objectBillboard_->SetParent(this);
+	objectBillboard_->SetColor(_parentSoldier->GetColor().color);
+	objectBillboard_->SetTexture(MainGame::GetTexture(List_LoadTexture_MainGame::SOLDIERBULLET)->GetTexture());
+
+	GetObjectCollider()->SetRadius(objectBillboard_->GetHalfSize().x);
+
+	SetActive(true);
+}
+
 void SoldierBullet::Uninit(void)
 {
-	BulletBillboard::Uninit();
+	Unit::Uninit();
 }
 
-// 更新処理
 void SoldierBullet::Update(void)
 {
-	// 未使用時は無処理
-	if (!GetInstance())
-		return;
+	CheckTargetBehave();
 
-	// 標的はキャスト？
-	if (m_pTarget->GetType() == Object::TYPE::TYPE_MODEL_PLAYER) {
-		Player* pPlayer = (Player*)m_pTarget;
+	ChangeVector();
 
-		// キャストの回避行動で追尾フラグを切る
-		if (pPlayer->GetPosture() == Player::POSTURE::POSTURE_AVOID || pPlayer->GetPosture() == Player::POSTURE::POSTURE_EMAVOID) {
-			m_bTracking = false;
+	Move();
 
-		}
+	CollisionTarget();
 
-	}
-
-	// 追尾処理
-	if (m_bTracking) {
-		m_front = m_pTarget->GetPosition() + D3DXVECTOR3(0, m_pTarget->GetHalfSize().y, 0) - GetPosition();
-		D3DXVec3Normalize(&m_front, &m_front);
-	}
-
-	// 移動処理
-	MovePosition(m_front * 2.f);
-
-	// 当たり判定
-	if (Collision_SphereToSphere(GetPosition(), GetRadius(), m_pTarget->GetPosition(), m_pTarget->GetHalfSize().x)) {
-
-		// 標的種類の判別
-		if (m_pTarget->GetType() == Object::TYPE::TYPE_MODEL_PLAYER) {
-			// 標的：プレイヤー
-			Player* pPlayer = (Player*)m_pTarget;
-		}
-		else {
-			// 標的：兵士
-			Soldier* pSoldier = (Soldier*)m_pTarget;
-			pSoldier->Damage(bulletDamage_soldier);
-		}
-
-		// 使用フラグを降ろす
-		SetInstance(false);
-
-		return;
-	}
-
-	// 寿命の減衰
-	m_cntEraseFrame--;
-
-	// 寿命が切れたら使用フラグを降ろす
-	if (m_cntEraseFrame <= 0)
-		SetInstance(false);
-
+	UpdateTimer();
 }
 
-// 描画処理
 void SoldierBullet::Draw(void)
 {
-	if (!GetInstance())
-		return;
-
-	BulletBillboard::Draw();
+	Unit::Draw();
 }
 
-// 兵士弾の動的生成処理
-// position : 生成位置
-// pTarget  : ターゲット
-void SoldierBullet::SetBullet(D3DXVECTOR3& position, ObjectModel *pTarget, Camera *pCamera)
+void SoldierBullet::SetActive(const bool& _isActive)
 {
-	// 実体持ちを探す
-	SoldierBullet* pCurrent = (SoldierBullet*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_3D_SOLDIERBULLET);
+	objectBillboard_->SetActive(_isActive);
 
-	// １つも作られていなかったら生成する
-	if (pCurrent == nullptr) {
-		// 生成処理
-		pCurrent = SoldierBullet::CreateBuffer();
+	Unit::SetActive(_isActive);
+}
 
-		// 設定処理
-		pCurrent->SetBullet_private(position, pTarget, pCamera);
+SoldierBullet* SoldierBullet::FindNonActiveSoldierBullet()
+{
+	SoldierBullet* soldierBullet = (SoldierBullet*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_3D_SOLDIERBULLET);
 
-		return;
+	if (soldierBullet != nullptr)
+	{
+		for (;;)
+		{
+			if (soldierBullet->GetActive() == false)
+			{
+				break;
+			}
+
+			soldierBullet = (SoldierBullet*)soldierBullet->GetNextPointer();
+
+			if (soldierBullet == nullptr)
+			{
+				break;
+			}
+		}
 	}
 
-	// 作られていたら未使用領域を探す
-	SoldierBullet* pNext = (SoldierBullet*)pCurrent->GetNextPointer();
-	for (;;) {
-		// 未使用なら兵士弾を設定して終了
-		if (!pCurrent->GetInstance()) {
-			// 設定処理
-			pCurrent->SetBullet_private(position, pTarget, pCamera);
+	return soldierBullet;
+}
 
-			return;
+void SoldierBullet::CheckTargetBehave()
+{
+	if (isChase_ == true)
+	{
+		if (IsTargetBahave_Avoid() == true)
+		{
+			isChase_ = false;
 		}
+	}
+}
 
-		// 未使用領域が見つからなければ、新しく生成する
-		if (pNext == nullptr) {
-			// 生成処理
-			pNext = SoldierBullet::CreateBuffer();
+void SoldierBullet::ChangeVector()
+{
+	if (isChase_ == true)
+	{
+		SetVectorToTarget();
+	}
+}
 
-			// 設定処理
-			pNext->SetBullet_private(position, pTarget, pCamera);
+void SoldierBullet::Move()
+{
+	MovePosition(vector_ * kSpeed_);
 
-			return;
+	objectBillboard_->SetUpdateWorldMatrix(true);
+}
+
+void SoldierBullet::CollisionTarget()
+{
+	if (IsCollisionTarget() == true)
+	{
+		target_->ReceiveDamage(kDamage_, this);
+		SetActive(false);
+	}
+}
+
+void SoldierBullet::UpdateTimer()
+{
+	--remaineFrame_;
+
+	if (remaineFrame_ == 0)
+	{
+		SetActive(false);
+	}
+}
+
+bool SoldierBullet::IsTargetBahave_Avoid()
+{
+	if (target_->GetType() == Object::TYPE_MODEL_PLAYER)
+	{
+		Player* player = (Player*)target_;
+
+		if (player->GetBehave() == Player::Behave::AVOID || player->GetBehave() == Player::Behave::HEAVY_AVOID)
+		{
+			return true;
 		}
-
-		// ポインタをずらす
-		pCurrent = pNext;
-		pNext = (SoldierBullet*)pCurrent->GetNextPointer();
-
 	}
 
+	return false;
 }
 
-// 兵士弾の設定処理
-void SoldierBullet::SetBullet_private(D3DXVECTOR3& position, ObjectModel *pTarget, Camera *pCamera)
+void SoldierBullet::SetVectorToTarget()
 {
-	SetPosition(position + D3DXVECTOR3(0, pTarget->GetHalfSize().y, 0));
-
-	m_pTarget = pTarget;
-	
-	SetCamera(*pCamera);
-
-	m_cntEraseFrame = 240;
-
-	m_front = m_pTarget->GetPosition() + D3DXVECTOR3(0, m_pTarget->GetHalfSize().y, 0) - GetPosition();
-
-	D3DXVec3Normalize(&m_front, &m_front);
-
-	m_bTracking = true;
-
-	SetInstance(true);
-
+	vector_ = target_->GetPosition() - GetPosition();
+	D3DXVec3Normalize(&vector_, &vector_);
 }
 
+bool SoldierBullet::IsCollisionTarget()
+{
+	if (target_->GetObjectCollider()->Collision(GetPosition()) == true)
+	{
+		return true;
+	}
 
+	return false;
+}

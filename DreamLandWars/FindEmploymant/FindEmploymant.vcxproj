@@ -74,7 +74,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -85,9 +85,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Commander.cpp" />
+    <ClCompile Include="BasePoint.cpp" />
+    <ClCompile Include="Collider.cpp" />
+    <ClCompile Include="RelayPoint.cpp" />
+    <ClCompile Include="SoldierCommander.cpp" />
+    <ClCompile Include="Controller.cpp" />
+    <ClCompile Include="Controller_KeyboardAndMouse.cpp" />
     <ClCompile Include="GameTitle.cpp" />
-    <ClCompile Include="Gauge.cpp" />
+    <ClCompile Include="SoldierGauge.cpp" />
     <ClCompile Include="Icon.cpp" />
     <ClCompile Include="LifeGauge.cpp" />
     <ClCompile Include="Bullet3D.cpp" />
@@ -106,11 +111,12 @@
     <ClCompile Include="Hold.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="LifeGauge_Soldier.cpp" />
-    <ClCompile Include="Object3D_Quaternion.cpp" />
+    <ClCompile Include="ObjectBillboard.cpp" />
     <ClCompile Include="ObjectCube.cpp" />
     <ClCompile Include="Part.cpp" />
     <ClCompile Include="SkyDome.cpp" />
     <ClCompile Include="SoldierBullet.cpp" />
+    <ClCompile Include="SoldierGenerator.cpp" />
     <ClCompile Include="TeamGauge.cpp" />
     <ClCompile Include="TeamLevel.cpp" />
     <ClCompile Include="light.cpp" />
@@ -120,7 +126,6 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="Object2D.cpp" />
     <ClCompile Include="Object3D.cpp" />
-    <ClCompile Include="ObjectBillboard.cpp" />
     <ClCompile Include="EffectBillboard.cpp" />
     <ClCompile Include="ObjectModel.cpp" />
     <ClCompile Include="oxdebugfont_dx9.cpp" />
@@ -146,19 +151,25 @@
     <ClCompile Include="Title.cpp" />
     <ClCompile Include="TouchScreen.cpp" />
     <ClCompile Include="tower.cpp" />
+    <ClCompile Include="Unit.cpp" />
     <ClCompile Include="Wall.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BasePoint.h" />
+    <ClInclude Include="Collider.h" />
+    <ClInclude Include="Controller.h" />
+    <ClInclude Include="Controller_KeyboardAndMouse.h" />
     <ClInclude Include="Etc_Paramaters.h" />
     <ClInclude Include="EventButton.h" />
     <ClInclude Include="GameTitle.h" />
-    <ClInclude Include="Gauge.h" />
+    <ClInclude Include="SoldierGauge.h" />
+    <ClInclude Include="ObjectBillboard.h" />
     <ClInclude Include="Part.h" />
     <ClInclude Include="SkyDome.h" />
-    <ClInclude Include="Soldier_LifeGauge.h" />
+    <ClInclude Include="RelayPoint.h" />
+    <ClInclude Include="SoldierGenerator.h" />
     <ClInclude Include="TouchScreen.h" />
-    <ClInclude Include="UniqueArea.h" />
-    <ClInclude Include="Commander.h" />
+    <ClInclude Include="SoldierCommander.h" />
     <ClInclude Include="Icon.h" />
     <ClInclude Include="LifeGauge.h" />
     <ClInclude Include="Bullet3D.h" />
@@ -179,7 +190,6 @@
     <ClInclude Include="input.h" />
     <ClInclude Include="LifeGauge_Soldier.h" />
     <ClInclude Include="ModelData.h" />
-    <ClInclude Include="Object3D_Quaternion.h" />
     <ClInclude Include="ObjectCube.h" />
     <ClInclude Include="SoldierBullet.h" />
     <ClInclude Include="TeamGauge.h" />
@@ -195,7 +205,6 @@
     <ClInclude Include="Object.h" />
     <ClInclude Include="Object2D.h" />
     <ClInclude Include="Object3D.h" />
-    <ClInclude Include="ObjectBillboard.h" />
     <ClInclude Include="EffectBillboard.h" />
     <ClInclude Include="ObjectModel.h" />
     <ClInclude Include="oxdebugfont.h" />
@@ -220,6 +229,7 @@
     <ClInclude Include="timer.h" />
     <ClInclude Include="Title.h" />
     <ClInclude Include="tower.h" />
+    <ClInclude Include="Unit.h" />
     <ClInclude Include="Wall.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

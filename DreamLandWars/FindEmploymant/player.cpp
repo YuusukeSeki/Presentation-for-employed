@@ -1,35 +1,37 @@
-//*****************************************************************************
-//
-//		プレイヤー
-//												Autohr : Yusuke Seki
-//*****************************************************************************
+// author : yusuke seki
+// data   :20181110
 #include "player.h"
 #include "list_CharaParameters.h"
 #include "MainGame.h"
 #include "list_LoadTexture_MainGame.h"
 #include "ModelData.h"
 #include "Part.h"
-
-// 当たり判定
 #include "collision.h"
 #include "renderer.h"
 #include "field.h"
-
-// 入力状況の取得
 #include "GameManager.h"
 #include "input.h"
-
-// 移動と攻撃
 #include "camera.h"
 #include "StraightShot.h"
 #include "DrawLine.h"
-
-// コリジョン対象
 #include "tower.h"
 #include "castle.h"
 #include "Hold.h"
 #include "Wall.h"
 
+#include "Unit.h"
+#include "Collider.h"
+
+const std::vector<std::string> Player::modelPassList_ =
+{
+	"data/model/MainGame/player03.x",
+	"data/model/MainGame/.x",
+	"data/model/MainGame/.x",
+};
+
+const float Player::kInirtia_ = 0.7f;
+const float Player::kMinThresholdSpeed_ = 0.001f;
+const float Player::kThresholdLength_AddDraw_ = 10.0f;
 
 #define KEY_MAX		2
 
@@ -88,425 +90,166 @@ Player::KEY_FRAME g_KeyFrameWalk[KEY_MAX] =
 
 };
 
-
-//-----------------------------------------------------------------------------
-// コンストラクタ
-//-----------------------------------------------------------------------------
-Player::Player(Object::TYPE type, Player::CHARACTER character) : ObjectModel(type)
+Player::Player() : Unit(TYPE::TYPE_MODEL_PLAYER), kCharacter_(Character::FIGHTER), kInitCameraPositionEye_(0.f, 200.f, -110.f), kInitCameraPositionAt_(0.f, 0.f, 0.f)
+                  ,kInitCameraVectorUp_(0.f, 1.f, 0.f), kInitCameraNear_(0.1f), kInitCameraFar_(500.0f)
 {
-	// キャラクターを設定
-	m_character = character;
-
-	// データのクリア
-	m_life              = 0;					// 体力
-	m_movePosition	    = D3DXVECTOR3(0, 0, 0);	// 移動量バッファ
-	m_InitialVelosity   = 0.f;					// 初速
-	m_Acceleration      = 0.f;					// 加速度
-	m_avDist            = 0.f;					// 回避距離
-	m_straightShotSpeed = 0.f;					// SSの速度
-	m_straightShotRange = 0.f;					// SSの射程
-	m_drawShotSpeed     = 0.f;					// DSの速度
-	m_drawShotRange     = 0.f;					// DSの射程
-	m_drawShotLength    = 0.f;					// DSの描ける長さ
-	m_cntCooldownFrame  = 0;					// 硬直時間計測用カウンター
-	m_cooldown_Avoid    = 0;					// 【硬直時間】避ける
-	m_cooldown_EmAvoid  = 0;					// 【硬直時間】緊急回避
-	m_cooldown_StShot   = 0;					// 【硬直時間】SS攻撃
-	m_cooldown_DrShot   = 0;					// 【硬直時間】DS攻撃
-	m_maxLife           = 0;					// 【最大値】体力
-	m_maxMoveSpeed      = 0.f;					// 【最大値】速度
-	m_pDL_StartPos      = nullptr;				// 描画線の始点のバッファ
-	m_DL_Length         = 0;					// 描画線の長さのバッファ
-	m_DL_PrePos         = D3DXVECTOR3(0, 0, 0);	// 描画線の前座標のバッファ
-	m_DL_PreLength      = 0;					// 描画線の更新前の長さのバッファ
-	m_pCamera           = nullptr;				// 追従してくるカメラ
-
-	// スコア
-	_score_crushSoldier = 0;	// 兵士撃破数
-
-	// パラメータ参照
-	List_CharacterParameters::InitParameter(this);
-
-
-
+	Release();
 }
 
+Player::Player(Object::TYPE type, const Player::Character& character) : Unit(type) , kCharacter_(character)
+	, kInitCameraPositionEye_(0.f, 200.f, -110.f), kInitCameraPositionAt_(0.f, 0.f, 0.f)
+	, kInitCameraVectorUp_(0.f, 1.f, 0.f), kInitCameraNear_(0.1f), kInitCameraFar_(500.0f)
+{
+	const D3DXVECTOR3 zero(0.0f, 0.0f, 0.0f);
 
-//-----------------------------------------------------------------------------
-// デストラクタ
-//-----------------------------------------------------------------------------
+	camera_ = nullptr;
+	inverseMatrix_ = {};
+	controller_ = nullptr;
+	cursorPosition3D_ = zero;
+
+	moveVector_ = zero;
+	currentSpeed_ = 0.0f;
+	runSpeed_ = 0.0f;
+	avoidPower_ = 0.0f;
+	heavyAvoidPower_ = 0.0f;
+	prePosition_ = zero;
+
+	countTime_Rotate_ = 0.0f;
+	startRotate_ = zero;
+	endRotate_ = zero;
+	startFront_ = zero;
+	endFront_ = zero;
+
+	currentBehave_ = Behave::NEUTRAL;
+	currentCoolTime_ = 0;
+	coolTimeAvoid_ = 0;
+	coolTimeHeavyAvoid_ = 0;
+	coolTimeStraightShot_ = 0;
+	coolTimeDrawShot_ = 0;
+	coolTimeBreakBasePoint_ = 0;
+
+	drawLine_ = nullptr;
+	drawLine_currentLength_ = 0.0f;
+	drawLine_preLength_ = 0.0f;
+
+	currentHp_ = 0.0f;
+	maxHp_ = 0.0f;
+	currentMp_ = 0.0f;
+	maxMp_ = 0.0f;
+
+	straightShotDamage_ = 0.0f;
+	straightShotSpeed_ = 0.0f;
+	straightShotRange_ = 0.0f;
+
+	drawShotDamage_ = 0.0f;
+	drawShotSpeed_ = 0.0f;
+	drawShotRange_ = 0.0f;
+	drawShotLength_ = 0.0f;
+
+	breakPower_ = 0.0f;
+}
+
 Player::~Player()
 {
-	// 継承データの終了処理
-	ObjectModel::Uninit();
-
+	Uninit();
 }
 
-
-//-----------------------------------------------------------------------------
-// 実体の生成
-//-----------------------------------------------------------------------------
-Player* Player::Create(D3DXVECTOR3& position, Camera* pCamera, const char* modelPass, Player::CHARACTER character)
+ Player* Player::Create(const D3DXVECTOR3& position, const Player::Character& character, const Object::GROUP& _group)
 {
-	// 実体の生成
-	Player* pPlayer = new Player(Object::TYPE_MODEL_PLAYER, character);
+	Player* player = new Player(Object::TYPE_MODEL_PLAYER, character);
+	player->Init(position, character, _group);
 
-	// 初期化
-	pPlayer->Init(position, pCamera, modelPass);
-
-	// 生成したポインタを返す
-	return pPlayer;
-
+	return player;
 }
 
-
-//-----------------------------------------------------------------------------
-// 初期化処理
-//-----------------------------------------------------------------------------
-void Player::Init(D3DXVECTOR3& position, Camera* pCamera, const char* modelPass)
+void Player::Init(const D3DXVECTOR3& position, const Player::Character& character, const Object::GROUP& _group)
 {
-	// 継承データの初期化処理
-	ObjectModel::Init(position, modelPass);
-
-	// DS
-	m_pDL_StartPos = nullptr;				// 描画線の始点のバッファ
-	m_DL_Length    = 0;						// 描画線の長さのバッファ
-	m_DL_PrePos    = D3DXVECTOR3(0, 0, 0);	// 描画線の前座標のバッファ
-	m_DL_PreLength = 0;						// 描画線の更新前の長さのバッファ
-
-	// 追従してくるカメラの取得
-	m_pCamera = pCamera;
-
-
-	currentFront = 0;
-	targetFront = currentFront;
-
-
-
-	m_Part[0] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_BODY);
-	m_Part[1] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_HEAD);
-	m_Part[2] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_RARM);
-	m_Part[3] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_RARM_EDGE);
-	m_Part[4] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_LARM);
-	m_Part[5] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_LARM_EDGE);
-	m_Part[6] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_RLEG);
-	m_Part[7] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_RLEG_EDGE);
-	m_Part[8] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_LLEG);
-	m_Part[9] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_LLEG_EDGE);
-
-	m_Part[0]->SetParent(nullptr);		// BODY
-	m_Part[1]->SetParent(m_Part[0]);	// HEAD
-	m_Part[2]->SetParent(m_Part[0]);	// RARM
-	m_Part[3]->SetParent(m_Part[2]);	// REDGE
-	m_Part[4]->SetParent(m_Part[0]);	// LARM
-	m_Part[5]->SetParent(m_Part[4]);	// LEDGE
-	m_Part[6]->SetParent(m_Part[0]);	// RLEG
-	m_Part[7]->SetParent(m_Part[6]);	// REDGE
-	m_Part[8]->SetParent(m_Part[0]);	// LLEG
-	m_Part[9]->SetParent(m_Part[8]);	// LEDGE
-
-	// BODY
-	D3DXVECTOR3 pos = D3DXVECTOR3(0, 20, 0);
-	//D3DXVECTOR3 rotate = D3DXVECTOR3(-0.21f, 3.1415f, 0);
-	D3DXVECTOR3 rotate = D3DXVECTOR3(0, 0, 0);
-	m_Part[0]->SetPosition(pos);
-	m_Part[0]->SetRotate(rotate);
-
-	// HEAD
-	pos = D3DXVECTOR3(0, m_Part[1]->GetParent()->GetSize().y * 0.75f, m_Part[1]->GetHalfSize().z * 0.5f);
-	m_Part[1]->SetPosition(pos);
-
-	// RARM
-	pos = D3DXVECTOR3(m_Part[2]->GetParent()->GetHalfSize().x, m_Part[2]->GetParent()->GetHalfSize().y, 0);
-	//rotate = D3DXVECTOR3(0, 0, 0.81f);
-	m_Part[2]->SetPosition(pos);
-	m_Part[2]->SetRotate(rotate);
-
-	// REDGE
-	pos = D3DXVECTOR3(m_Part[3]->GetParent()->GetSize().x, 0, 0);
-	//rotate = D3DXVECTOR3(0, 0, 1.68f);
-	m_Part[3]->SetPosition(pos);
-	m_Part[3]->SetRotate(rotate);
-
-	// LARM
-	pos = D3DXVECTOR3(-m_Part[4]->GetParent()->GetHalfSize().x, m_Part[4]->GetParent()->GetHalfSize().y, 0);
-	//rotate = D3DXVECTOR3(0, 0, 0.9f);
-	m_Part[4]->SetPosition(pos);
-	m_Part[4]->SetRotate(rotate);
-
-	// LEDGE
-	pos = D3DXVECTOR3(-m_Part[5]->GetParent()->GetSize().x, 0, 0);
-	//rotate = D3DXVECTOR3(0, 0, 1.56f);
-	m_Part[5]->SetPosition(pos);
-	m_Part[5]->SetRotate(rotate);
-
-	// RLEG
-	pos = D3DXVECTOR3(m_Part[6]->GetParent()->GetHalfSize().x, -m_Part[6]->GetParent()->GetHalfSize().y * 0.5f, 0);
-	//rotate = D3DXVECTOR3(0, 0, 0.33f);
-	m_Part[6]->SetPosition(pos);
-	m_Part[6]->SetRotate(rotate);
-
-	// REDGE
-	pos = D3DXVECTOR3(0, -m_Part[7]->GetParent()->GetSize().y, 0);
-	m_Part[7]->SetPosition(pos);
-
-	// LLEG
-	pos = D3DXVECTOR3(-m_Part[8]->GetParent()->GetHalfSize().x, -m_Part[8]->GetParent()->GetHalfSize().y * 0.5f, 0);
-	//rotate = D3DXVECTOR3(0, 0, -0.15f);
-	m_Part[8]->SetPosition(pos);
-	m_Part[8]->SetRotate(rotate);
-
-	// LEDGE
-	pos = D3DXVECTOR3(0, -m_Part[9]->GetParent()->GetSize().y, 0);
-	m_Part[9]->SetPosition(pos);
-
-
-	// Initialize Key Frame
-	g_KeyFrameWalk[0].Frame = 20;
-	g_KeyFrameWalk[1].Frame = 20;
-
-	for (int j = 0; j < KEY_MAX; j++) {
-		for (int i = 0; i < 10; i++) {
-			g_KeyFrameWalk[j].Key[i].Position = m_Part[i]->GetPosition();
-			//g_KeyFrameWalk[j].Key[i].Rotation = m_Part[i]->GetRotate();
-		}
+	// create controller
+	if (controller_ == nullptr)
+	{
+		controller_ = Controller::Create(Controller::Device::KEYBOARDANDMOUSE);
 	}
 
-	m_KeyFrame = g_KeyFrameWalk;
-	m_Key = 0;
-	m_Frame = 0;
+	Unit::Init(position, _group);
 
+	// create model
+	//const std::string modelPass = FindModelPass(character);
+
+	AroundParts();
+
+
+	// create camera
+	camera_ = Camera::Create(kInitCameraPositionEye_, kInitCameraPositionAt_, kInitCameraVectorUp_, kInitCameraNear_, kInitCameraFar_);
+
+	// create draw line
+	drawLine_ = nullptr;
+	drawLine_currentLength_ = 0;
+	drawLine_preLength_ = 0;
+
+	InitParamater(kCharacter_);
+
+	cursorPosition3D_ = FindCursorPosition_3D();
+
+	startRotate_ = GetFront();
+	endRotate_ = GetFront();
+	countTime_Rotate_ = 1.0f;
 }
 
-
-//-----------------------------------------------------------------------------
-// 終了処理
-//-----------------------------------------------------------------------------
 void Player::Uninit(void)
 {
-	// 継承データの終了処理
-	ObjectModel::Uninit();
+	if (camera_ != nullptr)
+	{
+		camera_->Release();
+		camera_ = nullptr;
+	}
+
+	//if (controller_ != nullptr)
+	//{
+	//	controller_->Release();
+	//	controller_ = nullptr;
+	//}
 
 }
 
-
-//-----------------------------------------------------------------------------
-// 更新処理
-//-----------------------------------------------------------------------------
 void Player::Update(void)
 {
-	TempInput();
-
-	// 逆行列の更新
 	UpdateInverseMatrix();
 
-	// 座標の移動
-	ObjectModel::MovePosition(m_movePosition);
+	cursorPosition3D_ = FindCursorPosition_3D();
 
-	// 向き求めちゃうよ～
-	D3DXVECTOR3 targetVector = GetFront();
-	D3DXVECTOR3 targetPosition = GetPosition();
+	if (currentCoolTime_ != 0)
+	{
+		--currentCoolTime_;
 
-	// ステート遷移
-	switch (m_posture) {
-		case POSTURE_NONE:
+		if (currentCoolTime_ == 0)
 		{
-			// 向きの変更
-			if (m_movePosition != D3DXVECTOR3(0, 0, 0)) SetRotateToObj(m_movePosition + this->GetPosition());
-
-			SetColor(0xffffffff); // 白
-			break;
+			currentBehave_ = Behave::NEUTRAL;
 		}
-
-		case POSTURE_RUN:
-		{
-			// 向きの変更
-			//if (m_movePosition != D3DXVECTOR3(0, 0, 0)) SetRotateToObj(m_movePosition + this->GetPosition());
-
-			D3DXVECTOR3 nowPos = GetPosition();
-			targetPosition = nowPos + m_movePosition;
-			//targetPosition.y = 0.f;
-
-			targetVector = targetPosition - nowPos;
-			
-			D3DXVec3Normalize(&targetVector, &targetVector);
-
-			//D3DXVec3Normalize(&targetPosition, &targetPosition);
-			//targetFront = atan2f(targetPosition.x, targetPosition.z);
-
-			// 現在の角度と目的の角度の差分を求める
-			float cos_sita = D3DXVec3Dot(&targetVector, &GetFront());
-			float sita = acosf(cos_sita);
-
-			// 回転方向を求める
-			float c0 = GetFront().x * targetVector.z - GetFront().z * targetVector.x;
-			if (c0 > 0)
-				sita *= -1;
-
-			// 回転させる
-			SetRotate(D3DXVECTOR3(0, sita, 0));
-			//SetFront(targetVector);
-
-			OX::DebugFont::print(450, 300, 0xff00ff00, "cos_sita : %f", cos_sita);
-			OX::DebugFont::print(450, 320, 0xff00ff00, "sita     : %f", sita);
-			OX::DebugFont::print(450, 340, 0xff00ff00, "tagFront x:%f y:%f z:%f", targetVector.x, targetVector.y, targetVector.z);
-			OX::DebugFont::print(450, 360, 0xff00ff00, "nowFront x:%f y:%f z:%f", GetFront().x, GetFront().y, GetFront().z);
-			OX::DebugFont::print(450, 380, 0xff00ff00, "tagPos   x:%f y:%f z:%f", targetPosition.x, targetPosition.y, targetPosition.z);
-			OX::DebugFont::print(450, 400, 0xff00ff00, "noePos   x:%f y:%f z:%f", GetPosition().x, GetPosition().y, GetPosition().z);
-
-
-			SetColor(0x00ff00ff); // 緑
-
-			// 移動量に慣性を掛ける
-			m_movePosition *= 0.0f;
-			if (fabs(m_movePosition.x) < 0.05f && fabs(m_movePosition.z) < 0.05f) {
-				m_movePosition.x = 0;
-				m_movePosition.z = 0;
-				if (m_posture == POSTURE_RUN) m_posture = POSTURE_NONE;
-			}
-
-			break;
-
-		}
-
-		case POSTURE_AVOID:
-		{
-			// 向きの変更
-			if (m_movePosition != D3DXVECTOR3(0, 0, 0)) SetRotateToObj(m_movePosition + this->GetPosition());
-
-			// 硬直時間の発生
-			m_cntCooldownFrame--;
-			if (m_cntCooldownFrame == 0) m_posture = POSTURE_NONE;
-
-			SetColor(0xffff00ff); // 黄
-
-			// 移動量に慣性を掛ける
-			m_movePosition *= INIRTIA;
-			if (fabs(m_movePosition.x) < 0.05f && fabs(m_movePosition.z) < 0.05f) {
-				m_movePosition.x = 0;
-				m_movePosition.z = 0;
-				if (m_posture == POSTURE_RUN) m_posture = POSTURE_NONE;
-			}
-
-			break;
-
-		}
-
-		case POSTURE_EMAVOID:
-		{
-			// 向きの変更
-			//if (m_movePosition != D3DXVECTOR3(0, 0, 0)) SetRotateToObj(m_movePosition + this->GetPosition());
-
-
-			// 硬直時間の発生
-			m_cntCooldownFrame--;
-			if (m_cntCooldownFrame == 0) m_posture = POSTURE_NONE;
-
-			SetColor(0x000000ff); // 黒
-
-								  // 移動量に慣性を掛ける
-			m_movePosition *= INIRTIA;
-			if (fabs(m_movePosition.x) < 0.05f && fabs(m_movePosition.z) < 0.05f) {
-				m_movePosition.x = 0;
-				m_movePosition.z = 0;
-				if (m_posture == POSTURE_RUN) m_posture = POSTURE_NONE;
-			}
-
-			break;
-
-		}
-
-		case POSTURE_BACKWORD:
-			break;
-
-		case POSTURE_TUMBLE:
-			break;
-
-		case POSTURE_DEATH:
-			break;
-
-		case POSTURE_REVIVE:
-			break;
-
-		case POSTURE_STREADY:
-		{
-			// 止まる
-			m_movePosition = D3DXVECTOR3(0, 0, 0);
-
-			SetColor(0xff00ffff); // 紫
-			break;
-
-		}
-
-		case POSTURE_STSHOT:
-		{
-			// 硬直時間の発生
-			m_cntCooldownFrame--;
-			if (m_cntCooldownFrame == 0) m_posture = POSTURE_NONE;
-
-			SetColor(0xff0000ff); // 赤
-			break;
-
-		}
-
-		case POSTURE_DRREADY:
-		{
-			// 止まる
-			m_movePosition = D3DXVECTOR3(0, 0, 0);
-
-			SetColor(0x00ffffff); // 
-			break;
-
-		}
-
-		case POSTURE_DRSHOT:
-		{
-			// 止まる
-			m_movePosition = D3DXVECTOR3(0, 0, 0);
-
-			// 硬直時間の発生
-			m_cntCooldownFrame--;
-			if (m_cntCooldownFrame == 0) m_posture = POSTURE_NONE;
-
-			SetColor(0x0000ffff); // 
-			break;
-
-		}
-
-		case POSTURE_BREAK:
-		{
-			// 止まる
-			m_movePosition = D3DXVECTOR3(0, 0, 0);
-
-			// 硬直時間の発生
-			m_cntCooldownFrame--;
-			if (m_cntCooldownFrame == 0) m_posture = POSTURE_NONE;
-
-			SetColor(0x808080ff); // 
-			break;
-
-		}
-
 	}
 
-	// 塔との当たり判定
+	Move();
+
+	StraightShot();
+
+	DrawShot();
+
+	Break();
+
 	CollisionTower();
 	
-	// 城との当たり判定
 	CollisionCastle();
 
-	// 壁との当たり判定
 	CollisionWall();
 
-	// フィールドとの当たり判定
-	Field* pField = MainGame::GetField();
+	CollisionField();
 
-	// 座標を地面の上に戻す
-	SetPosition(D3DXVECTOR3(GetPosition().x, pField->GetHeight(GetPosition()), GetPosition().z));
+	prePosition_ = GetPosition();
 
-	// Save Present Position
-	m_prePosion = GetPosition();
 
+	return;
+
+
+	//TempInput();
 
 	for (int i = 0; i < 10; i++)
 	{
@@ -529,137 +272,62 @@ void Player::Update(void)
 		m_Key = m_Key + 1 >= KEY_MAX ? 0 : m_Key + 1;
 		m_Frame = 0;
 	}
-
-	
-	//// 現在の角度と目的の角度の差分を求める
-	//float cos_sita = D3DXVec3Dot(&targetVector, &GetFront());
-	//float sita = acosf(cos_sita);
-
-	//// 回転方向を求める
-	//float c0 = GetFront().x * targetVector.z - GetFront().z * targetVector.x;
-	//if (c0 > 0)
-	//	sita *= -1;
-
-	//// 回転させる
-	//SetRotate(D3DXVECTOR3(0, sita, 0));
-	//SetFront(targetVector);
-
-	//OX::DebugFont::print(500, 300, 0xff00ff00, "cos_sita   : %f", cos_sita);
-	//OX::DebugFont::print(500, 320, 0xff00ff00, "sita       : %f", sita);
-	//OX::DebugFont::print(450, 340, 0xff00ff00, "tagFront x:%f y:%f z:%f", targetVector.x, targetVector.y, targetVector.z);
-	//OX::DebugFont::print(450, 360, 0xff00ff00, "nowFront x:%f y:%f z:%f", GetFront().x, GetFront().y, GetFront().z);
-
-	// 180度を越えているかをチェックする
-	
-
-
-	//SetFront(targetVector);
-
-	//// 
-	//if (a > D3DX_PI) {
-	//	currentFront -= a * 0.1f;
-	//}
-	//else {
-	//	currentFront += a * 0.1f;
-	//}
-	
-	//if (a > 0 && a <= D3DX_PI) {
-	//	// 時計回り
-	//	currentFront += a * 0.1f;
-	//	//currentFront += (targetFront - currentFront) * 0.1f;
-	//	
-	//}
-	//else if (a < 0 && a >= -D3DX_PI){
-	//	// 反時計回り
-	//	currentFront -= a * 0.1f;
-	//	//currentFront += (targetFront + currentFront) * 0.1f;
-	//	
-	//}
-	//else {
-	//	currentFront = targetFront;
-	//}
-
-	//SetRotate(D3DXVECTOR3(0, currentFront, 0));
-
-
-	// 回転を試行錯誤した残骸（失敗に終わる）
-	//float a = fabs(targetFront - currentFront);
-
-	//if (fabs(targetFront - currentFront) > 0.01f )
-	//{
-	//	float b = fabs(targetFront) + fabs(currentFront);
-
-	//	float c = sinf(targetFront) * D3DX_PI;
-	//	float d = sinf(currentFront) * D3DX_PI;
-	//	float e = c - d;
-
-	//	//if ((fabs(targetFront) - fabs(currentFront)) <= D3DX_PI)
-	//	if (fabs(targetFront - currentFront) <= D3DX_PI)
-	//	{
-	//		//currentFront += b * 0.1f;
-	//		currentFront += (targetFront - currentFront) * 0.1f;
-
-	//	}
-	//	else
-	//	{
-	//		b = D3DX_PI * 2 - b;
-
-	//		//currentFront -= b * 0.1f;
-	//		currentFront += (targetFront + currentFront) * 0.1f;
-
-	//	}
-
-	//	SetRotate(D3DXVECTOR3(0, currentFront, 0));
-
-	//	if (currentFront > D3DX_PI || currentFront <= -D3DX_PI)
-	//	{
-	//		currentFront *= -1;
-	//	}
-
-	//}
-	//else
-	//{
-	//	currentFront = targetFront;
-	//	SetRotate(D3DXVECTOR3(0, currentFront, 0));
-	//}
-
-	//static unsigned int cnt;
-	//cnt++;
-
-	//static float bufCur, bufTag, bufSab;
-	//
-	//static float sub;
-	//sub = targetFront - currentFront;
-
-	//if (cnt / 60 == 1) {
-	//	bufCur = currentFront;
-	//	bufTag = targetFront;
-	//	bufSab = sub;
-	//
-	//	cnt = 0;
-	//}
-
-	//OX::DebugFont::print(500,   0, 0xffffffff, "currentFront : %f", currentFront);
-	//OX::DebugFont::print(500,  20, 0xffffffff, "targetFront  : %f", targetFront);
-	//OX::DebugFont::print(500,  40, 0xffffffff, "sabun        : %f", sub);
-	//OX::DebugFont::print(500,  60, 0xffffffff, "bufCur       : %f", bufCur);
-	//OX::DebugFont::print(500,  80, 0xffffffff, "bufTag       : %f", bufTag);
-	//OX::DebugFont::print(500, 100, 0xffffffff, "bufSab       : %f", bufSab);
-
 }
 
-
-//-----------------------------------------------------------------------------
-// 描画処理
-//-----------------------------------------------------------------------------
 void Player::Draw(void)
 {
-	// 描画処理
-	ObjectModel::Draw();
-
+	Unit::Draw();
 }
 
+void Player::SetBehave(const Player::Behave& _behave)
+{
+	currentBehave_ = _behave;
+}
 
+Player::Behave Player::GetBehave()
+{
+	return currentBehave_;
+}
+
+void Player::SetCoolTime(const unsigned int _coolTime)
+{
+	currentCoolTime_ = _coolTime;
+}
+
+float Player::GetStraightShotDamage()
+{
+	return straightShotDamage_;
+}
+
+float Player::GetStraightShotSpeed()
+{
+	return straightShotSpeed_;
+}
+
+float Player::GetStraightShotRange()
+{
+	return straightShotRange_;
+}
+
+float Player::GetDrawShotDamage()
+{
+	return drawShotDamage_;
+}
+
+float Player::GetDrawShotSpeed()
+{
+	return drawShotSpeed_;
+}
+
+float Player::GetDrawShotRange()
+{
+	return drawShotRange_;
+}
+
+Camera* Player::GetCamera()
+{
+	return camera_;
+}
 
 void Player::TempInput()
 {
@@ -740,421 +408,569 @@ void Player::TempInput()
 
 }
 
-
-//=============================================================================
-//	増減
-// 座標の移動
-void Player::MovePosition(D3DXVECTOR3& movePosition)
+void Player::ReceiveDamage(const float& _damage, Unit* _unit)
 {
-	movePosition.x *= -1;
-	m_movePosition += m_pCamera->GetVecX() * movePosition.x;
-	m_movePosition += m_pCamera->GetVecZ() * movePosition.z;
+	currentHp_ -= _damage;
 
-	if (fabs(m_movePosition.x) + fabs(m_movePosition.z) > m_maxMoveSpeed) {
-		D3DXVec3Normalize(&m_movePosition, &m_movePosition);
-		m_movePosition *= m_maxMoveSpeed;
+	if (currentHp_ <= 0.0f)
+	{
+		// 死亡処理
 	}
-
 }
 
-
-// 体力
-void Player::MoveLife(int move)
+bool Player::IsRun()
 {
-	m_life += move;
-	if (m_life >= m_maxLife) m_life = m_maxLife;
-
-}
-
-
-
-//=============================================================================
-//	設定
-// 体力
-void Player::SetLife(float life)
-{
-	m_life = life;
-	if (m_life >= m_maxLife) m_life = m_maxLife;
-
-}
-
-
-// 体勢
-void Player::SetPosture(Player::POSTURE posture)
-{
-	m_posture = posture;
-}
-
-
-//=============================================================================
-//	特殊
-// 走る
-void Player::Run(float moveX, float moveZ)
-{
-	// 【発生判定】体勢が NONE, RUN 以外では無処理で返す
-	if ((m_posture != POSTURE_NONE && m_posture != POSTURE_RUN) || (moveX == 0 && moveZ == 0)) return;
-
-	// 移動行動
-	m_movePosition += m_pCamera->GetVecX() * moveX;
-	m_movePosition += m_pCamera->GetVecZ() * moveZ;
-	D3DXVec3Normalize(&m_movePosition, &m_movePosition);
-	m_movePosition *= m_maxMoveSpeed;
-
-	// 体勢の設定
-	m_posture = POSTURE_RUN;
-
-}
-
-
-// 避ける
-void Player::Avoid(float moveX, float moveZ)
-{
-	// 【発生判定】体勢が NONE, RUN, STREADY, DSREADY 以外では無処理で返す
-	if (m_posture != POSTURE_NONE && m_posture != POSTURE_RUN && m_posture != POSTURE_STREADY && m_posture != POSTURE_DRREADY) return;
-
+	if (currentCoolTime_ != 0)
+	{
+		return false;
+	}
 	
-	// 移動力が全く無い場合は向いてる方向に回避する
-	if (moveX == 0 && moveZ == 0) {
-		moveX = this->GetFront().x * m_avDist;
-		moveZ = this->GetFront().z * m_avDist;
+	if ((currentBehave_ == Behave::NEUTRAL || currentBehave_ == Behave::RUN) == false)
+	{
+		return false;
 	}
 
+	if (controller_->IsButtonPress(Controller::Key::RUN) == false)
+	{
+		return false;
+	}
 
-	// 回避行動
-	m_movePosition += m_pCamera->GetVecX() * moveX;
-	m_movePosition += m_pCamera->GetVecZ() * moveZ;
-	D3DXVec3Normalize(&m_movePosition, &m_movePosition);
-	m_movePosition *= m_avDist;
+	return true;
+}
 
-	// 【描画線データのクリア】
-	if (m_posture == Player::POSTURE::POSTURE_DRREADY && m_pDL_StartPos != nullptr)
-		m_pDL_StartPos->ClearParameter_List(m_pDL_StartPos);
+bool Player::IsAvoid()
+{
+	if (currentCoolTime_ != 0)
+	{
+		return false;
+	}
 
-	// 体勢の設定
-	m_posture = POSTURE_AVOID;
+	if ((currentBehave_ == Behave::NEUTRAL || currentBehave_ == Behave::RUN) == false)
+	{
+		return false;
+	}
 
-	// 硬直時間の設定
-	m_cntCooldownFrame = m_cooldown_Avoid;
+	if (controller_->IsButtonTrigger(Controller::Key::AVOID) == false)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Player::IsHeavyAvoid()
+{
+	if (currentCoolTime_ == 0)
+	{
+		return false;
+	}
+
+	if ((currentBehave_ == Behave::STRAIGHT_SHOT || currentBehave_ == Behave::DRAW_SHOT) == false)
+	{
+		return false;
+	}
+
+	if (controller_->IsButtonTrigger(Controller::Key::HEAVYAVOID) == false)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Player::IsReady_StraightShot(const D3DXVECTOR3& _cursorPosition_3D)
+{
+	if (currentCoolTime_ != 0)
+	{
+		return false;
+	}
+
+	if ((currentBehave_ == Behave::NEUTRAL || currentBehave_ == Behave::RUN) == false)
+	{
+		return false;
+	}
+
+	if (controller_->IsButtonTrigger(Controller::Key::STRAIGHTSHOT) == false)
+	{
+		return false;
+	}
+
+	if (CollisionCursorToPlayer(_cursorPosition_3D) == false)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Player::IsAttack_StraightShot(const D3DXVECTOR3& _cursorPosition_3D)
+{
+	if ((currentBehave_ == Behave::READY_STRAIGHT_SHOT) == false)
+	{
+		return false;
+	}
+
+	if (controller_->IsButtonRelease(Controller::Key::STRAIGHTSHOT) == false)
+	{
+		return false;
+	}
+
+	if (CollisionCursorToPlayer(_cursorPosition_3D) == true)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Player::IsCancel_StraightShot(const D3DXVECTOR3& _cursorPosition_3D)
+{
+	if ((currentBehave_ == Behave::READY_STRAIGHT_SHOT) == false)
+	{
+		return false;
+	}
+
+	if (controller_->IsButtonRelease(Controller::Key::STRAIGHTSHOT) == false)
+	{
+		return false;
+	}
+
+	if (CollisionCursorToPlayer(_cursorPosition_3D) == false)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Player::IsReady_DrawShot(const D3DXVECTOR3& _cursorPosition_3D)
+{
+	if (currentCoolTime_ != 0)
+	{
+		return false;
+	}
+
+	if ((currentBehave_ == Behave::NEUTRAL || currentBehave_ == Behave::RUN) == false)
+	{
+		return false;
+	}
+
+	if (controller_->IsButtonTrigger(Controller::Key::DRAWSHOT) == false)
+	{
+		return false;
+	}
+
+	if (CollisionCursorToPlayer(_cursorPosition_3D) == false)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Player::IsCreate_DrawLine()
+{
+	if ((currentBehave_ == Behave::READY_DRAW_SHOT) == false)
+	{
+		return false;
+	}
+
+	if (controller_->IsButtonPress(Controller::Key::DRAWSHOT) == false)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Player::IsAttack_DrawShot(const D3DXVECTOR3& _cursorPosition_3D)
+{
+	if ((currentBehave_ == Behave::READY_DRAW_SHOT) == false)
+	{
+		return false;
+	}
+
+	if (controller_->IsButtonRelease(Controller::Key::DRAWSHOT) == false)
+	{
+		return false;
+	}
+
+	if (CollisionCursorToPlayer(_cursorPosition_3D) == true)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Player::IsCancel_DrawShot(const D3DXVECTOR3& _cursorPosition_3D)
+{
+	if ((currentBehave_ == Behave::READY_DRAW_SHOT) == false)
+	{
+		return false;
+	}
+
+	if (controller_->IsButtonRelease(Controller::Key::DRAWSHOT) == false)
+	{
+		return false;
+	}
+
+	if (CollisionCursorToPlayer(_cursorPosition_3D) == false)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+bool Player::IsBreakBasePoint(const D3DXVECTOR3& _cursorPosition_3D)
+{
+	if (currentCoolTime_ != 0)
+	{
+		return false;
+	}
+
+	if ((currentBehave_ == Behave::NEUTRAL || currentBehave_ == Behave::RUN) == false)
+	{
+		return false;
+	}
+
+	if (controller_->IsButtonPress(Controller::Key::BREAK) == false)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void Player::Run()
+{
+	D3DXVECTOR3 moveValue(0, 0, 0);
+
+	// culcurate direction vector
+	moveValue += camera_->GetVecX() * controller_->GetAxis(Controller::Key::RUN).x;
+	moveValue += camera_->GetVecZ() * controller_->GetAxis(Controller::Key::RUN).y;
+	D3DXVec3Normalize(&moveValue, &moveValue);
+
+	// add move power
+	moveValue *= runSpeed_;
+
+	startFront_ = GetFront();
+	endFront_ = GetPosition() + moveValue - GetPosition();
+	D3DXVec3Normalize(&endFront_, &endFront_);
+
+	// rotate
+	countTime_Rotate_ = 0;
+	startRotate_ = GetRotate();
+	endRotate_ = GetRotateToPosition(GetPosition() + moveValue);
+
+	// move position
+	Unit::MovePosition(moveValue);
+
+	// setting current state
+	SetBehave(Behave::RUN);
+
+	#ifdef _DEBUG
+		OX::DebugFont::print(0, 20, 0xff00ff00, "PlayerPos : (%f, %f, %f)", GetPosition().x, GetPosition().y, GetPosition().z);
+		OX::DebugFont::print(0, 40, 0xff00ff00, "moveValue : (%f, %f, %f)", moveValue.x, moveValue.y, moveValue.z);
+	#endif
+}
+
+void Player::Avoid()
+{
+	moveVector_ = D3DXVECTOR3(0, 0, 0);
+
+	// culcurate avoid vector
+	if (controller_->IsButtonPress(Controller::Key::RUN) == true)
+	{
+		moveVector_ += camera_->GetVecX() * controller_->GetAxis(Controller::Key::RUN).x;
+		moveVector_ += camera_->GetVecZ() * controller_->GetAxis(Controller::Key::RUN).y;
+		D3DXVec3Normalize(&moveVector_, &moveVector_);
+	}
+	else
+	{
+		moveVector_ = endFront_;
+	}
+
+	currentSpeed_ = avoidPower_;
+
+	SetRotateToPosition(GetPosition() + moveVector_ * currentSpeed_);
+
+	SetBehave(Behave::AVOID);
+
+	SetCoolTime(coolTimeAvoid_);
+
+	// clear draw line
+	if (drawLine_ != nullptr)
+	{
+		drawLine_->ClearParameter_List(drawLine_);
+	}
 
 }
 
-
-// 緊急回避
-void Player::EmAvoid(float moveX, float moveZ)
+void Player::HeavyAvoid()
 {
-	// 【発生判定】体勢が STSHOT, DRSHOT 以外では無処理で返す
-	if (m_posture != POSTURE_STSHOT && m_posture != POSTURE_DRSHOT) return;
+	moveVector_ = D3DXVECTOR3(0, 0, 0);
 
-
-	// 移動力が全く無い場合は向いてる方向に回避する
-	if (moveX == 0 && moveZ == 0) {
-		moveX = this->GetFront().x * m_avDist;
-		moveZ = this->GetFront().z * m_avDist;
+	// culcurate avoid vector
+	if (controller_->IsButtonPress(Controller::Key::RUN) == true)
+	{
+		moveVector_ += camera_->GetVecX() * controller_->GetAxis(Controller::Key::RUN).x;
+		moveVector_ += camera_->GetVecZ() * controller_->GetAxis(Controller::Key::RUN).y;
+		D3DXVec3Normalize(&moveVector_, &moveVector_);
+	}
+	else
+	{
+		moveVector_ = GetFront();
 	}
 
-	// 回避行動
-	moveX *= -1;
-	m_movePosition += m_pCamera->GetVecX() * moveX;
-	m_movePosition += m_pCamera->GetVecZ() * moveZ;
-	D3DXVec3Normalize(&m_movePosition, &m_movePosition);
-	m_movePosition *= m_avDist;
+	currentSpeed_ = heavyAvoidPower_;
 
-	// 体勢の設定
-	m_posture = POSTURE_EMAVOID;
+	SetRotateToPosition(GetPosition() + moveVector_ * currentSpeed_);
 
-	// 硬直時間の設定
-	m_cntCooldownFrame = m_cooldown_EmAvoid;
+	SetBehave(Behave::HEAVY_AVOID);
 
+	SetCoolTime(coolTimeHeavyAvoid_);
+
+	// clear draw line
+	if (drawLine_ != nullptr)
+	{
+		drawLine_->ClearParameter_List(drawLine_);
+	}
 }
 
-
-// SS準備
-void Player::STReady()
+void Player::Ready_StraightShot()
 {
-	// 【発生判定】体勢が NONE, RUN, STREADY 以外では無処理で返す
-	if (m_posture != Player::POSTURE::POSTURE_NONE && m_posture != Player::POSTURE::POSTURE_RUN && m_posture != Player::POSTURE::POSTURE_STREADY)
-		return;
+	SetRotateToPosition(cursorPosition3D_);
 
-	// カーソル座標のバッファ
-	D3DXVECTOR3 mousePos(0, 0, 0);
-
-	// 【当たり判定】カーソル
-	if (CollisionCursor_Player(&mousePos)) {
-		// 【体勢の設定】→ "STREADY"に
-		m_posture = Player::POSTURE::POSTURE_STREADY;
-
-		// 【向きの設定】
-		SetRotateToObj(mousePos);
-
-	}
-
+	SetBehave(Behave::READY_STRAIGHT_SHOT);
 }
 
-
-// SS攻撃
-void Player::STShot()
+void Player::Attack_StraightShot()
 {
-	// 【発生判定】体勢が"STREADY"以外では無処理で返す
-	if (m_posture != POSTURE_STREADY) return;
+	SetRotateToPosition(cursorPosition3D_);
 
-
-	// デバイスの取得
-	LPDIRECT3DDEVICE9 pDevice = Renderer::GetDevice();
-
-	// カーソル座標のバッファの用意
-	D3DXVECTOR3 mousePos(0, 0, 0);
-
-
-	// 【当たり判定】カーソル
-	if (CollisionCursor_Player(&mousePos)) {
-		// 【体勢の設定】→ "NONE"に
-		m_posture = Player::POSTURE::POSTURE_NONE;
-
-		// SS撃たずに終了
-		return;
-
-	}
-
-	// 【向きの設定】カーソルの方向へ
-	SetRotateToObj(mousePos);
-
-	// 【SS発射】
 	StraightShot::SetStraightShot(*this);
 
-	// 【体勢の設定】→ "STSHOT"に
-	m_posture = POSTURE_STSHOT;
+	SetBehave(Behave::STRAIGHT_SHOT);
 
-	// 【硬直時間の設定】
-	m_cntCooldownFrame = m_cooldown_StShot;
-
-
+	SetCoolTime(coolTimeStraightShot_);
 }
 
-
-// DS準備
-void Player::DRReady(bool bTrigger)
+void Player::Cancel_StraightShot()
 {
-	// 【発生判定】体勢が NONE, RUN, DRREADY 以外では無処理で返す
-	if (m_posture != Player::POSTURE::POSTURE_NONE && m_posture != Player::POSTURE::POSTURE_RUN && m_posture != Player::POSTURE::POSTURE_DRREADY)
-		return;
+	SetBehave(Behave::NEUTRAL);
+}
 
+void Player::Ready_DrawShot()
+{
+	drawLine_ = DrawLine::SetStartLine(cursorPosition3D_, *this);
 
-	// デバイスの取得
-	LPDIRECT3DDEVICE9 pDevice = Renderer::GetDevice();
+	drawLine_currentLength_ = 0;
 
-	// カーソル座標のバッファの用意
-	D3DXVECTOR3 mousePos(0, 0, 0);
+	drawLine_preLength_ = drawLine_currentLength_;
 
+	SetBehave(Player::Behave::READY_DRAW_SHOT);
+}
 
-	// --- ステート遷移 ---
-	switch (m_posture) {
-	// 体勢が NONE, RUN → 【カーソルとキャラクタの当たり判定】
-	case Player::POSTURE::POSTURE_NONE:
-	case Player::POSTURE::POSTURE_RUN:
-		// 【当たり判定の発生判定】左クリック押した瞬間じゃなかったら処理無し
-		if (!bTrigger) return;
+void Player::Create_DrawLine(const D3DXVECTOR3& _cursorPosition_3D)
+{
+	D3DXVECTOR3 nextRelayPosition = _cursorPosition_3D;
+	D3DXVECTOR3 preRelayPosition = drawLine_->GetTailPosition();
 
-		// 【当たり判定】カーソル
-		if (CollisionCursor_Player(&mousePos)) {
-			// 【体勢の設定】→ "DRREADY"に
-			m_posture = Player::POSTURE::POSTURE_DRREADY;
+	if (IsOutOfRange(GetPosition(), nextRelayPosition, drawShotRange_) == true)
+	{
+		nextRelayPosition = WithinRange(GetPosition(), nextRelayPosition, drawShotRange_);
+	}
+
+	if (IsOutOfRange(preRelayPosition, nextRelayPosition, kThresholdLength_AddDraw_) == true)
+	{
+		drawLine_currentLength_ += sqrtf(Distance3D(nextRelayPosition, preRelayPosition));
+
+		if (IsOutOfLength(drawLine_currentLength_, drawShotLength_) == true)
+		{
+			nextRelayPosition = FindEndPosition(drawLine_preLength_, drawShotLength_, preRelayPosition, nextRelayPosition);
+			DrawLine::SetViaPoint(nextRelayPosition, drawLine_);
+			Attack_DrawShot();
 		}
-		else {
-			// 無処理で返す
-			return;			
-		}
-
-
-		// THRU
-	case Player::POSTURE::POSTURE_DRREADY:
-
-		// 【カーソルの座標を取得】
-		CollisionCursor_Player(&mousePos);
-
-		// 【始点判定】
-		if (bTrigger) {
-			// １、始点を送る（始点だよ！という情報を忘れずに）
-			m_pDL_StartPos = DrawLine::SetStartLine(mousePos, *this);
-			//m_pDL_StartPos = DrawLine::SetStartLine(GetPosition(), *this);
-
-			// ２、描画線の長さを初期化
-			m_DL_Length = 0;
-
-			// ３、描画線の前の点の座標を初期化
-			m_DL_PrePos = mousePos;
-			//m_DL_PrePos = GetPosition();
-
-			// ３、描画線の更新前の長さを初期化
-			m_DL_PreLength = m_DL_Length;
-
-			// 始点が mousePos の場合
-			break;
+		else
+		{
+			DrawLine::SetViaPoint(nextRelayPosition, drawLine_);
 		}
 
-		// 【射程外判定】
-		if (Distance3D(mousePos, GetPosition()) > m_drawShotRange * m_drawShotRange) {
-			// ※ 修正を行う
-			// 【座標の設定】中継点
-			D3DXVECTOR3 vec = mousePos - GetPosition();
-			D3DXVec3Normalize(&vec, &vec);
-			vec *= Player::m_drawShotRange;
-			mousePos = vec + GetPosition();
-		}
-
-		// 【中継点の保存判定】
-		//		※ 現在の条件：前の点との距離
-		//	※要 条件を距離と角度への変更
-		if (Distance3D(mousePos, this->m_DL_PrePos) <= Player::NON_DRAW * Player::NON_DRAW) break;	// switch
-
-		// 距離を見る
-
-
-		// 角度を見る
-
-
-		// 描画線の長さの更新
-		//m_DL_Length += (mousePos.x - m_DL_PrePos.x) * (mousePos.x - m_DL_PrePos.x)
-		//			 + (mousePos.z - m_DL_PrePos.z) * (mousePos.z - m_DL_PrePos.z);
-		m_DL_Length += sqrtf((mousePos.x - m_DL_PrePos.x) * (mousePos.x - m_DL_PrePos.x) + (mousePos.z - m_DL_PrePos.z) * (mousePos.z - m_DL_PrePos.z));
-
-
-		// 【描画線の長さ判定】上限を超えているか
-		//if (m_DL_Length >= m_drawShotLength * m_drawShotLength) {
-		if (m_DL_Length >= m_drawShotLength) {
-			// ★ 修正した次の点を送り、DSを撃つ ★
-
-			// 描画線の長さの修正
-			//float length = sqrtf(m_drawShotLength * m_drawShotLength - m_DL_PreLength);	// 限界値までの長さ
-			float length = sqrtf(m_drawShotLength - m_DL_PreLength);	// 限界値までの長さ
-
-			// 向きの取得
-			D3DXVECTOR3 vec = mousePos - m_DL_PrePos;
-			D3DXVec3Normalize(&vec, &vec);
-
-			// 修正された点の座標を設定
-			mousePos = vec * length + m_DL_PrePos;
-
-			// 中継点を送る
-			DrawLine::SetViaPoint(mousePos, m_pDL_StartPos);
-
-			// DSを撃つ
-			Player::DRShot(false);
-			
-			// 終了
-			return;
-		}
-
-		// 描画線の更新前の長さを最新に更新する
-		m_DL_PreLength = m_DL_Length;
-
-		// 中継点を送る
-		DrawLine::SetViaPoint(mousePos, m_pDL_StartPos);
-
-		// 中継点の前の座標を更新
-		m_DL_PrePos = mousePos;
-
-
-		// DRREADY 終了
-		break;
+		drawLine_preLength_ = drawLine_currentLength_;
 
 	}
 
-#ifdef _DEBUG
-	// デバック表示
-	OX::DebugFont::print(0,  20, 0xff00ff00, "PlayerPos.x         : %f", ObjectModel::GetPosition().x);
-	OX::DebugFont::print(0,  40, 0xff00ff00, "PlayerPos.y         : %f", ObjectModel::GetPosition().y);
-	OX::DebugFont::print(0,  60, 0xff00ff00, "PlayerPos.z         : %f", ObjectModel::GetPosition().z);
-	OX::DebugFont::print(0,  80, 0xff00ff00, "mousePos.x          : %f", mousePos.x);
-	OX::DebugFont::print(0, 100, 0xff00ff00, "mousePos.y          : %f", mousePos.y);
-	OX::DebugFont::print(0, 120, 0xff00ff00, "mousePos.z          : %f", mousePos.z);
-	OX::DebugFont::print(0, 140, 0xff00ff00, "m_drawLine_PrePos.x : %f", m_DL_PrePos.x);
-	OX::DebugFont::print(0, 160, 0xff00ff00, "m_drawLine_PrePos.y : %f", m_DL_PrePos.y);
-	OX::DebugFont::print(0, 180, 0xff00ff00, "m_drawLine_PrePos.z : %f", m_DL_PrePos.z);
-	OX::DebugFont::print(0, 200, 0xff00ff00, "m_drawLine_Length   : %f", m_DL_Length);
-#endif
+//#ifdef _DEBUG
+//	// デバック表示
+//	OX::DebugFont::print(0, 20, 0xff00ff00, "PlayerPos.x         : %f", BasePoint::GetPosition().x);
+//	OX::DebugFont::print(0, 40, 0xff00ff00, "PlayerPos.y         : %f", BasePoint::GetPosition().y);
+//	OX::DebugFont::print(0, 60, 0xff00ff00, "PlayerPos.z         : %f", BasePoint::GetPosition().z);
+//	OX::DebugFont::print(0, 80, 0xff00ff00, "mousePos.x          : %f", mousePos.x);
+//	OX::DebugFont::print(0, 100, 0xff00ff00, "mousePos.y          : %f", mousePos.y);
+//	OX::DebugFont::print(0, 120, 0xff00ff00, "mousePos.z          : %f", mousePos.z);
+//	OX::DebugFont::print(0, 140, 0xff00ff00, "m_drawLine_PrePos.x : %f", m_DL_PrePos.x);
+//	OX::DebugFont::print(0, 160, 0xff00ff00, "m_drawLine_PrePos.y : %f", m_DL_PrePos.y);
+//	OX::DebugFont::print(0, 180, 0xff00ff00, "m_drawLine_PrePos.z : %f", m_DL_PrePos.z);
+//	OX::DebugFont::print(0, 200, 0xff00ff00, "m_drawLine_Length   : %f", m_DL_Length);
+//#endif
+//
+}
+
+void Player::Attack_DrawShot()
+{
+	DrawLine::SetDrawShot(drawLine_);
+
+	SetRotateToPosition(drawLine_->GetNextPointer_DrawLine()->GetPosition());
+
+	SetBehave(Behave::DRAW_SHOT);
+
+	SetCoolTime(coolTimeDrawShot_);
+}
+
+void Player::Cancel_DrawShot()
+{
+	SetBehave(Behave::NEUTRAL);
+
+	drawLine_->ClearParameter_List(drawLine_);
+}
+
+void Player::Break_BasePoint()
+{
+	Tower* tower = CollisionCursorToBasePoint();
+
+	if (tower != nullptr)
+	{
+		D3DXVECTOR3 front(0, 0, 0);
+
+		front = tower->GetPosition();
+
+		tower->ReceiveDamage(breakPower_, this);
+
+		SetBehave(Behave::BREAK_BASEPOINT);
+
+		SetRotateToPosition(front);
+
+		SetCoolTime(coolTimeBreakBasePoint_);
+	}
+}
+
+void Player::Move()
+{
+	if (IsRun() == true)
+	{
+		Run();
+	}
+
+	if (IsAvoid() == true)
+	{
+		Avoid();
+	}
+
+	if (IsHeavyAvoid() == true)
+	{
+		HeavyAvoid();
+	}
+
+	Inirtia();
 
 }
 
-
-// DS攻撃
-void Player::DRShot(bool bRelease)
+void Player::StraightShot()
 {
-	// 【発生判定】体勢が DRREADY 以外では無処理で返す
-	if (m_posture != Player::POSTURE::POSTURE_DRREADY) return;
+	if (IsReady_StraightShot(cursorPosition3D_) == true)
+	{
+		Ready_StraightShot();
+	}
+	else if (IsAttack_StraightShot(cursorPosition3D_) == true)
+	{
+		Attack_StraightShot();
+	}
+	else if (IsCancel_StraightShot(cursorPosition3D_) == true)
+	{
+		Cancel_StraightShot();
+	}
+}
 
+void Player::DrawShot()
+{
+	if (IsReady_DrawShot(cursorPosition3D_) == true)
+	{
+		Ready_DrawShot();
+	}
+	else if (IsCreate_DrawLine() == true)
+	{
+		Create_DrawLine(cursorPosition3D_);
+	}
+	else if (IsAttack_DrawShot(cursorPosition3D_) == true)
+	{
+		Attack_DrawShot();
+	}
+	else if (IsCancel_DrawShot(cursorPosition3D_) == true)
+	{
+		Cancel_DrawShot();
+	}
+}
 
-	// 【キャンセル判定】
-	if(bRelease){
-		// デバイスの取得
-		LPDIRECT3DDEVICE9 pDevice = Renderer::GetDevice();
+void Player::Break()
+{
+	if (IsBreakBasePoint(cursorPosition3D_) == true)
+	{
+		Break_BasePoint();
+	}
+}
 
-		// カーソル座標のバッファ用意
-		D3DXVECTOR3 mousePos(0, 0, 0);
+void Player::Inirtia()
+{
+	MoveInirtia();
 
-		// 【当たり判定】カーソル → プレイヤー
-		if (CollisionCursor_Player(&mousePos)) {
-			// 【体勢の設定】→ "NONE"に
-			m_posture = Player::POSTURE::POSTURE_NONE;
+	RotateInirtia();
+}
 
-			// 【描画線のクリア】
-			m_pDL_StartPos->ClearParameter_List(m_pDL_StartPos);
+void Player::MoveInirtia()
+{
+	if (currentSpeed_ != 0)
+	{
+		D3DXVECTOR3 move = moveVector_ * currentSpeed_;
 
-			// DS撃たずに終了
-			return;
+		MovePosition(move);
+
+		currentSpeed_ *= kInirtia_;
+
+		if (currentSpeed_ < kMinThresholdSpeed_)
+		{
+			currentSpeed_ = 0;
+		}
+	}
+}
+
+void Player::RotateInirtia()
+{
+	D3DXVECTOR3 rotate;
+	D3DXVECTOR3 front;
+
+	if (countTime_Rotate_ < 1.0f)
+	{
+		countTime_Rotate_ += 1.0f / 15;
+
+		if (countTime_Rotate_ >= 1.0f)
+		{
+			countTime_Rotate_ = 1.0f;
 		}
 
+		D3DXVec3Lerp(&rotate, &startRotate_, &endRotate_, countTime_Rotate_ * (2 - countTime_Rotate_));
+		SetRotate(rotate);
+		
+		D3DXVec3Lerp(&front, &startFront_, &endFront_, countTime_Rotate_ * (2 - countTime_Rotate_));
+		SetFront(front);
 	}
-
-	// 【DSの発生】
-	DrawLine::SetDrawShot(m_pDL_StartPos);
-
-	// 【向きの設定】プレイヤーの向き → 発射した方向を向く
-	SetRotateToObj(m_pDL_StartPos->GetNextPointer_DrawLine()->GetPosition());
-
-	// 【体勢の設定】→ "DRSHOT"に
-	m_posture = Player::POSTURE::POSTURE_DRSHOT;
-
-	// 【硬直時間の設定】
-	m_cntCooldownFrame = m_cooldown_DrShot;
 
 }
 
-
-// 拠点を殴る
-void Player::BreakBasePoint()
-{
-	// 【発生判定】体勢が NONE, RUN 以外では無処理で返す
-	if (m_posture != Player::POSTURE::POSTURE_NONE && m_posture != Player::POSTURE::POSTURE_RUN) return;
-
-	// 【当たり判定】カーソル → 拠点
-	Tower* pTower = CollisionCursor_BasePoint();
-	if (pTower == nullptr) return;
-
-	D3DXVECTOR3 position = pTower->GetPosition();
-
-	// 【破壊判定】
-	if (pTower->BrowTower(m_breakPower)) {
-		// 壊した時の処理
-
-	}
-
-	// 【体勢の設定】破壊
-	m_posture = Player::POSTURE::POSTURE_BREAK;
-
-	// 【向きの設定】
-	SetRotateToObj(position);
-
-	// 【硬直時間の設定】
-	m_cntCooldownFrame = 10;
-
-}
-
-
-//=============================================================================
-//	private関数
 void Player::UpdateInverseMatrix()
 {
-	if (m_pCamera == nullptr) return;
+	if (camera_ == nullptr) return;
 
 	D3DXMATRIX vpMat;
 	D3DXMatrixIdentity(&vpMat);
@@ -1170,107 +986,70 @@ void Player::UpdateInverseMatrix()
 	vpMat._43 = vp.MinZ;
 
 	D3DXMATRIX inv_proj, inv_view;
-	D3DXMatrixInverse(&m_InverseMatrix, 0, &vpMat);
-	D3DXMatrixInverse(&inv_proj, 0, &m_pCamera->GetMtxProj());
-	D3DXMatrixInverse(&inv_view, 0, &m_pCamera->GetMtxView());
+	D3DXMatrixInverse(&inverseMatrix_, 0, &vpMat);
+	D3DXMatrixInverse(&inv_proj, 0, &camera_->GetMtxProj());
+	D3DXMatrixInverse(&inv_view, 0, &camera_->GetMtxView());
 
-	m_InverseMatrix *= inv_proj * inv_view;
-
-}
-
-// 【当たり判定】カーソル → プレイヤー
-bool Player::CollisionCursor_Player(D3DXVECTOR3* pOut)
-{
-	// カーソル座標の取得
-	POINT cursorPos;
-	D3DXVECTOR3 mousePos;
-	GetCursorPos(&cursorPos);
-	ScreenToClient(GetHWnd(), &cursorPos);
-
-	// 座標変換のために逆行列を掛ける
-	for (int i = 9960000; i < 10000000; i++) {
-
-		// 【座標の変換】カーソル座標 → 3D座標
-		//transScreenToWorld(&mousePos, pDevice, cursorPos.x, cursorPos.y, (1.f / 10000000) * i, &m_pCamera->GetMtxView(), &m_pCamera->GetMtxProj());
-		mousePos.x = (float)cursorPos.x;
-		mousePos.y = (float)cursorPos.y;
-		mousePos.z = (float)(1. / 10000000) * i;
-		D3DXVec3TransformCoord(&mousePos, &mousePos, &m_InverseMatrix);
-
-		if (mousePos.y < 0) {
-			mousePos.y = 0;
-			*pOut = mousePos;
-
-			// 【当たり判定】カーソルとキャラクター
-			if (CalcSphereRayCollision(GetRadius(), &this->GetPosition(), &mousePos, &m_pCamera->GetVecZ_UnNormal(), nullptr, nullptr)) {
-				return true;
-			}
-			else { return false; }
-		}
-	}
-
-	return false;
+	inverseMatrix_ *= inv_proj * inv_view;
 
 }
 
-// 【当たり判定】カーソル → 拠点
-Tower* Player::CollisionCursor_BasePoint()
+bool Player::CollisionCursorToPlayer(const D3DXVECTOR3& _cursorPosition_3D)
 {
-	D3DXVECTOR3 P1, P2;
+	D3DXVECTOR3 cursorPosition_3D = _cursorPosition_3D;
 
-	// カーソル座標の取得
-	POINT cursorPos;
-	D3DXVECTOR3 mousePos;
-	GetCursorPos(&cursorPos);
-	ScreenToClient(GetHWnd(), &cursorPos);
+	return CalcSphereRayCollision(GetRadius(), &GetPosition(), &cursorPosition_3D, &camera_->GetVecZ_UnNormal(), nullptr, nullptr);
+}
 
+Tower* Player::CollisionCursorToBasePoint()
+{
+	Tower* tower = (Tower*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_MODEL_TOWER);
 
-	Tower* pTower = (Tower*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_MODEL_TOWER);
+	if (tower != nullptr)
+	{
+		for (;;)
+		{
+			if (tower->GetGroup() != GetGroup())
+			{
+				if (tower->IsBrowedRange(this) == true)
+				{
+					POINT cursorPosition2D;
+					GetCursorPos(&cursorPosition2D);
+					ScreenToClient(GetHWnd(), &cursorPosition2D);
 
-	if (pTower == nullptr) return nullptr;
+					D3DXVECTOR3 cursolPosition3D;
+					cursolPosition3D.x = (float)cursorPosition2D.x;
+					cursolPosition3D.y = (float)cursorPosition2D.y;
 
-	Tower* pCurrent = pTower;
-	Tower* pNext    = (Tower*)pTower->GetNextPointer();
+					for (int i = 9900000; i < 10000000; i++)
+					{
+						// 【座標の変換】カーソル座標 → 3D座標
+						//transScreenToWorld(&mousePos, pDevice, cursorPos.x, cursorPos.y, (1.f / 10000000) * i, &camera_->GetMtxView(), &camera_->GetMtxProj());
+						cursolPosition3D.z = (float)(1. / 10000000) * i;
+						D3DXVec3TransformCoord(&cursolPosition3D, &cursolPosition3D, &inverseMatrix_);
 
-	for (;;) {
-		// 敵グループの塔かどうか
-		if (pCurrent->GetGroup() != GetGroup()) {
-
-			// 殴れる範囲内にいるかどうか
-			if (pCurrent->CollisionBrowRange(GetPosition())) {
-
-				// 座標変換のために逆行列を掛ける
-				for (int i = 9900000; i < 10000000; i++) {
-
-					// 【座標の変換】カーソル座標 → 3D座標
-					//transScreenToWorld(&mousePos, pDevice, cursorPos.x, cursorPos.y, (1.f / 10000000) * i, &m_pCamera->GetMtxView(), &m_pCamera->GetMtxProj());
-					mousePos.x = (float)cursorPos.x;
-					mousePos.y = (float)cursorPos.y;
-					mousePos.z = (float)(1. / 10000000) * i;
-					D3DXVec3TransformCoord(&mousePos, &mousePos, &m_InverseMatrix);
-
-					// 【当たり判定】カーソルと"HOLD"
-					if (CalcSphereRayCollision(pCurrent->GetHold()->GetRadius(), &pCurrent->GetHold()->GetPosition(), &mousePos, &m_pCamera->GetVecZ_UnNormal(), nullptr, nullptr)) {
-						return pCurrent;
+						// 【当たり判定】カーソルと"HOLD"
+						//if (CalcSphereRayCollision(tower->GetHold()->GetRadius(), &tower->GetHold()->GetPosition(), &mousePos, &camera_->GetVecZ_UnNormal(), nullptr, nullptr))
+						if (tower->GetObjectCollider()->Collision(cursolPosition3D) == true)
+						{
+							break;
+						}
 					}
 				}
+			}
 
-				return nullptr;
+			tower = (Tower*)tower->GetNextPointer();
 
+			if (tower == nullptr)
+			{
+				break;
 			}
 		}
-
-		pCurrent = pNext;
-
-		if (pCurrent == nullptr) return nullptr;
-
-		pNext = (Tower*)pCurrent->GetNextPointer();
 	}
 
+	return tower;
 }
 
-
-// 塔との当たり判定
 void Player::CollisionTower()
 {
 	Tower* pTower = (Tower*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_MODEL_TOWER);
@@ -1301,7 +1080,6 @@ void Player::CollisionTower()
 
 }
 
-// 城との当たり判定
 void Player::CollisionCastle()
 {
 	Castle* pCastle = (Castle*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_MODEL_CASTLE);
@@ -1332,87 +1110,392 @@ void Player::CollisionCastle()
 
 }
 
-// 壁との当たり判定
 void Player::CollisionWall()
 {
-	Wall* pCurrent = (Wall*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_3D_WALL);
+	//Wall* pCurrent = (Wall*)Object::GetLDATA_HEAD(Object::TYPE::TYPE_3D_WALL);
 
-	if (pCurrent == nullptr) return;
+	//if (pCurrent == nullptr) return;
 
-	Wall* pNext = (Wall*)pCurrent->GetNextPointer();
+	//Wall* pNext = (Wall*)pCurrent->GetNextPointer();
 
-	for (int i = 0; i < 4; i++)
+	//for (int i = 0; i < 4; i++)
+	//{
+	//	// Left Wall
+	//	if (GetPosition().x - GetRadius() < pCurrent->GetPosition_RIGHT().x)
+	//	{
+	//		D3DXVECTOR3 pos = GetPosition();
+	//		SetPosition(D3DXVECTOR3(pCurrent->GetPosition_RIGHT().x + GetRadius(), pos.y, pos.z));
+
+	//		return;
+	//	}
+
+	//	pCurrent = pNext;
+	//	pNext = (Wall*)pCurrent->GetNextPointer();
+
+	//	// Right Wall
+	//	if (GetPosition().x + GetRadius() > pCurrent->GetPosition_LEFT().x)
+	//	{
+	//		D3DXVECTOR3 pos = GetPosition();
+	//		SetPosition(D3DXVECTOR3(pCurrent->GetPosition_LEFT().x - GetRadius(), pos.y, pos.z));
+
+	//		return;
+	//	}
+
+	//	pCurrent = pNext;
+	//	pNext = (Wall*)pCurrent->GetNextPointer();
+
+
+	//	// Front Wall
+	//	if (GetPosition().z - GetRadius() < pCurrent->GetPosition_BACK().z)
+	//	{
+	//		D3DXVECTOR3 pos = GetPosition();
+	//		SetPosition(D3DXVECTOR3(pos.x, pos.y, pCurrent->GetPosition_BACK().z + GetRadius()));
+
+	//		return;
+	//	}
+
+	//	pCurrent = pNext;
+	//	pNext = (Wall*)pCurrent->GetNextPointer();
+
+	//	// Back Wall
+	//	if (GetPosition().z + GetRadius() > pCurrent->GetPosition_FRONT().z)
+	//	{
+	//		D3DXVECTOR3 pos = GetPosition();
+	//		SetPosition(D3DXVECTOR3(pos.x, pos.y, pCurrent->GetPosition_FRONT().z - GetRadius()));
+
+	//		return;
+	//	}
+	//	else
+	//		return;
+
+	//	//D3DXVECTOR3 collisionPoint;
+
+	//	//if (CalcParticlePlaneCollision(GetRadius(), &prePosition_, &GetPosition(), &pCurrent->GetNormal_RIGHT(), &pCurrent->GetPosition_RIGHT(), nullptr, &collisionPoint))
+	//	//{
+	//	//	D3DXVECTOR3 moveVec = GetPosition() - prePosition_;
+	//	//	D3DXVECTOR3 vec;
+	//	//	calcWallScratchVector(&vec, moveVec, pCurrent->GetNormal_RIGHT());
+
+	//	//	D3DXVECTOR3 vec = GetPosition() - pCurrent->GetPosition();
+	//	//	D3DXVec3Normalize(&vec, &vec);
+	//	//	SetPosition(D3DXVECTOR3(pCurrent->GetPosition().x + vec.x * (GetHalfSize().x + pCurrent->GetHalfSize().x),
+	//	//							0,
+	//	//							pCurrent->GetPosition().z + vec.z * (GetHalfSize().x + pCurrent->GetHalfSize().x)));
+
+	//	//	return;
+	//	//}
+
+	//	//if (pNext == nullptr) return;
+
+	//	//pCurrent = pNext;
+	//	//pNext = (Wall*)pCurrent->GetNextPointer();
+	//}
+
+	//return;
+}
+
+void Player::CollisionField()
+{
+	float fieldHeight = MainGame::GetField()->GetHeight(GetPosition());
+
+	if (GetPosition().y <= fieldHeight)
 	{
-		// Left Wall
-		if (GetPosition().x - GetRadius() < pCurrent->GetPosition_RIGHT().x)
-		{
-			D3DXVECTOR3 pos = GetPosition();
-			SetPosition(D3DXVECTOR3(pCurrent->GetPosition_RIGHT().x + GetRadius(), pos.y, pos.z));
+		SetPosition(D3DXVECTOR3(GetPosition().x, fieldHeight, GetPosition().z));
+	}
+}
 
-			return;
-		}
-
-		pCurrent = pNext;
-		pNext = (Wall*)pCurrent->GetNextPointer();
-
-		// Right Wall
-		if (GetPosition().x + GetRadius() > pCurrent->GetPosition_LEFT().x)
-		{
-			D3DXVECTOR3 pos = GetPosition();
-			SetPosition(D3DXVECTOR3(pCurrent->GetPosition_LEFT().x - GetRadius(), pos.y, pos.z));
-
-			return;
-		}
-
-		pCurrent = pNext;
-		pNext = (Wall*)pCurrent->GetNextPointer();
-
-
-		// Front Wall
-		if (GetPosition().z - GetRadius() < pCurrent->GetPosition_BACK().z)
-		{
-			D3DXVECTOR3 pos = GetPosition();
-			SetPosition(D3DXVECTOR3(pos.x, pos.y, pCurrent->GetPosition_BACK().z + GetRadius()));
-
-			return;
-		}
-
-		pCurrent = pNext;
-		pNext = (Wall*)pCurrent->GetNextPointer();
-
-		// Back Wall
-		if (GetPosition().z + GetRadius() > pCurrent->GetPosition_FRONT().z)
-		{
-			D3DXVECTOR3 pos = GetPosition();
-			SetPosition(D3DXVECTOR3(pos.x, pos.y, pCurrent->GetPosition_FRONT().z - GetRadius()));
-
-			return;
-		}
-		else
-			return;
-
-		//D3DXVECTOR3 collisionPoint;
-
-		//if (CalcParticlePlaneCollision(GetRadius(), &m_prePosion, &GetPosition(), &pCurrent->GetNormal_RIGHT(), &pCurrent->GetPosition_RIGHT(), nullptr, &collisionPoint))
-		//{
-		//	D3DXVECTOR3 moveVec = GetPosition() - m_prePosion;
-		//	D3DXVECTOR3 vec;
-		//	calcWallScratchVector(&vec, moveVec, pCurrent->GetNormal_RIGHT());
-
-		//	D3DXVECTOR3 vec = GetPosition() - pCurrent->GetPosition();
-		//	D3DXVec3Normalize(&vec, &vec);
-		//	SetPosition(D3DXVECTOR3(pCurrent->GetPosition().x + vec.x * (GetHalfSize().x + pCurrent->GetHalfSize().x),
-		//							0,
-		//							pCurrent->GetPosition().z + vec.z * (GetHalfSize().x + pCurrent->GetHalfSize().x)));
-
-		//	return;
-		//}
-
-		//if (pNext == nullptr) return;
-
-		//pCurrent = pNext;
-		//pNext = (Wall*)pCurrent->GetNextPointer();
+std::string Player::FindModelPass(const Player::Character& character)
+{
+	if (character >= Player::Character::MAX)
+	{
+		const char* errorMessage = "キャラクターが見つかりませんでした";
+		const char* errorTitle = "Player::FindModelPass";
+		_MSGERROR(errorMessage, errorTitle);
+		return nullptr;
 	}
 
+	return modelPassList_.at(character);
+}
+
+void Player::AroundParts()
+{
+	AddPart("head", "data/model/MainGame/head01.x");
+	AddPart("body", "data/model/MainGame/body01.x");
+	AddPart("leftArm", "data/model/MainGame/arm_l01.x");
+	AddPart("rightArm", "data/model/MainGame/arm_r01.x");
+	AddPart("leftLeg", "data/model/MainGame/leg_l01.x");
+	AddPart("rightLeg", "data/model/MainGame/leg_r01.x");
+
+	SetParent("body", nullptr);
+	SetParent("head", "body");
+	SetParent("leftArm", "body");
+	SetParent("rightArm", "body");
+	SetParent("leftLeg", "body");
+	SetParent("rightLeg", "body");
+
+	// body
+	std::string key = "body";
+	Part* parent = GetPart(key)->GetParent();
+	D3DXVECTOR3 position = D3DXVECTOR3(0, 20, 0);
+	D3DXVECTOR3 rotate = D3DXVECTOR3(0, 0, 0);
+	SetPartPosition(key, position);
+	SetPartRotate(key, rotate);
+
+	// head
+	key = "head";
+	parent = GetPart(key)->GetParent();
+	position = D3DXVECTOR3(0, parent->GetSize().y * 0.75f, GetPart(key)->GetHalfSize().z * 0.5f);
+	SetPartPosition(key, position);
+	SetPartRotate(key, rotate);
+
+	// leftArm
+	key = "leftArm";
+	parent = GetPart(key)->GetParent();
+	position = D3DXVECTOR3(-parent->GetHalfSize().x, parent->GetHalfSize().y, 0);
+	rotate = D3DXVECTOR3(0, 0, 0.9f);
+	SetPartPosition(key, position);
+	SetPartRotate(key, rotate);
+
+	// rightArm
+	key = "rightArm";
+	parent = GetPart(key)->GetParent();
+	position = D3DXVECTOR3(parent->GetHalfSize().x, parent->GetHalfSize().y, 0);
+	rotate = D3DXVECTOR3(0, 0, 0.81f);
+	SetPartPosition(key, position);
+	SetPartRotate(key, rotate);
+
+	// leftLeg
+	key = "leftLeg";
+	parent = GetPart(key)->GetParent();
+	position = D3DXVECTOR3(-parent->GetHalfSize().x, -parent->GetHalfSize().y * 0.5f, 0);
+	rotate = D3DXVECTOR3(0, 0, 1.56f);
+	SetPartPosition(key, position);
+	SetPartRotate(key, rotate);
+
+	// rightLeg
+	key = "rightLeg";
+	parent = GetPart(key)->GetParent();
+	position = D3DXVECTOR3(parent->GetHalfSize().x, -parent->GetHalfSize().y * 0.5f, 0);
+	rotate = D3DXVECTOR3(0, 0, 0.33f);
+	SetPartPosition(key, position);
+	SetPartRotate(key, rotate);
+
+
 	return;
+
+	//m_Part[0] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_BODY);
+	//m_Part[1] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_HEAD);
+	//m_Part[2] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_RARM);
+	//m_Part[3] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_RARM_EDGE);
+	//m_Part[4] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_LARM);
+	//m_Part[5] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_LARM_EDGE);
+	//m_Part[6] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_RLEG);
+	//m_Part[7] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_RLEG_EDGE);
+	//m_Part[8] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_LLEG);
+	//m_Part[9] = Part::Create(D3DXVECTOR3(0, 0, 0), MODELDATA_LLEG_EDGE);
+
+	//m_Part[0]->SetParent(nullptr);		// BODY
+	//m_Part[1]->SetParent(m_Part[0]);	// HEAD
+	//m_Part[2]->SetParent(m_Part[0]);	// RARM
+	//m_Part[3]->SetParent(m_Part[2]);	// REDGE
+	//m_Part[4]->SetParent(m_Part[0]);	// LARM
+	//m_Part[5]->SetParent(m_Part[4]);	// LEDGE
+	//m_Part[6]->SetParent(m_Part[0]);	// RLEG
+	//m_Part[7]->SetParent(m_Part[6]);	// REDGE
+	//m_Part[8]->SetParent(m_Part[0]);	// LLEG
+	//m_Part[9]->SetParent(m_Part[8]);	// LEDGE
+
+	//									// BODY
+	//D3DXVECTOR3 pos = D3DXVECTOR3(0, 20, 0);
+	//D3DXVECTOR3 rotate = D3DXVECTOR3(0, 0, 0);
+	//m_Part[0]->SetPosition(pos);
+	//m_Part[0]->SetRotate(rotate);
+
+	//// HEAD
+	//pos = D3DXVECTOR3(0, m_Part[1]->GetParent()->GetSize().y * 0.75f, m_Part[1]->GetHalfSize().z * 0.5f);
+	//m_Part[1]->SetPosition(pos);
+
+	//// RARM
+	//pos = D3DXVECTOR3(m_Part[2]->GetParent()->GetHalfSize().x, m_Part[2]->GetParent()->GetHalfSize().y, 0);
+	////rotate = D3DXVECTOR3(0, 0, 0.81f);
+	//m_Part[2]->SetPosition(pos);
+	//m_Part[2]->SetRotate(rotate);
+
+	//// REDGE
+	//pos = D3DXVECTOR3(m_Part[3]->GetParent()->GetSize().x, 0, 0);
+	////rotate = D3DXVECTOR3(0, 0, 1.68f);
+	//m_Part[3]->SetPosition(pos);
+	//m_Part[3]->SetRotate(rotate);
+
+	//// LARM
+	//pos = D3DXVECTOR3(-m_Part[4]->GetParent()->GetHalfSize().x, m_Part[4]->GetParent()->GetHalfSize().y, 0);
+	////rotate = D3DXVECTOR3(0, 0, 0.9f);
+	//m_Part[4]->SetPosition(pos);
+	//m_Part[4]->SetRotate(rotate);
+
+	//// LEDGE
+	//pos = D3DXVECTOR3(-m_Part[5]->GetParent()->GetSize().x, 0, 0);
+	////rotate = D3DXVECTOR3(0, 0, 1.56f);
+	//m_Part[5]->SetPosition(pos);
+	//m_Part[5]->SetRotate(rotate);
+
+	//// RLEG
+	//pos = D3DXVECTOR3(m_Part[6]->GetParent()->GetHalfSize().x, -m_Part[6]->GetParent()->GetHalfSize().y * 0.5f, 0);
+	////rotate = D3DXVECTOR3(0, 0, 0.33f);
+	//m_Part[6]->SetPosition(pos);
+	//m_Part[6]->SetRotate(rotate);
+
+	//// REDGE
+	//pos = D3DXVECTOR3(0, -m_Part[7]->GetParent()->GetSize().y, 0);
+	//m_Part[7]->SetPosition(pos);
+
+	//// LLEG
+	//pos = D3DXVECTOR3(-m_Part[8]->GetParent()->GetHalfSize().x, -m_Part[8]->GetParent()->GetHalfSize().y * 0.5f, 0);
+	////rotate = D3DXVECTOR3(0, 0, -0.15f);
+	//m_Part[8]->SetPosition(pos);
+	//m_Part[8]->SetRotate(rotate);
+
+	//// LEDGE
+	//pos = D3DXVECTOR3(0, -m_Part[9]->GetParent()->GetSize().y, 0);
+	//m_Part[9]->SetPosition(pos);
+
+
+	//// Initialize Key Frame
+	//g_KeyFrameWalk[0].Frame = 20;
+	//g_KeyFrameWalk[1].Frame = 20;
+
+	//for (int j = 0; j < KEY_MAX; j++) {
+	//	for (int i = 0; i < 10; i++) {
+	//		g_KeyFrameWalk[j].Key[i].Position = m_Part[i]->GetPosition();
+	//		//g_KeyFrameWalk[j].Key[i].Rotation = m_Part[i]->GetRotate();
+	//	}
+	//}
+
+	//m_KeyFrame = g_KeyFrameWalk;
+	//m_Key = 0;
+	//m_Frame = 0;
+}
+
+D3DXVECTOR3 Player::FindCursorPosition_3D()
+{
+	POINT cursorPosition_2D;
+	D3DXVECTOR3 cursorPosition_3D;
+	GetCursorPos(&cursorPosition_2D);
+	ScreenToClient(GameManager::GetWindowHandle(), &cursorPosition_2D);
+
+	for (int i = 9960000; i < 10000000; i++)
+	{
+		cursorPosition_3D.x = (float)cursorPosition_2D.x;
+		cursorPosition_3D.y = (float)cursorPosition_2D.y;
+		cursorPosition_3D.z = (float)(1.0f / 10000000) * i;
+		D3DXVec3TransformCoord(&cursorPosition_3D, &cursorPosition_3D, &inverseMatrix_);
+
+		if (cursorPosition_3D.y < 0)
+		{
+			cursorPosition_3D.y = 0;
+			break;
+		}
+	}
+
+	return cursorPosition_3D;
+}
+
+bool Player::IsOutOfRange(const D3DXVECTOR3& _centerPosition, const D3DXVECTOR3& _nextPosition, float _range)
+{
+	return Distance3D(_nextPosition, _centerPosition) > _range * _range ? true : false;
+}
+
+D3DXVECTOR3 Player::WithinRange(const D3DXVECTOR3& _centerPosition, const D3DXVECTOR3& _comparePosition, float _range)
+{
+	D3DXVECTOR3 nextRelayPosition(0, 0, 0);
+
+	// find vector
+	D3DXVECTOR3 vector = _comparePosition - _centerPosition;
+	D3DXVec3Normalize(&vector, &vector);
+
+	// add power
+	vector *= _range;
+
+	// find position
+	nextRelayPosition = vector + _centerPosition;
+
+	return nextRelayPosition;
+}
+
+bool Player::IsOutOfLength(const float& _currentLength, const float& _maxLength)
+{
+	return _currentLength >= _maxLength ? true : false;
+}
+
+D3DXVECTOR3 Player::FindEndPosition(const float& _preLength, const float& _maxLength, const D3DXVECTOR3& _preRelayPosition, const D3DXVECTOR3& _nextRelayPosition)
+{
+	D3DXVECTOR3 endPosition(0, 0, 0);
+
+	// find vector
+	D3DXVECTOR3 drawLineVector = _nextRelayPosition - _preRelayPosition;
+	D3DXVec3Normalize(&drawLineVector, &drawLineVector);
+
+	// find power
+	float addLength = sqrtf(_maxLength - _preLength);
+
+	// find end position
+	endPosition = drawLineVector * addLength + _preRelayPosition;
+
+	return endPosition;
+}
+
+void Player::InitParamater(Character _character)
+{
+	switch (_character)
+	{
+		case Character::FIGHTER:
+			// behave
+			currentBehave_ = Behave::NEUTRAL;
+
+			// speed
+			currentSpeed_    = 0.0f;
+			runSpeed_        = 2.0f;
+			avoidPower_      = 15.0f;
+			heavyAvoidPower_ = 10.0f;
+
+			// cool time
+			currentCoolTime_        = 0;
+			coolTimeAvoid_          = 45;
+			coolTimeHeavyAvoid_     = 120;
+			coolTimeStraightShot_   = 30;
+			coolTimeDrawShot_       = 75;
+			coolTimeBreakBasePoint_ = 90;
+
+			// hp
+			maxHp_ = 80.0f;
+			currentHp_ = maxHp_;
+
+			// mp
+			maxMp_ = 45.0f;
+			currentMp_ = maxMp_;
+
+			// straight shot
+			straightShotDamage_ = 100.0f;
+			straightShotSpeed_  = 5.0f;
+			straightShotRange_  = 50.0f;
+
+			// draw shot
+			drawShotDamage_ = 150.0f;
+			drawShotSpeed_  = 3.0f;
+			drawShotRange_  = 150.0f;
+			drawShotLength_ = 300.0f;
+
+			// break power
+			breakPower_ = 5.0f;
+			break;
+
+		case Character::ATTACKER:
+			break;
+
+		case Character::SUPPORTER:
+			break;
+
+	}
+
+
 }

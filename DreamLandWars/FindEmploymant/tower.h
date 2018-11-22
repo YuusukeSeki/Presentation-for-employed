@@ -1,70 +1,44 @@
-//*****************************************************************************
-//
-//		塔
-//													Autohr : Yusuke Seki
-//*****************************************************************************
-#ifndef _TOWER_H_
-#define _TOWER_H_
+// author : yusuke seki
+// data   : 20181115
+#ifndef TOWER_H_
+#define TOWER_H_
 
-#include "main.h"
-#include "ObjectModel.h"
+#include "BasePoint.h"
+class RelayPoint;
+class ObjectBillboard;
+class Gauge;
 
-class Hold;
-class LifeGauge;
-class Icon;
-
-
-class Tower : public ObjectModel
+class Tower : public BasePoint
 {
 public:
-	//----- コンストラクタ / デストラクタ -----
-	Tower();
-	Tower(Object::TYPE type);
-	virtual ~Tower();
+	Tower(const Object::TYPE& _type);
+	~Tower();
 
+	static Tower* Create(const D3DXVECTOR3& _position, const Object::GROUP& _group, RelayPoint* _nextRelayPoint);
 
-	//----- 基本的な関数 -----
-	static Tower* Create(D3DXVECTOR3& position, const char* FileName, Object::GROUP group);
-	void Init(D3DXVECTOR3& position, const char* FileName, Object::GROUP group);
-	void Uninit(void);
-	void Update(void);
-	void Draw(void);
+	void Init(const D3DXVECTOR3& _position, const Object::GROUP& _group, RelayPoint* _nextRelayPoint);
+	void Uninit();
+	void Update();
+	void Draw();
 
-	// 拠点にダメージを与える
-	// breakPower : 与えるダメージ
-	// 【返り値】	true  : 拠点が壊れた
-	//				false : 拠点が壊れてない
-	bool BrowTower(float breakPower);
+	void ReceiveDamage(const float& _damage, Unit* _unit);
+	bool IsBreak();
 
-	// 塔を殴れる範囲との当たり判定
-	// position : 対象キャストの位置
-	// 【返り値】	true  : 殴れる
-	//				false : 殴れない
-	bool CollisionBrowRange(D3DXVECTOR3& position);
-
-	// 体力を返す
-	// 【返り値】現在の体力
-	float GetLife() { return m_life; }
-
-	// "Hold"の実体を返す
-	// 【返り値】"Hold"の実体
-	Hold* GetHold() { return m_pHold; }
-
-	// 移動処理
-	void MovePosition(D3DXVECTOR3& movePosition);
-
+	float GetMaxHp();
+	float GetCurrentHp();
 
 private:
-	//----- データ -----
-	float m_life;		// 現在の体力
-	float m_browRange;	// 殴れる範囲
+	static const unsigned int kNumSoldier_First_;
+	static const unsigned int kNumSoldier_Subsequent_;
+	static const float kMaxHp_;
 
-	Hold*      m_pHold;			// "HOLD"
-	LifeGauge* m_pLifeGauge;	// 体力ゲージ
-	Icon*      m_pIcon;			// アイコン
-	
-	int m_cntFrame;	// 兵士生成用カウンター
+	float maxHp_;
+	float currentHp_;
 
+	unsigned int releaseTimer_;
+
+	ObjectBillboard* icon_;
+	Gauge* hpGauge_;
 
 };
 

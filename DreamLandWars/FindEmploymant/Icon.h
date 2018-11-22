@@ -8,7 +8,7 @@
 
 #include "main.h"
 #include "ObjectBillboard.h"
-#include "ObjectModel.h"
+#include "BasePoint.h"
 
 class Camera;
 

@@ -27,7 +27,7 @@ private:
 float VectorLength(D3DXVECTOR3& vec);
 
 // 2点間の距離の2乗を計算
-float Distance3D(D3DXVECTOR3& p1, D3DXVECTOR3& p2);
+float Distance3D(const D3DXVECTOR3& p1, const D3DXVECTOR3& p2);
 
  // カーソル座標を3D座標に変換
 D3DXVECTOR3* transScreenToWorld(D3DXVECTOR3* out, IDirect3DDevice9* pDev, int sx, int sy, float z, D3DXMATRIX* view, D3DXMATRIX* proj);
